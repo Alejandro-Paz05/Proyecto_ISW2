@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Akari Studio | Salón de Belleza</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER / NAVBAR ===== -->
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="#inicio" class="logo">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">Akari <em>Studio</em></span>
+      </a>
+      <nav class="nav-links">
+        <a href="#inicio">Inicio</a>
+        <a href="#productos">Productos</a>
+        <a href="#servicios">Servicios</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <button class="cart-btn" id="cartBtn" aria-label="Abrir carrito">
+        <span class="cart-icon">🛒</span>
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section id="inicio" class="hero">
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <p class="hero-tag">Belleza & Elegancia</p>
+      <h1 class="hero-title">Realza tu belleza<br />con <span>Akari Studio</span></h1>
+      <p class="hero-sub">Uñas, pestañas, cejas y más. Productos profesionales para que luzcas espectacular, en el corazón de Honduras.</p>
+      <div class="hero-actions">
+        <a href="#productos" class="btn btn-gold">Ver Productos</a>
+        <a href="#servicios" class="btn btn-outline">Nuestros Servicios</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SERVICIOS ===== -->
+  <section id="servicios" class="section">
+    <div class="container">
+      <p class="section-tag">Lo que ofrecemos</p>
+      <h2 class="section-title">Nuestros Servicios</h2>
+      <div class="services-grid">
+        <div class="service-card">
+          <div class="service-icon">💅</div>
+          <h3>Uñas</h3>
+          <p>Manicure, pedicure, acrílicas, gel y nail art personalizado.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">👁️</div>
+          <h3>Pestañas</h3>
+          <p>Extensiones clásicas y volumen ruso para una mirada impactante.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">✏️</div>
+          <h3>Cejas</h3>
+          <p>Diseño, laminado y micropigmentación de cejas perfectas.</p>
+        </div>
+        <div class="service-card">
+          <div class="service-icon">💄</div>
+          <h3>Maquillaje</h3>
+          <p>Maquillaje profesional para eventos, bodas y ocasiones especiales.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRODUCTOS ===== -->
+  <section id="productos" class="section section-dark">
+    <div class="container">
+      <p class="section-tag">Tienda online</p>
+      <h2 class="section-title">Nuestros Productos</h2>
+      <p class="section-sub">Agrega a tu carrito y realiza tu pedido sin necesidad de crear una cuenta.</p>
+
+      <div class="filters" id="filters">
+        <button class="filter-btn active" data-filter="todos">Todos</button>
+        <button class="filter-btn" data-filter="unas">Uñas</button>
+        <button class="filter-btn" data-filter="pestanas">Pestañas</button>
+        <button class="filter-btn" data-filter="cejas">Cejas</button>
+        <button class="filter-btn" data-filter="maquillaje">Maquillaje</button>
+        <button class="filter-btn" data-filter="accesorios">Accesorios</button>
+      </div>
+
+      <div class="products-grid" id="productsGrid">
+        <!-- Productos generados por JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACTO ===== -->
+  <section id="contacto" class="section">
+    <div class="container contact-container">
+      <div class="contact-info">
+        <p class="section-tag">Visítanos</p>
+        <h2 class="section-title">Contacto</h2>
+        <p><strong>📍 Dirección:</strong> Tegucigalpa, Honduras</p>
+        <p><strong>📞 Teléfono:</strong> +504 9999-0000</p>
+        <p><strong>✉️ Email:</strong> contacto@akaristudio.hn</p>
+        <p><strong>🕐 Horario:</strong> Lun - Sáb: 9:00 AM - 7:00 PM</p>
+      </div>
+      <div class="contact-map">
+        <div class="map-placeholder">
+          <span>📍</span>
+          <p>Mapa de ubicación</p>
+          <small>Akari Studio · Honduras</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container footer-container">
+      <div class="footer-brand">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">Akari <em>Studio</em></span>
+        <p>Belleza y elegancia en el corazón de Honduras.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Enlaces</h4>
+        <a href="#inicio">Inicio</a>
+        <a href="#productos">Productos</a>
+        <a href="#servicios">Servicios</a>
+        <a href="#contacto">Contacto</a>
+      </div>
+      <div class="footer-contact">
+        <h4>Contacto</h4>
+        <p>Tegucigalpa, Honduras</p>
+        <p>+504 9999-0000</p>
+        <p>contacto@akaristudio.hn</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Akari Studio. Todos los derechos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- ===== CARRITO (Drawer) ===== -->
+  <div class="cart-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-header">
+      <h3>Tu Carrito</h3>
+      <button class="close-btn" id="closeCart" aria-label="Cerrar carrito">&times;</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <p class="cart-empty">Tu carrito está vacío. ✨</p>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total">
+        <span>Total</span>
+        <span id="cartTotal">L 0.00</span>
+      </div>
+      <button class="btn btn-gold btn-block" id="checkoutBtn">Realizar Pedido</button>
+    </div>
+  </aside>
+
+  <!-- ===== MODAL CHECKOUT ===== -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal">
+      <button class="close-btn modal-close" id="closeCheckout">&times;</button>
+      <div id="checkoutContent"></div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL CONFIRMACIÓN ===== -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal modal-confirm">
+      <div id="confirmContent"></div>
+    </div>
+  </div>
+
+  <!-- Toast de notificación -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/checkout.js"></script>
+</body>
+</html>
