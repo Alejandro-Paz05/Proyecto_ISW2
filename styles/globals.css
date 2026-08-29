@@ -416,9 +416,15 @@ h1, h2, h3, h4 {
   transition: all 0.3s;
 }
 
-.add-btn:hover {
+.add-btn:hover:not(:disabled) {
   background: var(--gold-light);
   transform: scale(1.05);
+}
+
+.add-btn:disabled {
+  background: #3a3a3a;
+  color: #999;
+  cursor: not-allowed;
 }
 
 /* ===== STOCK / OUT OF STOCK ===== */
@@ -444,7 +450,8 @@ h1, h2, h3, h4 {
 }
 
 .loading-text,
-.error-text {
+.error-text,
+.empty-text {
   text-align: center;
   padding: 40px;
   font-size: 16px;
@@ -670,9 +677,21 @@ h1, h2, h3, h4 {
   line-height: 1;
 }
 
-.qty-btn:hover {
+.qty-btn:hover:not(:disabled) {
   background: var(--gold);
   color: var(--black);
+}
+
+.qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cart-item-limit {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--gray);
 }
 
 .cart-item-remove {
