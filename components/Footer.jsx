@@ -12,6 +12,7 @@ export default function Footer() {
           <a href="#inicio">Inicio</a>
           <a href="#productos">Productos</a>
           <a href="#servicios">Servicios</a>
+          <a href="#citas">Citas</a>
           <a href="#contacto">Contacto</a>
         </div>
         <div className="footer-contact">

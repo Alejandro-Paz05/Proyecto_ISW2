@@ -14,6 +14,7 @@ export default function Navbar() {
           <a href="#inicio">Inicio</a>
           <a href="#productos">Productos</a>
           <a href="#servicios">Servicios</a>
+          <a href="#citas">Citas</a>
           <a href="#contacto">Contacto</a>
         </nav>
         <button className="cart-btn" onClick={() => setCartOpen(true)} aria-label="Abrir carrito">

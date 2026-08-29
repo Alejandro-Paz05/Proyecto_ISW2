@@ -3,6 +3,7 @@ import Layout from '@/components/Layout';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import Services from '@/components/Services';
+import Booking from '@/components/Booking';
 import Products from '@/components/Products';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
@@ -41,6 +42,7 @@ export default function Home() {
         <Navbar />
         <Hero />
         <Services />
+        <Booking />
         <Products products={products} loading={loading} error={error} />
         <Contact />
         <Footer />
