@@ -4,7 +4,7 @@
   "private": true,
   "description": "Tienda online del salón de belleza Akari Studio: catálogo, inventario en tiempo real y checkout como invitado.",
   "engines": {
-    "node": ">=18.17"
+    "node": ">=22.22.2"
   },
   "scripts": {
     "dev": "next dev",

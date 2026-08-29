@@ -16,10 +16,13 @@ jobs:
       - name: Descargar el repositorio
         uses: actions/checkout@v4
 
+      # Node 24, igual que el entorno de desarrollo. No sirve una version
+      # menor: jsdom exige ^22.22.2 || ^24.15.0 || >=26, y Vite 8 pide
+      # ^20.19.0 || >=22.12.0.
       - name: Preparar Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
 
       # npm ci instala exactamente lo que fija package-lock.json y falla si
