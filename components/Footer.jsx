@@ -1,3 +1,13 @@
+import Link from 'next/link';
+
+const ENLACES = [
+  { href: '/akaristudio', label: 'Inicio' },
+  { href: '/akaristudio#servicios', label: 'Servicios' },
+  { href: '/akaristudio/citas', label: 'Citas' },
+  { href: '/akaristudio/productos', label: 'Productos' },
+  { href: '/akaristudio#contacto', label: 'Contacto' }
+];
+
 export default function Footer() {
   return (
     <footer className="footer">
@@ -9,11 +19,11 @@ export default function Footer() {
         </div>
         <div className="footer-links">
           <h4>Enlaces</h4>
-          <a href="#inicio">Inicio</a>
-          <a href="#productos">Productos</a>
-          <a href="#servicios">Servicios</a>
-          <a href="#citas">Citas</a>
-          <a href="#contacto">Contacto</a>
+          {ENLACES.map((enlace) => (
+            <Link key={enlace.href} href={enlace.href}>
+              {enlace.label}
+            </Link>
+          ))}
         </div>
         <div className="footer-contact">
           <h4>Contacto</h4>

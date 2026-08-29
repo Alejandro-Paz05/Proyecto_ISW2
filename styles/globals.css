@@ -149,6 +149,12 @@ h1, h2, h3, h4 {
   color: var(--gold);
 }
 
+/* Ahora que hay varias páginas, conviene señalar en cuál se está. */
+.nav-links a.activo {
+  color: var(--gold);
+  font-weight: 500;
+}
+
 .cart-btn {
   position: relative;
   background: none;
@@ -945,4 +951,60 @@ h1, h2, h3, h4 {
   .section-title {
     font-size: 32px;
   }
+}
+
+/* ============================================
+   ATAJOS DE LA PORTADA
+   Las citas y los productos son páginas propias:
+   la portada tiene que llevar hasta ellas.
+   ============================================ */
+.atajos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.atajo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+}
+
+.atajo:hover {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.07);
+  transform: translateY(-3px);
+}
+
+.atajo-icono {
+  font-size: 30px;
+}
+
+.atajo h3 {
+  font-size: 22px;
+  color: var(--white);
+}
+
+.atajo p {
+  font-size: 14.5px;
+  color: #b9b9b9;
+  line-height: 1.65;
+  flex: 1;
+}
+
+.atajo-accion {
+  color: var(--gold);
+  font-size: 14.5px;
+  font-weight: 500;
+  margin-top: 6px;
 }

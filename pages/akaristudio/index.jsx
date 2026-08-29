@@ -1,56 +1,47 @@
-import { useState, useEffect } from 'react';
-import Layout from '@/components/Layout';
-import Navbar from '@/components/Navbar';
+import Link from 'next/link';
+import TiendaLayout from '@/components/TiendaLayout';
 import Hero from '@/components/Hero';
 import Services from '@/components/Services';
-import Booking from '@/components/Booking';
-import Products from '@/components/Products';
 import Contact from '@/components/Contact';
-import Footer from '@/components/Footer';
-import CartDrawer from '@/components/CartDrawer';
-import CheckoutModal from '@/components/CheckoutModal';
-import ConfirmModal from '@/components/ConfirmModal';
-import Toast from '@/components/Toast';
-import { CartProvider } from '@/context/CartContext';
 
-export default function Home() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await fetch('/api/products');
-        if (!res.ok) throw new Error('Error al cargar productos');
-        const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProducts();
-  }, []);
-
+export default function Inicio() {
   return (
-    <Layout>
-      {/* El carrito necesita el catálogo para conocer precios y stock reales:
-          solo guarda ids y cantidades. */}
-      <CartProvider products={products} productsLoaded={!loading && !error}>
-        <Navbar />
-        <Hero />
-        <Services />
-        <Booking />
-        <Products products={products} loading={loading} error={error} />
-        <Contact />
-        <Footer />
-        <CartDrawer />
-        <CheckoutModal />
-        <ConfirmModal />
-        <Toast />
-      </CartProvider>
-    </Layout>
+    <TiendaLayout>
+      <Hero />
+      <Services />
+
+      {/* Las citas y los productos son páginas propias, así que la portada
+          necesita llevar hasta ellas de forma evidente. */}
+      <section className="section section-dark">
+        <div className="container">
+          <p className="section-tag">¿Qué querés hacer?</p>
+          <h2 className="section-title">Empezá por acá</h2>
+
+          <div className="atajos">
+            <Link href="/akaristudio/citas" className="atajo">
+              <span className="atajo-icono">📅</span>
+              <h3>Reservar una cita</h3>
+              <p>
+                Elegí el servicio y el horario que te quede cómodo. Ves en el momento qué está
+                libre.
+              </p>
+              <span className="atajo-accion">Ver disponibilidad →</span>
+            </Link>
+
+            <Link href="/akaristudio/productos" className="atajo">
+              <span className="atajo-icono">🛍️</span>
+              <h3>Comprar productos</h3>
+              <p>
+                Productos profesionales para uñas, pestañas, cejas y maquillaje. Comprá sin crear
+                cuenta.
+              </p>
+              <span className="atajo-accion">Ver la tienda →</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <Contact />
+    </TiendaLayout>
   );
 }
