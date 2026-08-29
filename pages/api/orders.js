@@ -7,6 +7,12 @@ const CLIENT_ERROR_CODES = new Set(['22023', 'P0001']);
 
 const MAX_ITEMS = 50;
 
+// Debe coincidir con la restricción CHECK de orders.payment_method.
+// Sin esta validación, un método inventado llega hasta el INSERT y la
+// base responde con un check_violation, que el handler traduciría a un
+// 500 en lugar del 400 que corresponde.
+const PAYMENT_METHODS = new Set(['efectivo', 'tarjeta', 'transferencia']);
+
 /**
  * Normaliza el carrito que llega del navegador a `[{ id, qty }]`.
  * Nombre, precio y total se ignoran a propósito: los pone la base de
@@ -44,6 +50,10 @@ export default async function handler(req, res) {
   const normalizedItems = normalizeItems(items);
   if (!normalizedItems) {
     return res.status(400).json({ error: 'El pedido no tiene productos válidos.' });
+  }
+
+  if (!PAYMENT_METHODS.has(payment)) {
+    return res.status(400).json({ error: 'El método de pago no es válido.' });
   }
 
   try {
