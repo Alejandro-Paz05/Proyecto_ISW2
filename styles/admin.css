@@ -1,0 +1,421 @@
+/* ============================================
+   AKARI STUDIO — Panel de administración
+   Deliberadamente sobrio: es una herramienta de
+   trabajo, no una vidriera.
+   ============================================ */
+
+.admin {
+  min-height: 100vh;
+  background: #f5f4f1;
+}
+
+/* ===== Cabecera ===== */
+.admin-header {
+  background: var(--black);
+  color: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.admin-marca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--white);
+  text-decoration: none;
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.admin-marca em {
+  color: var(--gold);
+  font-style: italic;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.admin-nav a {
+  color: #b9b9b9;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-nav a:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.admin-nav a.activo {
+  color: var(--black);
+  background: var(--gold);
+  font-weight: 600;
+}
+
+.admin-acciones {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-link-tienda {
+  color: #b9b9b9;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.admin-link-tienda:hover {
+  color: var(--gold);
+}
+
+.admin-salir {
+  background: none;
+  border: 1px solid #444;
+  color: #b9b9b9;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.admin-salir:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ===== Contenido ===== */
+.admin-contenido {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.admin-titulo {
+  font-size: 30px;
+  margin-bottom: 24px;
+}
+
+/* ===== Tarjetas de resumen ===== */
+.admin-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.admin-tarjeta {
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-tarjeta-valor {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  color: var(--black);
+}
+
+.admin-tarjeta-label {
+  font-size: 12px;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ===== Filtros ===== */
+.admin-filtros {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.admin-filtro {
+  background: var(--white);
+  border: 1px solid #e0ddd6;
+  color: var(--gray);
+  padding: 7px 16px;
+  border-radius: 50px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  text-transform: capitalize;
+  transition: all 0.15s;
+}
+
+.admin-filtro:hover {
+  border-color: var(--gold);
+  color: var(--black);
+}
+
+.admin-filtro.activo {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+/* ===== Tabla ===== */
+.admin-tabla-scroll {
+  overflow-x: auto;
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+}
+
+.admin-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 760px;
+}
+
+.admin-tabla th {
+  text-align: left;
+  font-family: 'Poppins', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray);
+  padding: 14px 16px;
+  border-bottom: 1px solid #eceae5;
+  white-space: nowrap;
+}
+
+.admin-tabla td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f2f0eb;
+  vertical-align: top;
+}
+
+.admin-tabla tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-tabla .derecha {
+  text-align: right;
+}
+
+.admin-fila {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.admin-fila:hover {
+  background: #faf9f6;
+}
+
+.admin-sub {
+  display: block;
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.admin-detalle-pista {
+  display: block;
+  font-size: 11px;
+  color: var(--gray);
+  margin-top: 3px;
+}
+
+/* ===== Fila expandida ===== */
+.admin-fila-detalle td {
+  background: #faf9f6;
+  padding: 0 16px 20px;
+}
+
+.admin-detalle {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 28px;
+  padding-top: 16px;
+}
+
+.admin-detalle h4 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray);
+  margin-bottom: 10px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.admin-detalle ul {
+  list-style: none;
+}
+
+.admin-detalle li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 0;
+  border-bottom: 1px dashed #e6e3dd;
+  font-size: 13px;
+}
+
+.admin-detalle li:last-child {
+  border-bottom: none;
+}
+
+.admin-detalle p {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.admin-detalle a {
+  color: var(--gold-dark);
+}
+
+/* ===== Selector de estado ===== */
+.admin-estado {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 50px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-transform: capitalize;
+  min-width: 118px;
+}
+
+.admin-estado:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.estado-pendiente   { background: #fff4d6; color: #8a6100; border-color: #f0dca8; }
+.estado-confirmado  { background: #e0edff; color: #1f4f8f; border-color: #bcd6f7; }
+.estado-enviado     { background: #e6e2ff; color: #4531a3; border-color: #cbc3f5; }
+.estado-entregado   { background: #ddf5e3; color: #1d6b35; border-color: #b6e5c4; }
+.estado-cancelado   { background: #ffe3e0; color: #96281b; border-color: #f5c3bd; }
+
+/* ===== Mensajes ===== */
+.admin-vacio {
+  text-align: center;
+  padding: 56px 24px;
+  color: var(--gray);
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+}
+
+.admin-alerta {
+  background: #ffe3e0;
+  color: #96281b;
+  border: 1px solid #f5c3bd;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* ===== Login ===== */
+.admin-login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--black);
+  padding: 24px;
+}
+
+.admin-login-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.admin-login-card .logo-icon {
+  color: var(--gold);
+  font-size: 26px;
+}
+
+.admin-login-card h1 {
+  font-size: 26px;
+  margin-top: 6px;
+}
+
+.admin-login-sub {
+  color: var(--gray);
+  font-size: 13px;
+  margin-bottom: 28px;
+}
+
+.admin-login-card label {
+  display: block;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.admin-login-card input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 15px;
+  margin-bottom: 18px;
+}
+
+.admin-login-card input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.admin-login-card .admin-alerta {
+  text-align: left;
+}
+
+.admin-login-card code {
+  background: rgba(0, 0, 0, 0.07);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .admin-header-inner {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .admin-nav {
+    order: 3;
+    width: 100%;
+    flex: none;
+  }
+
+  .admin-titulo {
+    font-size: 24px;
+  }
+}
