@@ -1,0 +1,509 @@
+/* ============================================
+   AKARI STUDIO — Reserva de citas
+   Asistente por pasos con resumen fijo al costado.
+   ============================================ */
+
+/* ===== Migas de pan ===== */
+.reserva-pasos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 28px;
+  font-size: 14px;
+}
+
+.reserva-paso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b4b1ab;
+}
+
+.reserva-paso.actual {
+  color: var(--black);
+  font-weight: 600;
+}
+
+.reserva-paso.hecho button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--gold-dark);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.reserva-flecha {
+  color: #d5d2cc;
+}
+
+/* ===== Estructura de dos columnas ===== */
+.reserva {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+  text-align: left;
+}
+
+.reserva-titulo {
+  font-size: 27px;
+  margin-bottom: 20px;
+}
+
+.reserva-subtitulo {
+  font-size: 18px;
+  margin: 28px 0 14px;
+}
+
+/* ===== Filtros por categoría ===== */
+.reserva-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.reserva-chip {
+  padding: 8px 18px;
+  border: 1px solid #e0ddd6;
+  border-radius: 50px;
+  background: var(--white);
+  color: var(--gray);
+  font-family: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reserva-chip:hover {
+  border-color: var(--gold);
+  color: var(--black);
+}
+
+.reserva-chip.activo {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* ===== Lista de servicios ===== */
+.reserva-servicios {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reserva-servicio {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.reserva-servicio:hover {
+  border-color: #d8d4cb;
+}
+
+.reserva-servicio.elegido {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.reserva-servicio-datos {
+  flex: 1;
+  min-width: 0;
+}
+
+.reserva-servicio-datos h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.reserva-servicio-duracion {
+  font-size: 13px;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+.reserva-servicio-desc {
+  font-size: 13.5px;
+  color: var(--gray);
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+
+.reserva-servicio-precio {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.reserva-mas {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: var(--white);
+  color: var(--black);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reserva-mas:hover {
+  border-color: var(--gold);
+  background: var(--gold);
+}
+
+.reserva-mas.quitar {
+  background: var(--gold);
+  border-color: var(--gold);
+  font-weight: 600;
+}
+
+/* ===== Tira de fechas ===== */
+.tira-fechas-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.tira-fechas-flechas {
+  display: flex;
+  gap: 6px;
+}
+
+.tira-fechas-flechas button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #e0ddd6;
+  background: var(--white);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--black);
+  transition: all 0.15s;
+}
+
+.tira-fechas-flechas button:hover:not(:disabled) {
+  border-color: var(--gold);
+}
+
+.tira-fechas-flechas button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.tira-fechas {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.tira-fecha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 4px;
+  border: 1px solid #e6e3dd;
+  border-radius: 12px;
+  background: var(--white);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tira-fecha:hover {
+  border-color: var(--gold);
+}
+
+.tira-fecha.activa {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+}
+
+.tira-fecha-dia,
+.tira-fecha-mes {
+  font-size: 11.5px;
+  color: var(--gray);
+  text-transform: lowercase;
+}
+
+.tira-fecha.activa .tira-fecha-dia,
+.tira-fecha.activa .tira-fecha-mes {
+  color: #cfcbc3;
+}
+
+.tira-fecha-numero {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ===== Lista de horas ===== */
+.lista-horas {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.hora {
+  width: 100%;
+  text-align: left;
+  padding: 16px 22px;
+  border: 1px solid #e6e3dd;
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--black);
+  font-family: inherit;
+  font-size: 15.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hora:hover {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.06);
+}
+
+.hora.activa {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+  font-weight: 600;
+}
+
+/* ===== Resumen lateral ===== */
+.reserva-resumen-caja {
+  position: sticky;
+  top: 90px;
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.reserva-resumen-marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #eceae5;
+  margin-bottom: 18px;
+}
+
+.reserva-resumen-marca .logo-icon {
+  color: var(--gold);
+  font-size: 24px;
+}
+
+.reserva-resumen-marca div {
+  display: flex;
+  flex-direction: column;
+}
+
+.reserva-resumen-marca strong {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+}
+
+.reserva-resumen-marca span {
+  font-size: 12.5px;
+  color: var(--gray);
+}
+
+.reserva-resumen-vacio {
+  color: var(--gray);
+  font-size: 14px;
+  padding: 12px 0 20px;
+}
+
+.reserva-resumen-lista {
+  list-style: none;
+  margin-bottom: 18px;
+}
+
+.reserva-resumen-lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f2f0eb;
+  font-size: 14px;
+}
+
+.reserva-resumen-lista li:last-child {
+  border-bottom: none;
+}
+
+.reserva-resumen-lista div {
+  display: flex;
+  flex-direction: column;
+}
+
+.reserva-resumen-lista small {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.reserva-resumen-precio {
+  white-space: nowrap;
+}
+
+.reserva-personas {
+  padding: 16px 0;
+  border-top: 1px solid #f2f0eb;
+}
+
+.reserva-personas label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 7px;
+}
+
+.reserva-personas select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--white);
+}
+
+.reserva-personas select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.reserva-personas small {
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  color: var(--gray);
+  line-height: 1.5;
+}
+
+.reserva-resumen-cuando {
+  background: var(--off-white);
+  border-radius: 9px;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+  text-transform: capitalize;
+}
+
+.reserva-resumen-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 16px;
+  border-top: 1px solid #eceae5;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.reserva-resumen-duracion {
+  font-size: 12.5px;
+  color: var(--gray);
+  margin-bottom: 18px;
+}
+
+.reserva-resumen-caja .btn {
+  margin-top: 6px;
+}
+
+.reserva-volver {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-family: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 6px;
+}
+
+.reserva-volver:hover {
+  color: var(--black);
+}
+
+/* ===== Confirmación ===== */
+.cita-confirmada {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+  padding: 48px 32px;
+  box-shadow: var(--shadow);
+}
+
+.cita-confirmada-servicio {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  margin-top: 8px;
+}
+
+.cita-confirmada-fecha {
+  color: var(--gold-dark);
+  font-size: 16px;
+  margin-bottom: 20px;
+  text-transform: capitalize;
+}
+
+.cita-confirmada-nota {
+  font-size: 14px;
+  color: var(--gray);
+  margin: 20px 0 24px;
+}
+
+@media (max-width: 940px) {
+  .reserva {
+    grid-template-columns: 1fr;
+  }
+
+  .reserva-resumen-caja {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .tira-fechas {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .reserva-titulo {
+    font-size: 22px;
+  }
+
+  .reserva-servicio {
+    padding: 16px;
+  }
+}
