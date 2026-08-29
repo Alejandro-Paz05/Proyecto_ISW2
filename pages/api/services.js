@@ -9,8 +9,9 @@ export default async function handler(req, res) {
   try {
     const { data, error } = await getSupabaseAdmin()
       .from('services')
-      .select('id, name, description, duration_minutes, price')
+      .select('id, name, description, duration_minutes, price, category')
       .eq('active', true)
+      .order('category', { ascending: true })
       .order('duration_minutes', { ascending: true });
 
     if (error) throw error;

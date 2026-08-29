@@ -12,30 +12,52 @@ import {
 // dentro de diez minutos.
 const MARGEN_MINUTOS = 10;
 
+const MAXIMO_SERVICIOS = 10;
+const MAXIMO_PERSONAS = 6;
+
+/** '1,2,3' -> [1, 2, 3]. Devuelve null si algo no es un id válido. */
+function parsearServicios(valor) {
+  const partes = String(valor ?? '')
+    .split(',')
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
+  if (partes.length === 0 || partes.length > MAXIMO_SERVICIOS) return null;
+
+  const ids = partes.map(Number);
+  if (ids.some((id) => !Number.isInteger(id) || id <= 0)) return null;
+
+  return ids;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const { date, service } = req.query;
+  const { date, services, people } = req.query;
 
   if (!esFechaValida(date)) {
     return res.status(400).json({ error: 'La fecha no es válida.' });
   }
 
-  const serviceId = Number(service);
-  if (!Number.isInteger(serviceId) || serviceId <= 0) {
-    return res.status(400).json({ error: 'El servicio no es válido.' });
+  const ids = parsearServicios(services);
+  if (!ids) {
+    return res.status(400).json({ error: 'Los servicios elegidos no son válidos.' });
+  }
+
+  const personas = people === undefined ? 1 : Number(people);
+  if (!Number.isInteger(personas) || personas < 1 || personas > MAXIMO_PERSONAS) {
+    return res.status(400).json({ error: 'La cantidad de personas no es válida.' });
   }
 
   const ahora = new Date();
-  const hoy = diaLocalDe(ahora);
-  if (date < hoy) {
+  if (date < diaLocalDe(ahora)) {
     return res.status(200).json({ abierto: false, motivo: 'pasado', franjas: [] });
   }
 
-  const limite = new Date(ahora.getTime() + DIAS_DE_ANTELACION * 24 * 60 * 60 * 1000);
+  const limite = new Date(ahora.getTime() + DIAS_DE_ANTELACION * 86400000);
   if (date > diaLocalDe(limite)) {
     return res.status(200).json({ abierto: false, motivo: 'muy-lejos', franjas: [] });
   }
@@ -43,13 +65,12 @@ export default async function handler(req, res) {
   try {
     const supabase = getSupabaseAdmin();
 
-    const [servicio, horario, bloqueo] = await Promise.all([
+    const [servicios, horario, bloqueo] = await Promise.all([
       supabase
         .from('services')
         .select('id, name, duration_minutes, price')
-        .eq('id', serviceId)
-        .eq('active', true)
-        .maybeSingle(),
+        .in('id', ids)
+        .eq('active', true),
       supabase
         .from('business_hours')
         .select('opens_at, closes_at, closed')
@@ -58,26 +79,48 @@ export default async function handler(req, res) {
       supabase.from('blocked_dates').select('day, reason').eq('day', date).maybeSingle()
     ]);
 
-    if (servicio.error) throw servicio.error;
+    if (servicios.error) throw servicios.error;
     if (horario.error) throw horario.error;
     if (bloqueo.error) throw bloqueo.error;
 
-    if (!servicio.data) {
-      return res.status(404).json({ error: 'El servicio no existe.' });
+    // Se comparan contra el conjunto de ids únicos: un id repetido en la
+    // consulta no debería hacer fallar la comprobación.
+    const unicos = new Set(ids);
+    if (servicios.data.length !== unicos.size) {
+      return res.status(404).json({ error: 'Alguno de los servicios no existe.' });
     }
+
+    // La duración total del bloque: los servicios elegidos, multiplicados por
+    // la cantidad de personas, porque se atienden una después de la otra.
+    const duracionServicios = ids.reduce((suma, id) => {
+      const servicio = servicios.data.find((s) => s.id === id);
+      return suma + servicio.duration_minutes;
+    }, 0);
+    const precioServicios = ids.reduce((suma, id) => {
+      const servicio = servicios.data.find((s) => s.id === id);
+      return suma + Number(servicio.price);
+    }, 0);
+
+    const duracionTotal = duracionServicios * personas;
+    const resumen = {
+      servicios: ids.map((id) => servicios.data.find((s) => s.id === id)),
+      personas,
+      duracionMinutos: duracionTotal,
+      total: precioServicios * personas
+    };
 
     if (bloqueo.data) {
       return res
         .status(200)
-        .json({ abierto: false, motivo: 'bloqueado', nota: bloqueo.data.reason, franjas: [] });
+        .json({ abierto: false, motivo: 'bloqueado', nota: bloqueo.data.reason, resumen, franjas: [] });
     }
 
     if (!horario.data || horario.data.closed) {
-      return res.status(200).json({ abierto: false, motivo: 'cerrado', franjas: [] });
+      return res.status(200).json({ abierto: false, motivo: 'cerrado', resumen, franjas: [] });
     }
 
-    // Las citas del día. Se consulta por el instante, no por la fecha, para
-    // que una cita que arranca a las 18:30 y cruza a las 19:30 cuente.
+    // Se consulta por instante y no por fecha, para que una cita que arranca
+    // a las 18:30 y cruza el límite del día también cuente.
     const desdeDia = instanteDesdeLocal(date, 0).toISOString();
     const hastaDia = instanteDesdeLocal(date, 24 * 60).toISOString();
 
@@ -94,7 +137,7 @@ export default async function handler(req, res) {
       dia: date,
       abre: horario.data.opens_at,
       cierra: horario.data.closes_at,
-      duracionMinutos: servicio.data.duration_minutes,
+      duracionMinutos: duracionTotal,
       ocupados: citas.map((cita) => ({
         desde: new Date(cita.starts_at),
         hasta: new Date(cita.ends_at)
@@ -106,7 +149,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(200).json({
       abierto: true,
-      servicio: servicio.data,
+      resumen,
       horario: { abre: horario.data.opens_at, cierra: horario.data.closes_at },
       franjas
     });
