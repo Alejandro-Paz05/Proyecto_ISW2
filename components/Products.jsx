@@ -1,22 +1,8 @@
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
+import { CATEGORIAS, ETIQUETAS_CATEGORIA } from '@/lib/categorias';
 
-const categories = [
-  { key: 'todos', label: 'Todos' },
-  { key: 'unas', label: 'Uñas' },
-  { key: 'pestanas', label: 'Pestañas' },
-  { key: 'cejas', label: 'Cejas' },
-  { key: 'maquillaje', label: 'Maquillaje' },
-  { key: 'accesorios', label: 'Accesorios' }
-];
-
-const categoryLabels = {
-  unas: 'Uñas',
-  pestanas: 'Pestañas',
-  cejas: 'Cejas',
-  maquillaje: 'Maquillaje',
-  accesorios: 'Accesorios'
-};
+const categories = [{ key: 'todos', label: 'Todos' }, ...CATEGORIAS];
 
 // Por debajo de este stock se avisa al cliente. Anunciar "quedan 25" no
 // aporta nada; anunciar "quedan 2" sí.
@@ -78,7 +64,7 @@ export default function Products({ products, loading, error }) {
                 <div className="product-card" key={product.id}>
                   <img src={product.image} alt={product.name} className="product-img" loading="lazy" />
                   <div className="product-body">
-                    <span className="product-category">{categoryLabels[product.category]}</span>
+                    <span className="product-category">{ETIQUETAS_CATEGORIA[product.category]}</span>
                     <h3 className="product-name">{product.name}</h3>
                     <p className="product-desc">{product.description}</p>
                     <div className="product-footer">
