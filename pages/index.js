@@ -35,7 +35,9 @@ export default function Home() {
 
   return (
     <Layout>
-      <CartProvider>
+      {/* El carrito necesita el catálogo para conocer precios y stock reales:
+          solo guarda ids y cantidades. */}
+      <CartProvider products={products} productsLoaded={!loading && !error}>
         <Navbar />
         <Hero />
         <Services />
