@@ -1,100 +1,73 @@
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
+
+// Códigos de Postgres que corresponden a un error del cliente, no del
+// servidor. `create_order` los usa para rechazar datos inválidos o
+// stock insuficiente, y su mensaje sí es seguro mostrarle al usuario.
+const CLIENT_ERROR_CODES = new Set(['22023', 'P0001']);
+
+const MAX_ITEMS = 50;
+
+/**
+ * Normaliza el carrito que llega del navegador a `[{ id, qty }]`.
+ * Nombre, precio y total se ignoran a propósito: los pone la base de
+ * datos. Si vinieran del cliente, cualquiera podría pedir un producto
+ * de L 4,500 por L 1.
+ */
+function normalizeItems(items) {
+  if (!Array.isArray(items) || items.length === 0 || items.length > MAX_ITEMS) {
+    return null;
+  }
+
+  const normalized = [];
+
+  for (const item of items) {
+    const id = Number(item?.id);
+    const qty = Number(item?.qty);
+
+    if (!Number.isInteger(id) || id <= 0) return null;
+    if (!Number.isInteger(qty) || qty <= 0) return null;
+
+    normalized.push({ id, qty });
+  }
+
+  return normalized;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const { customer, items, payment, total } = req.body;
+  const { customer, items, payment } = req.body ?? {};
 
-  // Validaciones básicas
-  if (!customer?.name || !customer?.email || !customer?.phone || !customer?.address) {
-    return res.status(400).json({ error: 'Faltan datos del cliente' });
-  }
-  if (!items || items.length === 0) {
-    return res.status(400).json({ error: 'El pedido no tiene productos' });
+  const normalizedItems = normalizeItems(items);
+  if (!normalizedItems) {
+    return res.status(400).json({ error: 'El pedido no tiene productos válidos.' });
   }
 
   try {
-    // 1. Verificar stock disponible para cada producto
-    for (const item of items) {
-      const { data: product, error: prodError } = await supabase
-        .from('products')
-        .select('id, stock')
-        .eq('id', item.id)
-        .single();
-
-      if (prodError) throw prodError;
-
-      if (!product || product.stock < item.qty) {
-        return res.status(400).json({
-          error: `No hay suficiente stock de "${item.name}". Solo quedan ${product?.stock ?? 0} unidades.`
-        });
-      }
-    }
-
-    // 2. Crear el pedido
-    const orderNumber = 'AK-' + Date.now().toString().slice(-6);
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        order_number: orderNumber,
-        customer_name: customer.name,
-        customer_email: customer.email,
-        customer_phone: customer.phone,
-        customer_address: customer.address,
-        payment_method: payment,
-        total: total
-      })
-      .select()
-      .single();
-
-    if (orderError) throw orderError;
-
-    // 3. Insertar los items del pedido
-    const orderItems = items.map(item => ({
-      order_id: order.id,
-      product_id: item.id,
-      product_name: item.name,
-      quantity: item.qty,
-      price: item.price
-    }));
-
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
-    if (itemsError) throw itemsError;
-
-    // 4. Descontar el stock de cada producto
-    for (const item of items) {
-      const { data: product } = await supabase
-        .from('products')
-        .select('stock')
-        .eq('id', item.id)
-        .single();
-
-      const newStock = Math.max(0, (product?.stock ?? 0) - item.qty);
-
-      const { error: stockError } = await supabase
-        .from('products')
-        .update({ stock: newStock })
-        .eq('id', item.id);
-
-      if (stockError) throw stockError;
-    }
-
-    return res.status(201).json({
-      success: true,
-      order: {
-        id: order.id,
-        order_number: orderNumber,
-        customer_email: customer.email,
-        total: total
-      }
+    // Una sola llamada: valida, reserva stock, crea el pedido y sus
+    // items dentro de la misma transacción. Ver supabase/schema.sql.
+    const { data, error } = await getSupabaseAdmin().rpc('create_order', {
+      p_customer_name: customer?.name ?? '',
+      p_customer_email: customer?.email ?? '',
+      p_customer_phone: customer?.phone ?? '',
+      p_customer_address: customer?.address ?? '',
+      p_payment_method: payment ?? '',
+      p_items: normalizedItems
     });
+
+    if (error) {
+      if (CLIENT_ERROR_CODES.has(error.code)) {
+        return res.status(400).json({ error: error.message });
+      }
+      throw error;
+    }
+
+    return res.status(201).json({ success: true, order: data });
   } catch (error) {
-    console.error('Error al crear pedido:', error.message);
+    console.error('Error al crear pedido:', error);
     return res.status(500).json({ error: 'Error al procesar el pedido' });
   }
 }

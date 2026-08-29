@@ -43,13 +43,10 @@ export default function CheckoutModal() {
             address: form.address
           },
           payment,
-          total,
-          items: cart.map(item => ({
-            id: item.id,
-            name: item.name,
-            qty: item.qty,
-            price: item.price
-          }))
+          // Solo id y cantidad: el precio y el total los calcula el
+          // servidor con los datos de la base. El resumen de arriba es
+          // únicamente informativo.
+          items: cart.map(item => ({ id: item.id, qty: item.qty }))
         })
       });
 
