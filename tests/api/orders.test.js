@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // vi.mock se eleva por encima de los imports, así que la función espía tiene
 // que crearse con vi.hoisted para existir cuando se evalúa la factory.
@@ -141,6 +141,17 @@ describe('POST /api/orders', () => {
   });
 
   describe('errores que devuelve la base', () => {
+    // Estos casos ejercitan a propósito la rama de fallo, donde el handler
+    // registra el error. Es lo que debe hacer, pero volcarlo en la salida
+    // ensucia el informe de la suite.
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
     it('traduce un error de validacion a 400 y muestra su mensaje', async () => {
       rpc.mockResolvedValue({
         data: null,
