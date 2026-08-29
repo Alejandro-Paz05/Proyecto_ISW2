@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 
 const SECCIONES = [
-  { href: '/admin', label: 'Pedidos' },
-  { href: '/admin/productos', label: 'Productos' }
+  { href: '/akaristudio/admin', label: 'Pedidos' },
+  { href: '/akaristudio/admin/productos', label: 'Productos' }
 ];
 
 export default function AdminLayout({ titulo, children }) {
@@ -12,7 +12,7 @@ export default function AdminLayout({ titulo, children }) {
 
   async function cerrarSesion() {
     await fetch('/api/admin/logout', { method: 'POST' });
-    router.replace('/admin/login');
+    router.replace('/akaristudio/admin/login');
   }
 
   return (
@@ -26,7 +26,7 @@ export default function AdminLayout({ titulo, children }) {
       <div className="admin">
         <header className="admin-header">
           <div className="admin-header-inner">
-            <Link href="/admin" className="admin-marca">
+            <Link href="/akaristudio/admin" className="admin-marca">
               <span className="logo-icon">✦</span>
               <span>Akari <em>Studio</em></span>
             </Link>
@@ -45,7 +45,7 @@ export default function AdminLayout({ titulo, children }) {
             </nav>
 
             <div className="admin-acciones">
-              <Link href="/" className="admin-link-tienda" target="_blank" rel="noreferrer">
+              <Link href="/akaristudio" className="admin-link-tienda" target="_blank" rel="noreferrer">
                 Ver tienda ↗
               </Link>
               <button type="button" className="admin-salir" onClick={cerrarSesion}>

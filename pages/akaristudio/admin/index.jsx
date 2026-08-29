@@ -207,7 +207,7 @@ export default function PedidosAdmin() {
 
 export function getServerSideProps({ req }) {
   if (!estaAutenticado(req)) {
-    return { redirect: { destination: '/admin/login', permanent: false } };
+    return { redirect: { destination: '/akaristudio/admin/login', permanent: false } };
   }
   return { props: {} };
 }

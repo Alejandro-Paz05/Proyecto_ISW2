@@ -24,7 +24,7 @@ export default function LoginAdmin({ configurado }) {
 
       if (!res.ok) throw new Error(data.error || 'No se pudo iniciar sesión.');
 
-      router.replace('/admin');
+      router.replace('/akaristudio/admin');
     } catch (err) {
       setError(err.message);
       setPassword('');
@@ -79,7 +79,7 @@ export default function LoginAdmin({ configurado }) {
 export function getServerSideProps({ req }) {
   // Si ya hay sesión, no tiene sentido volver a pedir la contraseña.
   if (estaAutenticado(req)) {
-    return { redirect: { destination: '/admin', permanent: false } };
+    return { redirect: { destination: '/akaristudio/admin', permanent: false } };
   }
   return { props: { configurado: hayPasswordConfigurada() } };
 }
