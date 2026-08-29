@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verificar:
+    name: Lint, pruebas y build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # npm ci instala exactamente lo que fija package-lock.json y falla si
+      # el lockfile quedó desincronizado con package.json, que es el mismo
+      # criterio con el que Vercel construye el despliegue.
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Pruebas
+        run: npm test
+
+      # El build no necesita credenciales de Supabase: el cliente se crea al
+      # atender cada petición, no al compilar.
+      - name: Build de producción
+        run: npm run build
