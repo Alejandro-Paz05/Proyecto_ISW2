@@ -1,80 +1,92 @@
-# ✨ Akari Studio — Tienda Online de Salón de Belleza
+# Akari Studio — Tienda Online
 
-Página web para el salón de belleza **Akari Studio** (Honduras). Tienda online con carrito de compras, inventario en tiempo real y checkout como invitado (sin crear cuenta).
+Tienda en línea para el salón de belleza **Akari Studio** (Honduras): catálogo de productos, inventario en tiempo real y checkout como invitado, sin necesidad de crear cuenta.
 
-## 🚀 Tecnologías
+Proyecto de la asignatura **Ingeniería de Software II**.
 
-- **Next.js 14** (React) — Framework full-stack
-- **Supabase** — Base de datos PostgreSQL (inventario y pedidos)
-- **Vercel** — Despliegue gratuito
+## Stack
 
-## 📁 Estructura
+| Capa | Tecnología |
+|---|---|
+| Frontend | Next.js 14 (Pages Router) + React 18 |
+| Backend | API Routes de Next.js |
+| Base de datos | Supabase (PostgreSQL) |
+| Despliegue | Vercel |
+
+## Estructura
 
 ```
-├── components/        # Componentes de UI
-├── context/           # Estado global del carrito
-├── lib/               # Cliente de Supabase
-├── pages/
-│   ├── api/           # API routes (productos, pedidos)
-│   └── index.js       # Página principal
-├── styles/            # Estilos globales
-└── supabase/          # Esquema de base de datos
+components/          Componentes de UI (catálogo, carrito, checkout)
+context/             Estado global del carrito (React Context)
+lib/supabase.js      Cliente de Supabase, solo servidor
+pages/
+  api/products.js    GET  — catálogo con stock actual
+  api/orders.js      POST — crear un pedido
+  index.js           Página principal
+styles/globals.css   Estilos globales
+supabase/schema.sql  Esquema, políticas RLS y función create_order
 ```
 
-## 🗄️ Configurar la base de datos (Supabase)
+## Arquitectura y decisiones de diseño
 
-1. Crea una cuenta gratis en [supabase.com](https://supabase.com)
-2. Crea un nuevo proyecto (elige una región cercana a Honduras)
-3. Ve a **SQL Editor** → **New query**
-4. Copia y pega el contenido de `supabase/schema.sql` y ejecútalo
-5. Ve a **Project Settings** → **API Keys** y copia:
-   - `Project URL`
-   - La clave **`anon`** (en la sección **Legacy API Keys**, empieza con `eyJ...`)
+**El navegador nunca habla con Supabase directamente.** Todo pasa por las API Routes. Por eso las credenciales no llevan el prefijo `NEXT_PUBLIC_`: una variable con ese prefijo queda incrustada en el JavaScript que descarga el usuario y es legible por cualquiera.
 
-> ⚠️ **Importante:** Usa la clave **`anon`** (JWT), no la `publishable`. La clave `publishable` no permite operaciones de escritura (INSERT) necesarias para guardar pedidos.
+**Los precios y el total se calculan en la base de datos.** El navegador solo envía `[{ id, qty }]`. Si el total viniera del cliente, se podría enviar un pedido de L 4,500 por L 1.00 con solo editar la petición.
 
-## ⚙️ Configurar variables de entorno
+**Un pedido es una transacción atómica.** La función `create_order` ([supabase/schema.sql](supabase/schema.sql)) bloquea las filas de producto con `SELECT ... FOR UPDATE`, verifica el stock, crea el pedido con sus items y descuenta el inventario. Todo dentro de una transacción: si algo falla no quedan pedidos huérfanos, y dos compras simultáneas del último producto no pueden vender la misma unidad dos veces.
 
-1. Copia `.env.example` a `.env.local`
-2. Completa los valores:
+**RLS activado.** El rol público `anon` solo puede leer el catálogo. Las tablas `orders` y `order_items` no tienen políticas, así que son inaccesibles para cualquier cliente público: los datos personales de los clientes no se pueden consultar desde fuera del servidor.
+
+## Configurar Supabase
+
+1. Crea una cuenta gratuita en [supabase.com](https://supabase.com) y un proyecto nuevo.
+2. Ve a **SQL Editor** → **New query**, pega el contenido de [supabase/schema.sql](supabase/schema.sql) y ejecútalo.
+3. Ve a **Project Settings** → **API** y copia:
+   - **Project URL**
+   - La clave **`service_role`** (hay que pulsar *Reveal*)
+
+> **La clave `service_role` es secreta.** Salta las políticas de seguridad de la base de datos. Va únicamente en variables de entorno del servidor; nunca en el repositorio ni en código del navegador.
+
+## Variables de entorno
+
+Copia `.env.example` a `.env.local` y completa:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
 ```
 
-## 💻 Ejecutar localmente
+## Ejecutar localmente
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000)
+Abre [http://localhost:3000](http://localhost:3000).
 
-## 🌐 Desplegar en Vercel
+Otros comandos: `npm run build` (compilar), `npm start` (servir la build), `npm run lint`.
 
-1. Sube tu proyecto a **GitHub** (si aún no lo has hecho)
-2. Crea una cuenta gratis en [vercel.com](https://vercel.com)
-3. Haz clic en **Add New** → **Project**
-4. Importa tu repositorio de GitHub
-5. En **Environment Variables**, agrega:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-6. Haz clic en **Deploy**
-7. ¡Listo! Tu página estará disponible en una URL pública como `https://akari-studio.vercel.app`
+## Desplegar en Vercel
 
-## 🛒 Funcionalidades
+1. Sube el repositorio a GitHub.
+2. En [vercel.com](https://vercel.com): **Add New** → **Project** → importa el repositorio.
+3. En **Environment Variables** agrega `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`.
+4. **Deploy**.
 
-- ✅ Catálogo de productos con filtros por categoría
-- ✅ **Inventario en tiempo real** (muestra stock disponible)
-- ✅ **Out of stock** (productos agotados se marcan y no se pueden comprar)
-- ✅ Carrito de compras (persistente en el navegador)
-- ✅ Checkout como **invitado** (solo correo, teléfono y dirección)
-- ✅ Pedidos guardados en la base de datos
-- ✅ Descuento automático de stock al hacer un pedido
-- ✅ Precios en Lempiras (Honduras)
+## Funcionalidades
 
-## 💳 Pago
+- Catálogo con filtro por categoría
+- Inventario en tiempo real; los productos agotados se marcan y no se pueden comprar
+- Carrito persistente en el navegador
+- Checkout como invitado (nombre, correo, teléfono y dirección)
+- Validación de los datos del cliente en la base de datos
+- Descuento automático de stock, a prueba de pedidos simultáneos
+- Número de pedido correlativo (`AK-001000`, `AK-001001`, …)
+- Precios en lempiras
 
-Actualmente el pago es **estático** (Efectivo, Tarjeta, Transferencia). Para pagos reales se puede integrar Stripe, PayPal o Mercado Pago más adelante.
+## Limitaciones conocidas
+
+- **El pago no es real.** El método de pago (efectivo, tarjeta, transferencia) se guarda como texto, pero no hay cobro. Integrar una pasarela real (Stripe, PayPal o Tigo Money) es trabajo pendiente.
+- **No se envían correos.** La pantalla de confirmación muestra el número de pedido; el contacto con el cliente es manual.
+- **No hay panel de administración.** Los pedidos y el stock se gestionan desde el panel de Supabase.
