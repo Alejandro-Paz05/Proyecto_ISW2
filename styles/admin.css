@@ -334,6 +334,147 @@
   margin-bottom: 18px;
 }
 
+.admin-aviso {
+  background: #ddf5e3;
+  color: #1d6b35;
+  border: 1px solid #b6e5c4;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* ===== Productos ===== */
+.admin-boton-nuevo {
+  margin-bottom: 20px;
+}
+
+.admin-formulario {
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-formulario h3 {
+  font-size: 19px;
+  margin-bottom: 20px;
+}
+
+.admin-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.admin-campos label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.admin-campos .ancho-completo {
+  grid-column: 1 / -1;
+}
+
+.admin-campos input,
+.admin-campos select,
+.admin-campos textarea {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.admin-campos input:focus,
+.admin-campos select:focus,
+.admin-campos textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.admin-vista-previa {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.admin-vista-previa img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 9px;
+  border: 1px solid #e6e3dd;
+}
+
+.admin-formulario-acciones {
+  display: flex;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.admin-formulario-acciones .admin-salir {
+  border-color: #ddd;
+  color: var(--gray);
+}
+
+.admin-miniatura {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #eceae5;
+  display: block;
+}
+
+.admin-miniatura-vacia {
+  display: grid;
+  place-items: center;
+  background: #f5f4f1;
+  color: var(--gold);
+}
+
+.admin-agotado {
+  color: #96281b;
+  font-weight: 600;
+}
+
+.admin-acciones-fila {
+  white-space: nowrap;
+}
+
+.admin-acciones-fila button {
+  background: none;
+  border: 1px solid #ddd;
+  color: var(--gray);
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 6px;
+  transition: all 0.15s;
+}
+
+.admin-acciones-fila button:hover {
+  border-color: var(--gold);
+  color: var(--black);
+}
+
+.admin-acciones-fila button.peligro:hover {
+  border-color: #d9534f;
+  color: #96281b;
+}
+
 /* ===== Login ===== */
 .admin-login {
   min-height: 100vh;
