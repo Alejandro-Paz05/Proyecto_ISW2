@@ -24,7 +24,9 @@ pages/
   api/orders.js      POST — crear un pedido
   index.js           Página principal
 styles/globals.css   Estilos globales
-supabase/schema.sql  Esquema, políticas RLS y función create_order
+supabase/
+  schema.sql         Estructura: tablas, RLS y función create_order
+  seed.sql           Catálogo de ejemplo, para pruebas
 ```
 
 ## Arquitectura y decisiones de diseño
@@ -40,12 +42,32 @@ supabase/schema.sql  Esquema, políticas RLS y función create_order
 ## Configurar Supabase
 
 1. Crea una cuenta gratuita en [supabase.com](https://supabase.com) y un proyecto nuevo.
-2. Ve a **SQL Editor** → **New query**, pega el contenido de [supabase/schema.sql](supabase/schema.sql) y ejecútalo.
-3. Ve a **Project Settings** → **API** y copia:
+2. Ve a **SQL Editor** → **New query**, pega el contenido de [supabase/schema.sql](supabase/schema.sql) y ejecútalo. Esto crea la estructura, vacía.
+3. Opcional, para tener algo con qué probar: ejecuta también [supabase/seed.sql](supabase/seed.sql), que carga 16 productos de ejemplo.
+4. Ve a **Project Settings** → **API** y copia:
    - **Project URL**
    - La clave **`service_role`** (hay que pulsar *Reveal*)
 
 > **La clave `service_role` es secreta.** Salta las políticas de seguridad de la base de datos. Va únicamente en variables de entorno del servidor; nunca en el repositorio ni en código del navegador.
+
+## Cargar el catálogo
+
+`schema.sql` se ejecuta **una sola vez**, al montar la base: borra y recrea las tablas. Para cargar o modificar productos no hace falta volver a tocarlo, y no conviene hacerlo — se perderían los pedidos recibidos.
+
+Para reemplazar el catálogo de ejemplo por los productos reales del salón, en el **SQL Editor**:
+
+```sql
+-- 1. Vaciar el catálogo de ejemplo.
+--    Los pedidos ya registrados conservan el nombre y el precio con que
+--    se vendieron, porque order_items guarda su propia copia.
+DELETE FROM products;
+
+-- 2. Cargar los productos reales. Una fila por producto.
+INSERT INTO products (name, category, price, description, image, stock) VALUES
+('Nombre del producto', 'unas', 450, 'Descripción que verá el cliente.', 'https://url-de-la-imagen.jpg', 10);
+```
+
+Las categorías válidas son las que muestra el filtro de la tienda: `unas`, `pestanas`, `cejas`, `maquillaje` y `accesorios`. El precio va en lempiras y `stock` es el inventario inicial, que la tienda descuenta sola con cada pedido.
 
 ## Variables de entorno
 
