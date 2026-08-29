@@ -1,5 +1,7 @@
 # Akari Studio — Tienda Online
 
+[![CI](https://github.com/Alejandro-Paz05/Proyecto_ISW2/actions/workflows/ci.yml/badge.svg)](https://github.com/Alejandro-Paz05/Proyecto_ISW2/actions/workflows/ci.yml)
+
 Tienda en línea para el salón de belleza **Akari Studio** (Honduras): catálogo de productos, inventario en tiempo real y checkout como invitado, sin necesidad de crear cuenta.
 
 Proyecto de la asignatura **Ingeniería de Software II**.
@@ -22,11 +24,13 @@ lib/supabase.js      Cliente de Supabase, solo servidor
 pages/
   api/products.js    GET  — catálogo con stock actual
   api/orders.js      POST — crear un pedido
-  index.js           Página principal
+  index.jsx          Página principal
 styles/globals.css   Estilos globales
 supabase/
   schema.sql         Estructura: tablas, RLS y función create_order
   seed.sql           Catálogo de ejemplo, para pruebas
+tests/               Pruebas, espejando la estructura del código
+.github/workflows/   Integración continua
 ```
 
 ## Arquitectura y decisiones de diseño
@@ -87,7 +91,24 @@ npm run dev
 
 Abre [http://localhost:3000](http://localhost:3000).
 
-Otros comandos: `npm run build` (compilar), `npm start` (servir la build), `npm run lint`.
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo |
+| `npm test` | Corre las pruebas una vez |
+| `npm run test:watch` | Pruebas en modo continuo, mientras programas |
+| `npm run lint` | Revisa el código con ESLint |
+| `npm run build` | Compila para producción |
+| `npm start` | Sirve la build compilada |
+
+## Pruebas
+
+Vitest con jsdom y Testing Library. Las pruebas viven en `tests/`, espejando la estructura del código, y cubren las dos piezas con lógica real: el carrito ([tests/context/](tests/context/)) y la creación de pedidos ([tests/api/](tests/api/)).
+
+No hacen falta credenciales ni conexión a Supabase: el cliente de base de datos se simula.
+
+Están fuera de `pages/` a propósito. Next.js convierte en ruta todo lo que hay en esa carpeta, así que un archivo de pruebas junto al código se publicaba como un endpoint real en producción.
+
+Cada push ejecuta lint, pruebas y build en GitHub Actions ([ci.yml](.github/workflows/ci.yml)).
 
 ## Desplegar en Vercel
 
