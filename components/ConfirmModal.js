@@ -16,7 +16,8 @@ export default function ConfirmModal() {
         <h2 className="confirm-title">¡Pedido Confirmado!</h2>
         <p className="confirm-text">
           Gracias por tu compra.<br />
-          Hemos enviado un correo de confirmación a <strong>{lastOrder.customer_email}</strong>.
+          Nos comunicaremos contigo a <strong>{lastOrder.customer_email}</strong> para
+          coordinar la entrega y el pago.
         </p>
         <div className="confirm-details">
           <p><strong>N° de pedido:</strong> {lastOrder.order_number}</p>
