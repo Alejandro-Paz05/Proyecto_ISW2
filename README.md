@@ -52,7 +52,18 @@ tests/                 Pruebas, espejando la estructura del código
 .github/workflows/     Integración continua
 ```
 
-## Arquitectura y decisiones de diseño
+## Arquitectura
+
+El documento completo, con los diagramas C4 en Mermaid, el flujo de reserva y el modelo de datos, está en [docs/arquitectura.md](docs/arquitectura.md).
+
+Decisiones registradas:
+
+| ADR | Decisión |
+|---|---|
+| [ADR-001](docs/adr/ADR-001-reglas-de-negocio-en-la-base-de-datos.md) | Poner las reglas de integridad del negocio en la base de datos, no en la aplicación |
+| [ADR-002](docs/adr/ADR-002-acceso-a-supabase-solo-desde-el-servidor.md) | Acceder a Supabase únicamente desde el servidor, nunca desde el navegador |
+
+## Decisiones de diseño en resumen
 
 **El navegador nunca habla con Supabase directamente.** Todo pasa por las API Routes. Por eso las credenciales no llevan el prefijo `NEXT_PUBLIC_`: una variable con ese prefijo queda incrustada en el JavaScript que descarga el usuario y es legible por cualquiera.
 
