@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /akaristudio
+Allow: /akaristudio/citas
+Allow: /akaristudio/productos
+
+# El panel es privado: no tiene sentido que aparezca en buscadores.
+Disallow: /akaristudio/admin
+Disallow: /api/
+
+Sitemap: https://www.alejandropaz.xyz/sitemap.xml
