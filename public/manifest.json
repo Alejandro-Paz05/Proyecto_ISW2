@@ -1,0 +1,51 @@
+{
+  "name": "Akari Studio · Salón de Belleza",
+  "short_name": "Akari Studio",
+  "description": "Reservá tu cita y comprá productos profesionales para uñas, pestañas, cejas y maquillaje.",
+  "lang": "es-HN",
+  "dir": "ltr",
+  "start_url": "/akaristudio",
+  "scope": "/akaristudio",
+  "id": "/akaristudio",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "categories": ["beauty", "shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Reservar una cita",
+      "short_name": "Citas",
+      "description": "Ver los horarios disponibles y reservar",
+      "url": "/akaristudio/citas",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ver productos",
+      "short_name": "Tienda",
+      "description": "Catálogo con inventario en tiempo real",
+      "url": "/akaristudio/productos",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
