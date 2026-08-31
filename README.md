@@ -103,11 +103,13 @@ Copia `env.example` a `.env.local` y completa:
 
 ```env
 SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-ADMIN_PASSWORD=una-contrasena-de-8-o-mas-caracteres
+SUPABASE_SERVICE_ROLE_KEY=<la clave service_role de tu proyecto>
+ADMIN_PASSWORD=<una contraseña de 8 caracteres o más>
 ```
 
 Las mismas tres hacen falta en el despliegue.
+
+Los valores de arriba son marcadores de posición: en este repositorio no hay ninguna credencial real, ni en los archivos ni en el historial. Las reales viven en `.env.local`, que está en `.gitignore`, y en las variables de entorno de Vercel.
 
 ## Ejecutar localmente
 
