@@ -4,6 +4,9 @@ export default function Document() {
   return (
     <Html lang="es">
       <Head>
+        {/* Prueba de propiedad del proyecto para la evaluación del curso.
+            También disponible en /verificacion.txt */}
+        <meta name="learn-cap" content="LEARN-CAP-76080609" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
