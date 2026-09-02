@@ -740,6 +740,26 @@ h1, h2, h3, h4 {
   padding: 20px;
 }
 
+/* El fondo que cierra el diálogo es un botón real, para que la acción esté
+   también al alcance del teclado. Se le quita toda apariencia de botón: lo
+   que se ve es el velo oscuro del overlay que tiene detrás. */
+.overlay-cerrar {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+  appearance: none;
+}
+
+.overlay-cerrar:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -4px;
+}
+
 .modal-overlay.active {
   display: flex;
 }
@@ -846,7 +866,24 @@ h1, h2, h3, h4 {
   margin-bottom: 20px;
 }
 
+/* El fieldset agrupa los radios sin heredar el borde ni el margen que los
+   navegadores le ponen por defecto. */
+.payment-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 20px;
+}
+
+.payment-fieldset legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .payment-option {
+  /* Ancla al radio oculto, que va posicionado en absoluto. */
+  position: relative;
   flex: 1;
   border: 2px solid #ddd;
   border-radius: 10px;
@@ -855,6 +892,21 @@ h1, h2, h3, h4 {
   cursor: pointer;
   transition: all 0.3s;
   font-size: 13px;
+}
+
+/* El radio se oculta a la vista pero sigue en el árbol de accesibilidad y
+   recibe el foco: la tarjeta entera funciona como su etiqueta. */
+.payment-option input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.payment-option:has(input:focus-visible) {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .payment-option:hover {

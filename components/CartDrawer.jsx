@@ -1,4 +1,5 @@
 import { useCart } from '@/context/CartContext';
+import { useCerrarConEscape } from '@/lib/use-escape';
 
 function formatPrice(amount) {
   return 'L ' + Number(amount).toFixed(2);
@@ -12,13 +13,26 @@ export default function CartDrawer() {
 
   const total = getCartTotal();
 
+  useCerrarConEscape(cartOpen, () => setCartOpen(false));
+
   return (
     <>
-      <div
-        className={`cart-overlay ${cartOpen ? 'active' : ''}`}
+      {/* Botón real y no un div con onClick: cerrar tocando fuera del panel
+          también tiene que funcionar con el teclado. */}
+      <button
+        type="button"
+        className={`cart-overlay overlay-cerrar ${cartOpen ? 'active' : ''}`}
+        aria-label="Cerrar el carrito"
+        tabIndex={cartOpen ? 0 : -1}
         onClick={() => setCartOpen(false)}
-      ></div>
-      <aside className={`cart-drawer ${cartOpen ? 'active' : ''}`}>
+      />
+      <aside
+        className={`cart-drawer ${cartOpen ? 'active' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Carrito de compras"
+        aria-hidden={!cartOpen}
+      >
         <div className="cart-header">
           <h3>Tu Carrito</h3>
           <button className="close-btn" onClick={() => setCartOpen(false)} aria-label="Cerrar carrito">&times;</button>

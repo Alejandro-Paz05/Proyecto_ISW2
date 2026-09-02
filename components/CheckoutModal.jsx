@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
+import { useCerrarConEscape } from '@/lib/use-escape';
 
 function formatPrice(amount) {
   return 'L ' + Number(amount).toFixed(2);
@@ -22,6 +23,8 @@ export default function CheckoutModal() {
   const [submitting, setSubmitting] = useState(false);
 
   const total = getCartTotal();
+
+  useCerrarConEscape(checkoutOpen, () => setCheckoutOpen(false));
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -73,10 +76,25 @@ export default function CheckoutModal() {
   if (!checkoutOpen) return null;
 
   return (
-    <div className="modal-overlay active" onClick={(e) => e.target === e.currentTarget && setCheckoutOpen(false)}>
-      <div className="modal">
-        <button className="close-btn modal-close" onClick={() => setCheckoutOpen(false)}>&times;</button>
-        <h2 className="checkout-title">Finalizar Pedido</h2>
+    <div className="modal-overlay active">
+      {/* El fondo es un botón real y no un div con onClick: así cerrar
+          haciendo clic afuera también funciona con el teclado, en vez de
+          ser una acción que solo existe para quien usa mouse. */}
+      <button
+        type="button"
+        className="overlay-cerrar"
+        aria-label="Cerrar el formulario"
+        onClick={() => setCheckoutOpen(false)}
+      />
+      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="checkout-titulo">
+        <button
+          className="close-btn modal-close"
+          onClick={() => setCheckoutOpen(false)}
+          aria-label="Cerrar"
+        >
+          &times;
+        </button>
+        <h2 className="checkout-title" id="checkout-titulo">Finalizar Pedido</h2>
         <p className="checkout-sub">Compra como invitado. Solo necesitas tu correo y teléfono. ✨</p>
 
         <div className="order-summary">
@@ -115,21 +133,30 @@ export default function CheckoutModal() {
             <textarea id="address" name="address" rows="2" required placeholder="Ciudad, colonia, calle, número de casa" value={form.address} onChange={handleChange}></textarea>
           </div>
 
-          <div className="form-group">
-            <label>Método de pago</label>
+          {/* Radios reales en lugar de divs con onClick: así se puede elegir
+              el método de pago con el teclado y un lector de pantalla lo
+              anuncia como un grupo de opciones. El estilo lo da el label. */}
+          <fieldset className="form-group payment-fieldset">
+            <legend>Método de pago</legend>
             <div className="payment-methods">
               {paymentMethods.map(m => (
-                <div
+                <label
                   key={m.key}
                   className={`payment-option ${payment === m.key ? 'selected' : ''}`}
-                  onClick={() => setPayment(m.key)}
                 >
+                  <input
+                    type="radio"
+                    name="payment"
+                    value={m.key}
+                    checked={payment === m.key}
+                    onChange={() => setPayment(m.key)}
+                  />
                   <span className="pay-icon">{m.icon}</span>
                   {m.label}
-                </div>
+                </label>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           <button type="submit" className="btn btn-gold btn-block" disabled={submitting}>
             {submitting ? 'Procesando...' : 'Confirmar Pedido'}
