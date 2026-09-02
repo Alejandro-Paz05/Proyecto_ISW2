@@ -1,8 +1,12 @@
 # ADR-001 — Poner las reglas de integridad del negocio en la base de datos, no en la aplicación
 
-- **Estado:** aceptada
+- **Estado:** aceptada, con alcance reducido
 - **Fecha:** 2026-08-29
 - **Decide:** Alejandro Paz
+
+> **Actualización del 2026-09-01.** Esta decisión se tomó para dos casos: el inventario y la agenda de citas. La agenda se retiró del producto a pedido de la clienta, según la [ADR-003](ADR-003-solicitud-de-citas-por-whatsapp.md), y con ella desapareció la restricción de exclusión que se describe más abajo.
+>
+> La decisión **sigue vigente para los pedidos**, que es donde nació el problema y donde se sigue aplicando. El texto original se conserva sin editar, incluida la parte sobre las citas: un ADR registra lo que se decidió y por qué en su momento, y reescribirlo para que coincida con el presente borraría justamente lo que hace útil leerlo después.
 
 ---
 
