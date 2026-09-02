@@ -15,6 +15,10 @@ jobs:
     steps:
       - name: Descargar el repositorio
         uses: actions/checkout@v4
+        with:
+          # SonarQube necesita el historial completo para atribuir cada
+          # línea a su commit y calcular el "código nuevo".
+          fetch-depth: 0
 
       # Node 24, igual que el entorno de desarrollo. No sirve una version
       # menor: jsdom exige ^22.22.2 || ^24.15.0 || >=26, y Vite 8 pide
@@ -34,10 +38,19 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Pruebas
-        run: npm test
+      # Genera coverage/lcov.info, que lee el paso de SonarQube.
+      - name: Pruebas con cobertura
+        run: npm run test:coverage
 
       # El build no necesita credenciales de Supabase: el cliente se crea al
       # atender cada petición, no al compilar.
       - name: Build de producción
         run: npm run build
+
+      # Solo desde el repositorio original: un fork no tiene el secreto y el
+      # paso fallaría sin que su autor pueda hacer nada.
+      - name: Análisis de SonarQube Cloud
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

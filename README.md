@@ -1,6 +1,8 @@
 # Akari Studio
 
 [![CI](https://github.com/Alejandro-Paz05/Proyecto_ISW2/actions/workflows/ci.yml/badge.svg)](https://github.com/Alejandro-Paz05/Proyecto_ISW2/actions/workflows/ci.yml)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Alejandro-Paz05_Proyecto_ISW2&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Alejandro-Paz05_Proyecto_ISW2)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Alejandro-Paz05_Proyecto_ISW2&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Alejandro-Paz05_Proyecto_ISW2)
 
 Sitio del salón de belleza **Akari Studio** (Honduras): tienda en línea con inventario en tiempo real, solicitud de citas por WhatsApp y un panel de administración para gestionar pedidos y catálogo.
 
@@ -143,6 +145,7 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 |---|---|
 | `npm run dev` | Servidor de desarrollo |
 | `npm test` | Corre las pruebas una vez |
+| `npm run test:coverage` | Pruebas con reporte de cobertura |
 | `npm run test:watch` | Pruebas en modo continuo |
 | `npm run lint` | Revisa el código con ESLint |
 | `npm run build` | Compila para producción |
@@ -154,7 +157,7 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 
 ## Pruebas
 
-127 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código:
+211 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura es del **89%** sobre el código con lógica:
 
 | Archivo | Qué cubre |
 |---|---|
@@ -163,12 +166,19 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 | `tests/lib/admin-auth.test.js` | Tokens de sesión, firma y protección de rutas |
 | `tests/lib/validar-producto.test.js` | Alta y edición de productos |
 | `tests/lib/fechas.test.js` | Manejo de fechas en la zona horaria del salón |
+| `tests/lib/negocio.test.js` | Enlace de WhatsApp y codificación del mensaje |
+| `tests/api/health.test.js` | Healthcheck: 503 ante base caída, sin filtrar detalles |
+| `tests/api/products.test.js` | Catálogo público y manejo de errores |
+| `tests/api/admin-sesion.test.js` | Login, cierre de sesión y retardo ante intentos fallidos |
+| `tests/api/admin-orders.test.js` | Pedidos del panel: acceso, estados y validaciones |
+| `tests/api/admin-products.test.js` | Alta, edición y baja de productos |
+| `tests/helpers/` | Simulacros de req/res y del cliente de Supabase |
 
 No hacen falta credenciales ni conexión a Supabase: el cliente de base de datos se simula.
 
 Están fuera de `pages/` a propósito. Next.js convierte en ruta todo lo que hay en esa carpeta, así que un archivo de pruebas junto al código se publicaba como un endpoint real en producción.
 
-Cada push ejecuta lint, pruebas y build en GitHub Actions ([ci.yml](.github/workflows/ci.yml)).
+Cada push ejecuta lint, pruebas con cobertura, build y análisis de SonarQube Cloud en GitHub Actions ([ci.yml](.github/workflows/ci.yml)). La configuración del análisis está en [sonar-project.properties](sonar-project.properties).
 
 ## Desplegar en Vercel
 
