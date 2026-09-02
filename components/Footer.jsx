@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { NEGOCIO } from '@/lib/negocio';
 
 const ENLACES = [
   { href: '/akaristudio', label: 'Inicio' },
@@ -15,7 +16,7 @@ export default function Footer() {
         <div className="footer-brand">
           <span className="logo-icon">✦</span>
           <span className="logo-text">Akari <em>Studio</em></span>
-          <p>Belleza y elegancia en el corazón de Honduras.</p>
+          <p>{NEGOCIO.descripcion}</p>
         </div>
         <div className="footer-links">
           <h4>Enlaces</h4>
@@ -27,9 +28,13 @@ export default function Footer() {
         </div>
         <div className="footer-contact">
           <h4>Contacto</h4>
-          <p>Tegucigalpa, Honduras</p>
-          <p>+504 9999-0000</p>
-          <p>contacto@akaristudio.hn</p>
+          <p>{NEGOCIO.direccion}</p>
+          <p>
+            <a href={NEGOCIO.telefonoEnlace}>{NEGOCIO.telefono}</a>
+          </p>
+          <p>
+            <a href={`mailto:${NEGOCIO.correo}`}>{NEGOCIO.correo}</a>
+          </p>
         </div>
       </div>
       <div className="footer-bottom">

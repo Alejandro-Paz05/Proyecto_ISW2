@@ -1,3 +1,5 @@
+import { NEGOCIO } from '@/lib/negocio';
+
 export default function Contact() {
   return (
     <section id="contacto" className="section">
@@ -5,16 +7,28 @@ export default function Contact() {
         <div className="contact-info">
           <p className="section-tag">Visítanos</p>
           <h2 className="section-title">Contacto</h2>
-          <p><strong>📍 Dirección:</strong> Tegucigalpa, Honduras</p>
-          <p><strong>📞 Teléfono:</strong> +504 9999-0000</p>
-          <p><strong>✉️ Email:</strong> contacto@akaristudio.hn</p>
-          <p><strong>🕐 Horario:</strong> Lun - Sáb: 9:00 AM - 7:00 PM</p>
+          <p>
+            <strong>📍 Dirección:</strong> {NEGOCIO.direccion}
+          </p>
+          <p>
+            <strong>📞 Teléfono:</strong>{' '}
+            <a href={NEGOCIO.telefonoEnlace}>{NEGOCIO.telefono}</a>
+          </p>
+          <p>
+            <strong>✉️ Email:</strong>{' '}
+            <a href={`mailto:${NEGOCIO.correo}`}>{NEGOCIO.correo}</a>
+          </p>
+          <p>
+            <strong>🕐 Horario:</strong> {NEGOCIO.horario}
+          </p>
         </div>
         <div className="contact-map">
           <div className="map-placeholder">
             <span>📍</span>
             <p>Mapa de ubicación</p>
-            <small>Akari Studio · Honduras</small>
+            <small>
+              {NEGOCIO.nombre} · {NEGOCIO.direccion}
+            </small>
           </div>
         </div>
       </div>
