@@ -50,17 +50,19 @@ pages/
   akaristudio/admin/   Panel: pedidos y productos
   api/                 Rutas de API
 public/                Manifiesto, service worker, iconos, robots
-scripts/               Generación de los iconos
+scripts/               Generación de iconos y exportación del modelo
 styles/                globals.css, citas.css, admin.css
 supabase/              Esquema, migraciones y datos de ejemplo
 tests/                 Pruebas, espejando la estructura del código
-docs/                  Arquitectura y decisiones (ADR)
+docs/                  Arquitectura, ADR y modelo de datos
 .github/workflows/     Integración continua
 ```
 
 ## Arquitectura
 
 El documento completo, con los diagramas C4 en Mermaid, el flujo de un pedido y el modelo de datos, está en [docs/arquitectura.md](docs/arquitectura.md).
+
+El modelo de datos exportado en JSON, con columnas, tipos, restricciones, políticas RLS y relaciones, está en [docs/modelo-de-datos.json](docs/modelo-de-datos.json). Se genera con `node scripts/exportar-modelo.mjs`, que lo verifica contra la base antes de escribirlo.
 
 Decisiones registradas:
 
@@ -145,10 +147,10 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 | `npm run lint` | Revisa el código con ESLint |
 | `npm run build` | Compila para producción |
 | `npm start` | Sirve la build compilada |
+| `node scripts/generar-iconos.mjs` | Regenera los iconos de la aplicación |
+| `node scripts/exportar-modelo.mjs` | Exporta el modelo de datos, verificándolo contra la base |
 
 > No ejecutes `npm run build` con el servidor de desarrollo encendido: ambos escriben en `.next` y se pisan.
-
-Los iconos se regeneran con `node scripts/generar-iconos.mjs`.
 
 ## Pruebas
 
