@@ -16,6 +16,9 @@
 # Archivos de Vercel
 .vercel
 
+# Cobertura de pruebas
+/coverage
+
 # Misc
 .DS_Store
 *.pem
