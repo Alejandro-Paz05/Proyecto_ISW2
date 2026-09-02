@@ -1,0 +1,290 @@
+{
+  "proyecto": "Akari Studio",
+  "descripcion": "Tienda en línea con inventario del salón de belleza Akari Studio. Las citas se solicitan por WhatsApp y no se persisten: ver docs/adr/ADR-003.",
+  "codigo_verificacion": "LEARN-CAP-76080609",
+  "motor": "PostgreSQL (Supabase)",
+  "esquema": "public",
+  "repositorio": "https://github.com/Alejandro-Paz05/Proyecto_ISW2",
+  "entidades": [
+    {
+      "nombre": "products",
+      "descripcion": "Catálogo de productos a la venta, con su inventario.",
+      "clave_primaria": [
+        "id"
+      ],
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "nulo": false,
+          "clave": "PK"
+        },
+        {
+          "nombre": "name",
+          "tipo": "text",
+          "nulo": false,
+          "descripcion": "Nombre visible en la tienda."
+        },
+        {
+          "nombre": "category",
+          "tipo": "text",
+          "nulo": false,
+          "descripcion": "unas, pestanas, cejas, maquillaje o accesorios."
+        },
+        {
+          "nombre": "price",
+          "tipo": "numeric(10,2)",
+          "nulo": false,
+          "restriccion": "price >= 0",
+          "descripcion": "Precio en lempiras. Lo lee el servidor, nunca el navegador."
+        },
+        {
+          "nombre": "description",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "image",
+          "tipo": "text",
+          "nulo": true,
+          "descripcion": "URL http o https."
+        },
+        {
+          "nombre": "stock",
+          "tipo": "integer",
+          "nulo": false,
+          "por_defecto": "0",
+          "restriccion": "stock >= 0",
+          "descripcion": "Unidades disponibles. Lo descuenta create_order."
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false,
+          "por_defecto": "now()"
+        }
+      ],
+      "rls": {
+        "activo": true,
+        "politicas": [
+          {
+            "nombre": "products_public_read",
+            "operacion": "SELECT",
+            "roles": [
+              "anon",
+              "authenticated"
+            ],
+            "condicion": "true",
+            "motivo": "El catálogo es información pública; escribirlo requiere el servidor."
+          }
+        ]
+      }
+    },
+    {
+      "nombre": "orders",
+      "descripcion": "Pedidos recibidos. Contiene datos personales del cliente.",
+      "clave_primaria": [
+        "id"
+      ],
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "nulo": false,
+          "clave": "PK"
+        },
+        {
+          "nombre": "order_number",
+          "tipo": "text",
+          "nulo": false,
+          "clave": "UNIQUE",
+          "descripcion": "Correlativo AK-001000, desde una secuencia. Nunca se repite."
+        },
+        {
+          "nombre": "customer_name",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "customer_email",
+          "tipo": "text",
+          "nulo": false,
+          "descripcion": "Validado y normalizado a minúsculas por create_order."
+        },
+        {
+          "nombre": "customer_phone",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "customer_address",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "payment_method",
+          "tipo": "text",
+          "nulo": false,
+          "restriccion": "payment_method IN ('efectivo','tarjeta','transferencia')"
+        },
+        {
+          "nombre": "total",
+          "tipo": "numeric(10,2)",
+          "nulo": false,
+          "restriccion": "total >= 0",
+          "descripcion": "Calculado por la base sumando precios reales. No llega del navegador."
+        },
+        {
+          "nombre": "status",
+          "tipo": "text",
+          "nulo": false,
+          "por_defecto": "'pendiente'",
+          "restriccion": "status IN ('pendiente','confirmado','enviado','entregado','cancelado')"
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false,
+          "por_defecto": "now()"
+        }
+      ],
+      "indices": [
+        {
+          "nombre": "orders_created_at_idx",
+          "columnas": [
+            "created_at DESC"
+          ]
+        }
+      ],
+      "rls": {
+        "activo": true,
+        "politicas": [],
+        "motivo": "Sin políticas y con RLS activo, el acceso público es cero. Guarda datos personales que solo el servidor debe poder leer."
+      }
+    },
+    {
+      "nombre": "order_items",
+      "descripcion": "Líneas de cada pedido, con su propia copia del nombre y el precio.",
+      "clave_primaria": [
+        "id"
+      ],
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "nulo": false,
+          "clave": "PK"
+        },
+        {
+          "nombre": "order_id",
+          "tipo": "integer",
+          "nulo": false,
+          "clave": "FK",
+          "referencia": "orders.id"
+        },
+        {
+          "nombre": "product_id",
+          "tipo": "integer",
+          "nulo": true,
+          "clave": "FK",
+          "referencia": "products.id"
+        },
+        {
+          "nombre": "product_name",
+          "tipo": "text",
+          "nulo": false,
+          "descripcion": "Copia histórica: conserva el nombre con que se vendió."
+        },
+        {
+          "nombre": "quantity",
+          "tipo": "integer",
+          "nulo": false,
+          "restriccion": "quantity > 0"
+        },
+        {
+          "nombre": "price",
+          "tipo": "numeric(10,2)",
+          "nulo": false,
+          "restriccion": "price >= 0",
+          "descripcion": "Copia histórica: el precio cobrado ese día, no el actual."
+        }
+      ],
+      "indices": [
+        {
+          "nombre": "order_items_order_id_idx",
+          "columnas": [
+            "order_id"
+          ]
+        }
+      ],
+      "rls": {
+        "activo": true,
+        "politicas": [],
+        "motivo": "Igual que orders: cero acceso público."
+      }
+    }
+  ],
+  "relaciones": [
+    {
+      "desde": "order_items.order_id",
+      "hacia": "orders.id",
+      "cardinalidad": "N:1",
+      "al_borrar": "CASCADE",
+      "motivo": "Un pedido sin sus líneas no tiene sentido: se borran juntos."
+    },
+    {
+      "desde": "order_items.product_id",
+      "hacia": "products.id",
+      "cardinalidad": "N:1",
+      "al_borrar": "SET NULL",
+      "motivo": "Eliminar un producto del catálogo no debe borrar el historial de ventas. La línea conserva product_name y price, así que la venta sigue siendo legible."
+    }
+  ],
+  "funciones": [
+    {
+      "nombre": "create_order",
+      "tipo": "SECURITY DEFINER",
+      "lenguaje": "plpgsql",
+      "parametros": [
+        "p_customer_name text",
+        "p_customer_email text",
+        "p_customer_phone text",
+        "p_customer_address text",
+        "p_payment_method text",
+        "p_items jsonb"
+      ],
+      "retorna": "jsonb",
+      "descripcion": "Única vía para registrar un pedido. Bloquea las filas de producto con SELECT ... FOR UPDATE ordenadas por id, valida el stock, calcula el total con los precios de la base, inserta el pedido y sus líneas, y descuenta el inventario. Todo en una transacción.",
+      "permisos": "Solo service_role. Revocada de PUBLIC, anon y authenticated."
+    }
+  ],
+  "reglas_de_negocio": [
+    {
+      "regla": "No se puede vender más stock del disponible",
+      "donde": "create_order, con SELECT ... FOR UPDATE",
+      "por_que": "Leer y escribir en dos pasos deja una ventana donde dos pedidos simultáneos ven el mismo stock. Al correr en funciones serverless no hay un proceso único donde poner un candado en memoria."
+    },
+    {
+      "regla": "El precio y el total los calcula la base",
+      "donde": "create_order",
+      "por_que": "Si vinieran del navegador, se podría pedir un producto de L 680 por L 1."
+    },
+    {
+      "regla": "Las líneas de un pedido guardan copia del nombre y el precio",
+      "donde": "order_items",
+      "por_que": "Una venta cerrada debe conservar lo que se cobró, aunque cambie la tarifa."
+    },
+    {
+      "regla": "El número de pedido nunca se repite",
+      "donde": "Secuencia order_number_seq + restricción UNIQUE",
+      "por_que": "La primera versión usaba los últimos dígitos de un timestamp, que se repiten cada ~16 minutos y chocaban contra la restricción."
+    }
+  ],
+  "notas": [
+    "Las citas no se persisten: se solicitan por WhatsApp. Ver docs/adr/ADR-003.",
+    "Las tablas services, appointments, appointment_services, business_hours y blocked_dates existieron hasta el 2026-09-01 y fueron eliminadas.",
+    "Los servicios y precios del salón viven en lib/servicios.js, no en la base."
+  ],
+  "generado": "2026-09-02T00:59:32.511Z",
+  "verificado_contra_produccion": true
+}
