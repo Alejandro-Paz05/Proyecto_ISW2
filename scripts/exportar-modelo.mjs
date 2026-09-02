@@ -269,8 +269,14 @@ async function verificar(env) {
       continue;
     }
 
-    const reales = Object.keys(filas[0]).sort();
-    const declaradas = entidad.columnas.map((c) => c.nombre).sort();
+    // El orden no cambia el resultado de la comparación, pero sí el de los
+    // mensajes de error: ordenar deja una salida estable entre corridas.
+    // localeCompare y no el sort por defecto, que ordena por código UTF-16 y
+    // ubica mal cualquier nombre con acento.
+    const alfabeticamente = (a, b) => a.localeCompare(b);
+
+    const reales = Object.keys(filas[0]).sort(alfabeticamente);
+    const declaradas = entidad.columnas.map((c) => c.nombre).sort(alfabeticamente);
 
     const faltan = reales.filter((c) => !declaradas.includes(c));
     const sobran = declaradas.filter((c) => !reales.includes(c));
