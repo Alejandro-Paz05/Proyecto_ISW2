@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import '@/styles/globals.css';
-import '@/styles/booking.css';
+import '@/styles/citas.css';
 import '@/styles/admin.css';
 
 export default function App({ Component, pageProps }) {

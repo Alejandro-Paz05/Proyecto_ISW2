@@ -1,13 +1,13 @@
 import TiendaLayout from '@/components/TiendaLayout';
-import Booking from '@/components/Booking';
+import SolicitarCita from '@/components/SolicitarCita';
 
 export default function Citas() {
   return (
     <TiendaLayout
-      titulo="Reservar una cita"
-      descripcion="Reservá tu cita en Akari Studio: uñas, pestañas, cejas y maquillaje. Elegí el servicio y mirá los horarios disponibles al instante."
+      titulo="Solicitar una cita"
+      descripcion="Pedí tu cita en Akari Studio por WhatsApp: uñas, pestañas, cejas y maquillaje. Armá tu solicitud y enviala con un toque."
     >
-      <Booking />
+      <SolicitarCita />
     </TiendaLayout>
   );
 }

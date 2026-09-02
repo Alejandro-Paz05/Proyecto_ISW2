@@ -1,0 +1,324 @@
+/* ============================================
+   AKARI STUDIO — Solicitud de cita por WhatsApp
+   ============================================ */
+
+.solicitud {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 28px;
+  align-items: start;
+  text-align: left;
+}
+
+.solicitud-paso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 21px;
+  margin: 34px 0 18px;
+}
+
+.solicitud-paso:first-child {
+  margin-top: 0;
+}
+
+.cita-numero {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--black);
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ===== Filtros por categoría ===== */
+.reserva-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.reserva-chip {
+  padding: 8px 18px;
+  border: 1px solid #e0ddd6;
+  border-radius: 50px;
+  background: var(--white);
+  color: var(--gray);
+  font-family: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reserva-chip:hover {
+  border-color: var(--gold);
+  color: var(--black);
+}
+
+.reserva-chip.activo {
+  background: var(--black);
+  border-color: var(--black);
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* ===== Lista de servicios ===== */
+.reserva-servicios {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reserva-servicio {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.reserva-servicio:hover {
+  border-color: #d8d4cb;
+}
+
+.reserva-servicio.elegido {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.reserva-servicio-datos {
+  flex: 1;
+  min-width: 0;
+}
+
+.reserva-servicio-datos h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.reserva-servicio-duracion {
+  font-size: 13px;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+.reserva-servicio-desc {
+  font-size: 13.5px;
+  color: var(--gray);
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+
+.reserva-servicio-precio {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.reserva-mas {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: var(--white);
+  color: var(--black);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.reserva-mas:hover {
+  border-color: var(--gold);
+  background: var(--gold);
+}
+
+.reserva-mas.quitar {
+  background: var(--gold);
+  border-color: var(--gold);
+  font-weight: 600;
+}
+
+/* ===== Cuándo ===== */
+.solicitud-cuando {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.solicitud-cuando label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.solicitud-cuando input,
+.solicitud-cuando select {
+  padding: 11px 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  background: var(--white);
+}
+
+.solicitud-cuando input:focus,
+.solicitud-cuando select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.solicitud-aclaracion {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--off-white);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 9px 9px 0;
+  font-size: 13.5px;
+  color: var(--gray);
+}
+
+/* ===== Resumen lateral ===== */
+.reserva-resumen-caja {
+  position: sticky;
+  top: 90px;
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+
+.reserva-resumen-marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #eceae5;
+  margin-bottom: 18px;
+}
+
+.reserva-resumen-marca .logo-icon {
+  color: var(--gold);
+  font-size: 24px;
+}
+
+.reserva-resumen-marca div {
+  display: flex;
+  flex-direction: column;
+}
+
+.reserva-resumen-marca strong {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+}
+
+.reserva-resumen-marca span {
+  font-size: 12.5px;
+  color: var(--gray);
+}
+
+.solicitud-previa-titulo {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--gray);
+  margin-bottom: 10px;
+}
+
+/* La vista previa del mensaje: se muestra tal cual va a llegar al chat,
+   para que nadie envíe algo que no leyó. */
+.solicitud-previa {
+  background: #f6f5f2;
+  border: 1px solid #eceae5;
+  border-radius: 10px;
+  padding: 14px;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--black);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-bottom: 18px;
+}
+
+.reserva-resumen-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 16px;
+  border-top: 1px solid #eceae5;
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.boton-whatsapp {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+}
+
+.boton-whatsapp.inactivo {
+  background: #e2e0db;
+  color: #9c9992;
+  cursor: not-allowed;
+}
+
+.boton-whatsapp.inactivo:hover {
+  background: #e2e0db;
+  transform: none;
+}
+
+.solicitud-falta {
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #96281b;
+  text-align: center;
+}
+
+.solicitud-nota {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--gray);
+  line-height: 1.55;
+  text-align: center;
+}
+
+@media (max-width: 940px) {
+  .solicitud {
+    grid-template-columns: 1fr;
+  }
+
+  .reserva-resumen-caja {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .solicitud-paso {
+    font-size: 18px;
+  }
+
+  .reserva-servicio {
+    padding: 16px;
+  }
+}

@@ -19,13 +19,13 @@ export default function Inicio() {
 
           <div className="atajos">
             <Link href="/akaristudio/citas" className="atajo">
-              <span className="atajo-icono">📅</span>
-              <h3>Reservar una cita</h3>
+              <span className="atajo-icono">💬</span>
+              <h3>Solicitar una cita</h3>
               <p>
-                Elegí el servicio y el horario que te quede cómodo. Ves en el momento qué está
-                libre.
+                Elegí el servicio y el día que te quede cómodo. Se envía por WhatsApp y te
+                confirmamos por ahí mismo.
               </p>
-              <span className="atajo-accion">Ver disponibilidad →</span>
+              <span className="atajo-accion">Pedir por WhatsApp →</span>
             </Link>
 
             <Link href="/akaristudio/productos" className="atajo">
