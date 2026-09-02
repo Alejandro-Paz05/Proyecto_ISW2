@@ -92,29 +92,40 @@ function dentroDeLaEstrella(dx, dy, radio) {
   return Math.pow(Math.abs(dx) / radio, n) + Math.pow(Math.abs(dy) / radio, n) <= 1;
 }
 
+// Cada píxel se muestrea en cuatro puntos: sin eso, las puntas de la
+// estrella quedan dentadas.
+const MUESTRAS = [0.25, 0.75];
+
+/** Qué proporción del píxel (x, y) cae dentro de la figura, de 0 a 1. */
+function cobertura(x, y, centro, radio) {
+  let dentro = 0;
+
+  for (const sy of MUESTRAS) {
+    for (const sx of MUESTRAS) {
+      if (dentroDeLaEstrella(x + sx - centro, y + sy - centro, radio)) dentro++;
+    }
+  }
+
+  return dentro / (MUESTRAS.length * MUESTRAS.length);
+}
+
+/** Escribe un píxel RGBA mezclando el fondo y la figura según la cobertura. */
+function pintarPixel(pixeles, i, fondo, figura, mezcla) {
+  for (let canal = 0; canal < 3; canal++) {
+    pixeles[i + canal] = Math.round(fondo[canal] + (figura[canal] - fondo[canal]) * mezcla);
+  }
+  pixeles[i + 3] = 255;
+}
+
 function dibujarIcono(lado, { fondo = NEGRO, figura = DORADO, proporcion = 0.34 } = {}) {
   const pixeles = Buffer.alloc(lado * lado * 4);
   const centro = (lado - 1) / 2;
   const radio = lado * proporcion;
-  // Se muestrea cada píxel en cuatro puntos para suavizar el borde: sin esto
-  // las puntas de la estrella quedan dentadas.
-  const muestras = [0.25, 0.75];
 
   for (let y = 0; y < lado; y++) {
     for (let x = 0; x < lado; x++) {
-      let dentro = 0;
-      for (const sy of muestras) {
-        for (const sx of muestras) {
-          if (dentroDeLaEstrella(x + sx - centro, y + sy - centro, radio)) dentro++;
-        }
-      }
-
-      const mezcla = dentro / (muestras.length * muestras.length);
-      const i = (y * lado + x) * 4;
-      for (let canal = 0; canal < 3; canal++) {
-        pixeles[i + canal] = Math.round(fondo[canal] + (figura[canal] - fondo[canal]) * mezcla);
-      }
-      pixeles[i + 3] = 255;
+      const mezcla = cobertura(x, y, centro, radio);
+      pintarPixel(pixeles, (y * lado + x) * 4, fondo, figura, mezcla);
     }
   }
 
