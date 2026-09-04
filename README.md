@@ -62,7 +62,14 @@ docs/                  Arquitectura, ADR y modelo de datos
 
 El documento completo, con los diagramas C4 en Mermaid, el flujo de un pedido y el modelo de datos, está en [docs/arquitectura.md](docs/arquitectura.md).
 
-El modelo de datos exportado en JSON, con columnas, tipos, restricciones, políticas RLS y relaciones, está en [docs/modelo-de-datos.json](docs/modelo-de-datos.json). Se genera con `node scripts/exportar-modelo.mjs`, que lo verifica contra la base antes de escribirlo.
+El modelo de datos se exporta a dos archivos, ambos con `node scripts/exportar-modelo.mjs`:
+
+| Archivo | Qué contiene |
+|---|---|
+| [docs/db-export.json](docs/db-export.json) | Formato de intercambio: tablas, columnas, tipos, índices, relaciones, políticas RLS y el conteo real de filas |
+| [docs/modelo-de-datos.json](docs/modelo-de-datos.json) | La versión anotada, con el porqué de cada decisión |
+
+Salen de la misma declaración, así que no pueden desincronizarse entre sí. El script **verifica el modelo contra la base en producción antes de escribir nada**: comprueba que cada tabla exista, que las columnas coincidan una a una, y consulta cuántas filas tiene realmente cada una. Si algo no cuadra, no escribe los archivos y sale con código 1. Un modelo escrito a mano se desactualiza en silencio; este falla ruidosamente.
 
 Decisiones registradas:
 
@@ -80,7 +87,11 @@ Decisiones registradas:
 
 **Los precios y los totales se calculan en la base.** El navegador solo envía qué producto y cuánto. Si el total viniera del cliente, se podría enviar un pedido de L 4,500 por L 1.00 editando la petición.
 
-**RLS activado.** El rol público `anon` solo puede leer el catálogo. Las tablas con datos personales no tienen políticas, así que son inaccesibles desde fuera del servidor.
+**RLS activado.** El rol público `anon` solo puede leer el catálogo: `products` y `categories`. Las tablas con datos personales no tienen políticas, así que son inaccesibles desde fuera del servidor.
+
+**La integridad del catálogo la sostiene la base.** `products.category` tiene una clave foránea contra `categories.key`. Antes la validación vivía solo en la aplicación, así que un INSERT hecho desde el panel de Supabase la saltaba entera y dejaba el producto invisible en la tienda.
+
+**La bitácora de estados la escribe un trigger, no la aplicación.** Si dependiera de que la ruta de API se acuerde de insertar la fila, cambiar el estado desde el panel de Supabase perdería el registro.
 
 **El panel se cierra solo si falta configuración.** Sin la variable `ADMIN_PASSWORD` responde 503 en vez de quedar abierto.
 
@@ -90,9 +101,11 @@ Decisiones registradas:
 
 1. Crea una cuenta gratuita en [supabase.com](https://supabase.com) y un proyecto nuevo.
 2. En **SQL Editor** → **New query**, ejecuta:
-   - [supabase/schema.sql](supabase/schema.sql) — productos y pedidos
+   - [supabase/schema.sql](supabase/schema.sql) — las cinco tablas, los índices, las políticas RLS y las dos funciones
    - [supabase/seed.sql](supabase/seed.sql) — opcional, 16 productos de ejemplo
 3. En **Project Settings** → **API**, copia la **Project URL** y la clave **`service_role`** (hay que pulsar *Reveal*).
+
+Sobre una base que ya existía desde antes de septiembre de 2026, `schema.sql` no sirve: borra las tablas y las vuelve a crear vacías. Para agregar `categories` y `order_status_history` conservando los datos está [supabase/migracion-categorias-e-historial.sql](supabase/migracion-categorias-e-historial.sql), que es idempotente y corre dentro de una transacción.
 
 > **La clave `service_role` es secreta.** Salta las políticas de seguridad de la base. Va únicamente en variables de entorno del servidor; nunca en el repositorio ni en código del navegador.
 
@@ -153,11 +166,12 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 
 ## Pruebas
 
-206 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura es del **89%** sobre el código con lógica:
+226 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura de líneas es del **97%** sobre el código con lógica. Los resúmenes que leen las herramientas —[`coverage/lcov.info`](coverage/lcov.info) y [`coverage/coverage-summary.json`](coverage/coverage-summary.json)— están versionados, para que la cifra se pueda comprobar leyendo el repositorio en vez de confiar en una captura.
 
 | Archivo | Qué cubre |
 |---|---|
 | `tests/context/CartContext.test.jsx` | Límites de stock, precios frescos, reconciliación del carrito |
+| `tests/context/CatalogoContext.test.jsx` | Carga del catálogo y respaldo de categorías sin conexión |
 | `tests/api/orders.test.js` | Validación de pedidos y traducción de errores de la base |
 | `tests/lib/admin-auth.test.js` | Tokens de sesión, firma y protección de rutas |
 | `tests/lib/validar-producto.test.js` | Alta y edición de productos |
@@ -165,6 +179,7 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 | `tests/lib/use-escape.test.jsx` | Cierre de diálogos con Escape |
 | `tests/api/health.test.js` | Healthcheck: 503 ante base caída, sin filtrar detalles |
 | `tests/api/products.test.js` | Catálogo público y manejo de errores |
+| `tests/api/categories.test.js` | Categorías públicas, orden y cacheo |
 | `tests/api/admin-sesion.test.js` | Login, cierre de sesión y retardo ante intentos fallidos |
 | `tests/api/admin-orders.test.js` | Pedidos del panel: acceso, estados y validaciones |
 | `tests/api/admin-products.test.js` | Alta, edición y baja de productos |
