@@ -185,6 +185,20 @@ Tres capas, cada una con una regla distinta, porque no todos los datos envejecen
 
 Cuando la base parpadea, `lib/cache.js` entrega la copia vencida en vez de fallar: un catálogo de hace un minuto no le hace daño a nadie y la alternativa es una pantalla de error. Y si diez visitas llegan juntas con la caché recién vencida, se agrupan en una sola consulta en lugar de lanzar diez idénticas justo en el peor momento.
 
+### Qué hace Vercel con esto
+
+Medido en producción, no supuesto:
+
+| | Lo que envía el código | Lo que llega al navegador |
+|---|---|---|
+| `/api/products` | `private, no-cache, must-revalidate` | igual, con `X-Vercel-Cache: MISS` |
+| `/api/categories` | `public, s-maxage=300, stale-while-revalidate=600` | `public`, con `X-Vercel-Cache: HIT` y `Age` |
+| ETag | `W/"..."` de `lib/respuesta-cacheable.js` | uno propio de Vercel |
+
+El edge se queda con el `s-maxage` para su propia caché y reescribe la cabecera que ve el cliente, y reemplaza el ETag por el suyo. El resultado es el buscado —el catálogo revalida siempre y devuelve `304` si nada cambió; las categorías se sirven desde el edge— pero en producción lo resuelve la plataforma.
+
+El código de `respuesta-cacheable.js` no sobra por eso: es lo que responde en desarrollo, con `npm start` y en cualquier despliegue sin un edge que lo haga. Que Vercel coincida es una optimización, no la premisa.
+
 ## Pruebas
 
 226 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura de líneas es del **97%** sobre el código con lógica. Los resúmenes que leen las herramientas —[`coverage/lcov.info`](coverage/lcov.info) y [`coverage/coverage-summary.json`](coverage/coverage-summary.json)— están versionados, para que la cifra se pueda comprobar leyendo el repositorio en vez de confiar en una captura.
