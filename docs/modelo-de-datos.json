@@ -7,6 +7,40 @@
   "repositorio": "https://github.com/Alejandro-Paz05/Proyecto_ISW2",
   "entidades": [
     {
+      "nombre": "schema_migraciones",
+      "descripcion": "Qué migraciones de supabase/migraciones/ se aplicaron a esta base. Es infraestructura, no dominio: no la lee ninguna parte de la aplicación.",
+      "clave_primaria": [
+        "version"
+      ],
+      "columnas": [
+        {
+          "nombre": "version",
+          "tipo": "integer",
+          "nulo": false,
+          "clave": "PK"
+        },
+        {
+          "nombre": "nombre",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "aplicada_en",
+          "tipo": "timestamptz",
+          "nulo": false,
+          "por_defecto": "now()"
+        }
+      ],
+      "indices": [],
+      "relaciones": [],
+      "rls": {
+        "activo": true,
+        "politicas": [],
+        "motivo": "En qué estado está el esquema no es información pública."
+      },
+      "filas": 4
+    },
+    {
       "nombre": "categories",
       "descripcion": "Categorías del catálogo. Fuente de verdad; lib/categorias.js es su espejo para el modo sin conexión y para validar sin consultar la base.",
       "clave_primaria": [
@@ -376,7 +410,7 @@
         "politicas": [],
         "motivo": "Está atada a pedidos, que tampoco son públicos."
       },
-      "filas": 4
+      "filas": 6
     }
   ],
   "relaciones": [
@@ -474,6 +508,6 @@
     "Las tablas services, appointments, appointment_services, business_hours y blocked_dates existieron hasta el 2026-09-01 y fueron eliminadas.",
     "lib/categorias.js es un espejo de la tabla categories, no la fuente de verdad."
   ],
-  "generado": "2026-09-04T01:43:50.429Z",
+  "generado": "2026-09-04T02:46:52.407Z",
   "verificado_contra_produccion": true
 }

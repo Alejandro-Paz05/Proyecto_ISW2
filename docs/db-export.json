@@ -1,9 +1,34 @@
 {
-  "generado_at": "2026-09-04T01:43:50.429Z",
+  "generado_at": "2026-09-04T02:46:52.407Z",
   "motor": "postgres",
   "proyecto": "Akari Studio",
   "codigo_verificacion": "LEARN-CAP-76080609",
   "tablas": [
+    {
+      "nombre": "schema_migraciones",
+      "filas": 4,
+      "columnas": [
+        {
+          "nombre": "version",
+          "tipo": "integer",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "nombre",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "aplicada_en",
+          "tipo": "timestamptz",
+          "nulo": false
+        }
+      ],
+      "indices": [],
+      "relaciones": [],
+      "politicas_rls": []
+    },
     {
       "nombre": "categories",
       "filas": 5,
@@ -215,7 +240,7 @@
     },
     {
       "nombre": "order_status_history",
-      "filas": 4,
+      "filas": 6,
       "columnas": [
         {
           "nombre": "id",
