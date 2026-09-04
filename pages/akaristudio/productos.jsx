@@ -4,6 +4,7 @@ import { useCatalogo } from '@/context/CatalogoContext';
 
 function Catalogo() {
   const { productos, categorias, etiquetas, cargando, error } = useCatalogo();
+
   return (
     <Products
       products={productos}
