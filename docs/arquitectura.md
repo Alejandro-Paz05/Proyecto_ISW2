@@ -59,8 +59,8 @@ flowchart TB
     end
 
     subgraph supabase["Supabase — PostgreSQL"]
-        tablas[("Tablas<br/>products · orders · order_items")]
-        funciones["Función SQL<br/>create_order"]
+        tablas[("Tablas<br/>categories · products<br/>orders · order_items<br/>order_status_history")]
+        funciones["Funciones SQL<br/>create_order<br/>registrar_estado_pedido"]
         rls["Row Level Security"]
     end
 
@@ -86,7 +86,7 @@ flowchart TB
 | Service Worker | API del navegador | Cachea estáticos y da respaldo sin conexión. Nunca cachea la API. |
 | localStorage | API del navegador | Carrito entre visitas. Guarda solo ids y cantidades. |
 | API Routes | Node.js sobre Vercel | Única vía hacia la base. Valida la forma de los datos y traduce errores. |
-| Función SQL | PL/pgSQL | Reglas de negocio: precios y stock. |
+| Funciones SQL | PL/pgSQL | Reglas de negocio: precios, stock y bitácora de estados. |
 | PostgreSQL | Supabase | Persistencia e integridad. |
 
 El pedido de cita **no tiene contenedor de ningún tipo**: es un enlace `wa.me` en un botón flotante. No hay página, ni ruta de API, ni tabla, ni estado.
@@ -98,7 +98,7 @@ El pedido de cita **no tiene contenedor de ningún tipo**: es un enlace `wa.me` 
 ```mermaid
 flowchart LR
     subgraph rutas["API Routes"]
-        publicas["Rutas públicas<br/>products · orders · health"]
+        publicas["Rutas públicas<br/>products · categories<br/>orders · health"]
         privadas["Rutas del panel<br/>admin/orders<br/>admin/products"]
         login["admin/login<br/>admin/logout"]
     end
@@ -111,12 +111,13 @@ flowchart LR
 
     subgraph estaticos["Datos en el código"]
         negocio["negocio<br/>Contacto y enlace wa.me"]
-        categorias["categorias<br/>Categorías del catálogo"]
+        categorias["categorias<br/>Espejo de la tabla,<br/>para el modo sin conexión"]
     end
 
     subgraph base["PostgreSQL"]
         co["create_order()"]
         lock["SELECT ... FOR UPDATE<br/>sobre cada producto"]
+        trig["registrar_estado_pedido()<br/>trigger sobre orders"]
     end
 
     publicas --> cliente
@@ -124,8 +125,10 @@ flowchart LR
     privadas --> validar
     privadas --> cliente
     login --> auth
+    validar -.->|"valida contra"| categorias
     cliente --> co
     co --> lock
+    co --> trig
 ```
 
 ---
@@ -181,13 +184,21 @@ Sin servidor, sin base de datos, sin página y sin estado. Es el flujo más simp
 
 ```mermaid
 erDiagram
+    categories ||--o{ products : clasifica
     products ||--o{ order_items : "aparece en"
     orders ||--|{ order_items : contiene
+    orders ||--o{ order_status_history : registra
 
+    categories {
+        int id PK
+        text key UK
+        text label
+        int position
+    }
     products {
         int id PK
         text name
-        text category
+        text category FK
         numeric price
         text description
         text image
@@ -213,9 +224,22 @@ erDiagram
         int quantity
         numeric price
     }
+    order_status_history {
+        int id PK
+        int order_id FK
+        text status
+        text note
+        timestamptz changed_at
+    }
 ```
 
-`order_items` guarda **su propia copia** del nombre y el precio. No es redundancia por descuido: una venta ya cerrada debe conservar lo que se cobró ese día, aunque después cambie la tarifa o se elimine el producto del catálogo. Por eso su clave foránea es `ON DELETE SET NULL` y no `CASCADE`.
+Tres decisiones de modelado que no se leen solas en el diagrama:
+
+**`order_items` guarda su propia copia del nombre y el precio.** No es redundancia por descuido: una venta ya cerrada debe conservar lo que se cobró ese día, aunque después cambie la tarifa o se elimine el producto del catálogo. Por eso su clave foránea es `ON DELETE SET NULL` y no `CASCADE`.
+
+**`products.category` apunta a `categories.key` y no a `categories.id`.** Un id numérico sería lo ortodoxo, pero la clave de texto es la que ya viaja en la URL del filtro y la que devuelve la API, así que un id obligaría a resolver la traducción en cada consulta a cambio de nada. `key` es `UNIQUE`, que es todo lo que PostgreSQL pide para ser destino de una clave foránea.
+
+**`order_status_history` la escribe un trigger, no la aplicación.** Si dependiera de que la ruta de API se acuerde de insertar la fila, bastaría con cambiar el estado desde el panel de Supabase para perder el registro. Es la misma lógica de la [ADR-001](adr/ADR-001-reglas-de-negocio-en-la-base-de-datos.md) aplicada a la auditoría.
 
 ---
 
@@ -237,7 +261,7 @@ La ADR-003 retiró una funcionalidad completa que ya estaba en producción, a pe
 flowchart LR
     dev["git push"] --> ci["GitHub Actions"]
     ci --> lint["ESLint"]
-    ci --> test["206 pruebas<br/>Vitest<br/>89% de cobertura"]
+    ci --> test["226 pruebas<br/>Vitest<br/>97% de cobertura"]
     ci --> build["next build"]
     ci --> sonar["SonarQube Cloud"]
     dev --> vercel["Vercel"]
