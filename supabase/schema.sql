@@ -13,28 +13,55 @@
 -- "Cargar el catálogo" del README.
 --
 -- Modelo de seguridad:
---   - RLS activado en las tres tablas.
---   - El rol `anon` solo puede LEER el catálogo de productos.
---   - `orders` y `order_items` no tienen ninguna política, así que
---     son invisibles para cualquier cliente público.
+--   - RLS activado en las cinco tablas.
+--   - El rol `anon` solo puede LEER el catálogo: `products` y
+--     `categories`.
+--   - `orders`, `order_items` y `order_status_history` no tienen
+--     ninguna política, así que son invisibles para cualquier
+--     cliente público.
 --   - Los pedidos se crean únicamente con la función `create_order`,
 --     que se invoca desde el servidor con la clave `service_role`.
 -- ============================================================
 
 DROP FUNCTION IF EXISTS create_order(TEXT, TEXT, TEXT, TEXT, TEXT, JSONB);
+DROP TABLE IF EXISTS order_status_history CASCADE;
 DROP TABLE IF EXISTS order_items CASCADE;
 DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
+DROP TABLE IF EXISTS categories CASCADE;
+DROP FUNCTION IF EXISTS registrar_estado_pedido();
 DROP SEQUENCE IF EXISTS order_number_seq;
 
 -- ============================================================
 -- Tablas
 -- ============================================================
 
+-- Las categorías viven en la base y no en el código para que agregar
+-- una no exija un despliegue, y sobre todo para que products.category
+-- pueda apuntarle con una clave foránea: sin eso, nada impide guardar
+-- un producto en una categoría que la tienda no sabe mostrar.
+CREATE TABLE categories (
+  id         SERIAL PRIMARY KEY,
+  key        TEXT UNIQUE NOT NULL CHECK (key ~ '^[a-z]+$'),
+  label      TEXT NOT NULL,
+  position   INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Las categorías sí van acá, a diferencia de los productos: sin ellas
+-- la clave foránea de products no deja insertar nada.
+INSERT INTO categories (key, label, position) VALUES
+  ('unas',       'Uñas',       1),
+  ('pestanas',   'Pestañas',   2),
+  ('cejas',      'Cejas',      3),
+  ('maquillaje', 'Maquillaje', 4),
+  ('accesorios', 'Accesorios', 5);
+
 CREATE TABLE products (
   id          SERIAL PRIMARY KEY,
   name        TEXT NOT NULL,
-  category    TEXT NOT NULL,
+  category    TEXT NOT NULL REFERENCES categories(key)
+                ON UPDATE CASCADE ON DELETE RESTRICT,
   price       NUMERIC(10, 2) NOT NULL CHECK (price >= 0),
   description TEXT,
   image       TEXT,
@@ -66,8 +93,31 @@ CREATE TABLE order_items (
   price        NUMERIC(10, 2) NOT NULL CHECK (price >= 0)
 );
 
+-- Bitácora de estados. La escribe un trigger y no la aplicación: si
+-- dependiera de que la ruta de API se acuerde de insertar la fila,
+-- bastaría con cambiar el estado desde el panel de Supabase para
+-- perder el registro.
+CREATE TABLE order_status_history (
+  id         SERIAL PRIMARY KEY,
+  order_id   INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  status     TEXT NOT NULL
+               CHECK (status IN ('pendiente', 'confirmado', 'enviado', 'entregado', 'cancelado')),
+  note       TEXT,
+  changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE INDEX order_items_order_id_idx ON order_items (order_id);
 CREATE INDEX orders_created_at_idx    ON orders (created_at DESC);
+
+-- PostgreSQL no indexa solo las columnas origen de una clave foránea.
+-- Sin este índice, borrar o renombrar una categoría recorre products
+-- entero para verificar la restricción.
+CREATE INDEX products_category_idx ON products (category);
+
+-- El panel siempre pregunta lo mismo: la bitácora de UN pedido, del
+-- cambio más reciente al más viejo. El índice compuesto la cubre entera.
+CREATE INDEX order_status_history_order_idx
+  ON order_status_history (order_id, changed_at DESC);
 
 -- Número de pedido correlativo: AK-001000, AK-001001, ...
 -- Una secuencia nunca repite, a diferencia de un timestamp recortado.
@@ -77,9 +127,11 @@ CREATE SEQUENCE order_number_seq START 1000;
 -- Row Level Security
 -- ============================================================
 
-ALTER TABLE products    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
 
 -- El catálogo es público: cualquiera puede verlo, nadie puede modificarlo.
 CREATE POLICY products_public_read ON products
@@ -87,9 +139,43 @@ CREATE POLICY products_public_read ON products
   TO anon, authenticated
   USING (true);
 
--- `orders` y `order_items` quedan sin políticas a propósito: con RLS
--- activado eso significa cero acceso para los roles públicos. Solo
--- `service_role`, que salta RLS, puede tocarlos desde el servidor.
+CREATE POLICY categories_public_read ON categories
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+-- `orders`, `order_items` y `order_status_history` quedan sin políticas
+-- a propósito: con RLS activado eso significa cero acceso para los roles
+-- públicos. Solo `service_role`, que salta RLS, puede tocarlos desde el
+-- servidor.
+
+-- ============================================================
+-- Bitácora de estados (trigger)
+-- ============================================================
+
+CREATE FUNCTION registrar_estado_pedido()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    INSERT INTO order_status_history (order_id, status, note, changed_at)
+    VALUES (NEW.id, NEW.status, 'Pedido recibido en la tienda', NEW.created_at);
+  ELSIF NEW.status IS DISTINCT FROM OLD.status THEN
+    INSERT INTO order_status_history (order_id, status)
+    VALUES (NEW.id, NEW.status);
+  END IF;
+
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER orders_registrar_estado
+  AFTER INSERT OR UPDATE OF status ON orders
+  FOR EACH ROW
+  EXECUTE FUNCTION registrar_estado_pedido();
 
 -- ============================================================
 -- Creación de pedidos (atómica)
