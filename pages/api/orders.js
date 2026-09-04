@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
 
 // Códigos de Postgres que corresponden a un error del cliente, no del
 // servidor. `create_order` los usa para rechazar datos inválidos o
@@ -58,7 +59,8 @@ export default async function handler(req, res) {
 
   try {
     // Una sola llamada: valida, reserva stock, crea el pedido y sus
-    // items dentro de la misma transacción. Ver supabase/schema.sql.
+    // items dentro de la misma transacción.
+    // Ver supabase/migraciones/002_pedidos.sql.
     const { data, error } = await getSupabaseAdmin().rpc('create_order', {
       p_customer_name: customer?.name ?? '',
       p_customer_email: customer?.email ?? '',
@@ -74,6 +76,11 @@ export default async function handler(req, res) {
       }
       throw error;
     }
+
+    // El pedido descontó inventario: la copia del catálogo quedó vieja en
+    // este mismo instante. Esperar a que venza mostraría como disponible
+    // algo que se acaba de vender.
+    invalidar(CLAVE_PRODUCTOS);
 
     return res.status(201).json({ success: true, order: data });
   } catch (error) {

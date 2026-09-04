@@ -1,6 +1,8 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { soloAdmin } from '@/lib/admin-auth';
 import { validarProducto } from '@/lib/validar-producto';
+import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
+import { SIN_CACHE } from '@/lib/respuesta-cacheable';
 
 const COLUMNAS = 'id, name, category, price, description, image, stock, created_at';
 
@@ -21,7 +23,9 @@ async function listar(req, res) {
 
     if (error) throw error;
 
-    res.setHeader('Cache-Control', 'no-store');
+    // El panel nunca se cachea, ni acá ni en el CDN: muestra el estado real
+    // del negocio y quien lo mira está por tomar decisiones con eso.
+    res.setHeader('Cache-Control', SIN_CACHE);
     return res.status(200).json(data);
   } catch (error) {
     console.error('Error al listar productos:', error);
@@ -41,6 +45,8 @@ async function crear(req, res) {
       .single();
 
     if (error) throw error;
+
+    invalidar(CLAVE_PRODUCTOS);
 
     return res.status(201).json(data);
   } catch (error) {

@@ -76,7 +76,7 @@ describe('rutas de productos del panel', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual([PRODUCTO]);
-      expect(res.headers['Cache-Control']).toBe('no-store');
+      expect(res.headers['Cache-Control']).toContain('no-store');
     });
 
     it('crea un producto y responde 201', async () => {

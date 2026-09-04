@@ -1,7 +1,8 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { soloAdmin } from '@/lib/admin-auth';
 
-// Debe coincidir con la restricción CHECK de orders.status en schema.sql.
+// Debe coincidir con el CHECK de orders.status en
+// supabase/migraciones/002_pedidos.sql.
 export const ESTADOS = ['pendiente', 'confirmado', 'enviado', 'entregado', 'cancelado'];
 
 async function handler(req, res) {

@@ -1,4 +1,10 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { conCache, CLAVE_CATEGORIAS } from '@/lib/cache';
+import { responderJSON, CACHE_CATEGORIAS } from '@/lib/respuesta-cacheable';
+
+// Cinco minutos. Las categorías se cambian a mano y muy de vez en cuando;
+// no hay ninguna ruta de la aplicación que las escriba.
+const TTL_MS = 5 * 60 * 1000;
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -7,19 +13,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { data, error } = await getSupabaseAdmin()
-      .from('categories')
-      .select('key, label')
-      .order('position', { ascending: true });
+    const categorias = await conCache(CLAVE_CATEGORIAS, TTL_MS, async () => {
+      const { data, error } = await getSupabaseAdmin()
+        .from('categories')
+        .select('key, label')
+        .order('position', { ascending: true });
 
-    if (error) throw error;
+      if (error) throw error;
+      return data;
+    });
 
-    // A diferencia del stock, una categoría cambia una vez cada varios meses.
-    // Cachearla en el CDN evita una consulta por visita, y el
-    // stale-while-revalidate hace que ni siquiera la primera visita después
-    // de un cambio pague la espera.
-    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
-    return res.status(200).json(data);
+    return responderJSON(req, res, categorias, CACHE_CATEGORIAS);
   } catch (error) {
     console.error('Error al obtener categorías:', error);
     return res.status(500).json({ error: 'Error al obtener categorías' });

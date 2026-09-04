@@ -13,6 +13,8 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 import handler from '@/pages/api/categories';
+import { limpiarCache } from '@/lib/cache';
+import { calcularETag } from '@/lib/respuesta-cacheable';
 
 const CATEGORIAS = [
   { key: 'unas', label: 'Uñas' },
@@ -22,6 +24,8 @@ const CATEGORIAS = [
 
 describe('GET /api/categories', () => {
   beforeEach(() => {
+    // La cache vive en el modulo y sobrevive entre pruebas.
+    limpiarCache();
     from.mockClear();
     order.mockReset();
     order.mockResolvedValue({ data: CATEGORIAS, error: null });
@@ -65,6 +69,22 @@ describe('GET /api/categories', () => {
 
     expect(res.headers['Cache-Control']).toMatch(/s-maxage=\d+/);
     expect(res.headers['Cache-Control']).not.toMatch(/no-store/);
+  });
+
+  it('responde 304 si el cliente ya tiene esa version', async () => {
+    const res = await llamar(handler, {
+      headers: { 'if-none-match': calcularETag(CATEGORIAS) }
+    });
+
+    expect(res.statusCode).toBe(304);
+    expect(res.body).toBeNull();
+  });
+
+  it('no consulta la base dos veces seguidas', async () => {
+    await llamar(handler);
+    await llamar(handler);
+
+    expect(order).toHaveBeenCalledTimes(1);
   });
 
   describe('cuando la base falla', () => {

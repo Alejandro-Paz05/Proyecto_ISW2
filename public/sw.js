@@ -21,13 +21,20 @@
  * para saberlo.
  */
 
-const CACHE_ESTATICO = 'akari-v2-estatico';
-const CACHE_PAGINAS = 'akari-v2-paginas';
+const CACHE_ESTATICO = 'akari-v3-estatico';
+const CACHE_PAGINAS = 'akari-v3-paginas';
+const CACHE_DATOS = 'akari-v3-datos';
 
 // Todo lo que no esté en esta lista se borra al activar una versión nueva.
-const CACHES_VIGENTES = [CACHE_ESTATICO, CACHE_PAGINAS];
+const CACHES_VIGENTES = [CACHE_ESTATICO, CACHE_PAGINAS, CACHE_DATOS];
 
 const PAGINA_SIN_CONEXION = '/offline.html';
+
+// La única ruta de API que se puede guardar. Las categorías cambian una vez
+// cada varios meses y ninguna decisión depende de que estén al día: servir
+// las de ayer no le hace daño a nadie. El stock es lo contrario, y por eso
+// no hay ninguna otra en esta lista.
+const API_CACHEABLE = '/api/categories';
 
 const PRECARGA = [
   PAGINA_SIN_CONEXION,
@@ -73,7 +80,15 @@ self.addEventListener('fetch', (evento) => {
   const url = new URL(peticion.url);
   if (url.origin !== self.location.origin) return;
 
-  // La API siempre va a la red. Un dato viejo aquí engaña al usuario.
+  // Las categorías son la excepción: se sirven al instante desde la copia
+  // guardada mientras se busca la versión nueva por detrás.
+  if (url.pathname === API_CACHEABLE) {
+    evento.respondWith(copiaMientrasRevalida(peticion));
+    return;
+  }
+
+  // El resto de la API siempre va a la red. Un stock viejo engaña al
+  // usuario: agrega al carrito algo que ya se vendió y lo descubre al pagar.
   if (url.pathname.startsWith('/api/')) return;
 
   // El panel no se cachea: es contenido privado y detrás de sesión.
@@ -101,6 +116,40 @@ async function cachePrimero(peticion) {
   } catch {
     return new Response('', { status: 504, statusText: 'Sin conexión' });
   }
+}
+
+/**
+ * Devuelve la copia guardada de inmediato y actualiza por detrás.
+ *
+ * La primera visita paga la red; las siguientes responden al instante y se
+ * quedan con la versión nueva para la próxima. Solo sirve donde un dato de
+ * hace un rato es aceptable, que en este proyecto es exactamente un caso.
+ */
+async function copiaMientrasRevalida(peticion) {
+  const cache = await caches.open(CACHE_DATOS);
+  const enCache = await cache.match(peticion);
+
+  const enRed = fetch(peticion)
+    .then((respuesta) => {
+      if (respuesta.ok) cache.put(peticion, respuesta.clone());
+      return respuesta;
+    })
+    // Sin conexión no hay nada que actualizar. El catch evita que la
+    // promesa quede rechazada sin dueño cuando ya se respondió con la
+    // copia guardada.
+    .catch(() => null);
+
+  if (enCache) return enCache;
+
+  const respuesta = await enRed;
+  if (respuesta) return respuesta;
+
+  // Ni copia ni red: se contesta una lista vacía y con estado de error, para
+  // que el cliente caiga a su espejo local en vez de quedarse sin filtros.
+  return new Response('[]', {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
 
 async function redPrimero(peticion) {

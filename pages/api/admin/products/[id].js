@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { soloAdmin } from '@/lib/admin-auth';
 import { validarProducto } from '@/lib/validar-producto';
+import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
 
 const COLUMNAS = 'id, name, category, price, description, image, stock, created_at';
 
@@ -32,6 +33,8 @@ async function editar(id, req, res) {
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'El producto no existe.' });
 
+    invalidar(CLAVE_PRODUCTOS);
+
     return res.status(200).json(data);
   } catch (error) {
     // Ver la nota del mismo caso en index.js: la clave foránea contra
@@ -58,6 +61,8 @@ async function eliminar(id, res) {
 
     if (error) throw error;
     if (!data) return res.status(404).json({ error: 'El producto no existe.' });
+
+    invalidar(CLAVE_PRODUCTOS);
 
     return res.status(200).json({ ok: true, id: data.id });
   } catch (error) {
