@@ -16,8 +16,17 @@
 # Archivos de Vercel
 .vercel
 
-# Cobertura de pruebas
-/coverage
+# Cobertura de pruebas.
+#
+# El reporte HTML (lcov-report/) son cientos de archivos generados y no se
+# versiona. Los dos resúmenes sí: son los artefactos que leen las
+# herramientas externas —lcov.info lo consume SonarCloud, y
+# coverage-summary.json permite consultar el porcentaje sin correr las
+# pruebas— y tenerlos en el repo hace que la cifra sea auditable en vez de
+# depender de que alguien confíe en una captura de pantalla.
+/coverage/*
+!/coverage/lcov.info
+!/coverage/coverage-summary.json
 
 # Misc
 .DS_Store
