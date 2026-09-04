@@ -1,0 +1,259 @@
+{
+  "generado_at": "2026-09-04T01:43:50.429Z",
+  "motor": "postgres",
+  "proyecto": "Akari Studio",
+  "codigo_verificacion": "LEARN-CAP-76080609",
+  "tablas": [
+    {
+      "nombre": "categories",
+      "filas": 5,
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "key",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "label",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "position",
+          "tipo": "integer",
+          "nulo": false
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        }
+      ],
+      "indices": [],
+      "relaciones": [],
+      "politicas_rls": [
+        "categories_public_read"
+      ]
+    },
+    {
+      "nombre": "products",
+      "filas": 16,
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "name",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "category",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "price",
+          "tipo": "numeric(10,2)",
+          "nulo": false
+        },
+        {
+          "nombre": "description",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "image",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "stock",
+          "tipo": "integer",
+          "nulo": false
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        }
+      ],
+      "indices": [
+        "products_category_idx"
+      ],
+      "relaciones": [
+        {
+          "columna": "category",
+          "referencia": "categories.key"
+        }
+      ],
+      "politicas_rls": [
+        "products_public_read"
+      ]
+    },
+    {
+      "nombre": "orders",
+      "filas": 2,
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "order_number",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "customer_name",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "customer_email",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "customer_phone",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "customer_address",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "payment_method",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "total",
+          "tipo": "numeric(10,2)",
+          "nulo": false
+        },
+        {
+          "nombre": "status",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        }
+      ],
+      "indices": [
+        "orders_created_at_idx"
+      ],
+      "relaciones": [],
+      "politicas_rls": []
+    },
+    {
+      "nombre": "order_items",
+      "filas": 3,
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "order_id",
+          "tipo": "integer",
+          "nulo": false
+        },
+        {
+          "nombre": "product_id",
+          "tipo": "integer",
+          "nulo": true
+        },
+        {
+          "nombre": "product_name",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "quantity",
+          "tipo": "integer",
+          "nulo": false
+        },
+        {
+          "nombre": "price",
+          "tipo": "numeric(10,2)",
+          "nulo": false
+        }
+      ],
+      "indices": [
+        "order_items_order_id_idx"
+      ],
+      "relaciones": [
+        {
+          "columna": "order_id",
+          "referencia": "orders.id"
+        },
+        {
+          "columna": "product_id",
+          "referencia": "products.id"
+        }
+      ],
+      "politicas_rls": []
+    },
+    {
+      "nombre": "order_status_history",
+      "filas": 4,
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "order_id",
+          "tipo": "integer",
+          "nulo": false
+        },
+        {
+          "nombre": "status",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "note",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "changed_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        }
+      ],
+      "indices": [
+        "order_status_history_order_idx"
+      ],
+      "relaciones": [
+        {
+          "columna": "order_id",
+          "referencia": "orders.id"
+        }
+      ],
+      "politicas_rls": []
+    }
+  ]
+}

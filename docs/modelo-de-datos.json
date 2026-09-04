@@ -7,6 +7,66 @@
   "repositorio": "https://github.com/Alejandro-Paz05/Proyecto_ISW2",
   "entidades": [
     {
+      "nombre": "categories",
+      "descripcion": "Categorías del catálogo. Fuente de verdad; lib/categorias.js es su espejo para el modo sin conexión y para validar sin consultar la base.",
+      "clave_primaria": [
+        "id"
+      ],
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "nulo": false,
+          "clave": "PK"
+        },
+        {
+          "nombre": "key",
+          "tipo": "text",
+          "nulo": false,
+          "clave": "UNIQUE",
+          "restriccion": "key ~ '^[a-z]+$'",
+          "descripcion": "Sin acentos ni espacios: viaja en la URL del filtro de la tienda."
+        },
+        {
+          "nombre": "label",
+          "tipo": "text",
+          "nulo": false,
+          "descripcion": "Lo que ve la clienta."
+        },
+        {
+          "nombre": "position",
+          "tipo": "integer",
+          "nulo": false,
+          "por_defecto": "0",
+          "descripcion": "Orden de los filtros. No alfabético: lo decide la dueña."
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false,
+          "por_defecto": "now()"
+        }
+      ],
+      "indices": [],
+      "relaciones": [],
+      "rls": {
+        "activo": true,
+        "politicas": [
+          {
+            "nombre": "categories_public_read",
+            "operacion": "SELECT",
+            "roles": [
+              "anon",
+              "authenticated"
+            ],
+            "condicion": "true",
+            "motivo": "Las categorías son parte del catálogo, que es información pública."
+          }
+        ]
+      },
+      "filas": 5
+    },
+    {
       "nombre": "products",
       "descripcion": "Catálogo de productos a la venta, con su inventario.",
       "clave_primaria": [
@@ -29,7 +89,9 @@
           "nombre": "category",
           "tipo": "text",
           "nulo": false,
-          "descripcion": "unas, pestanas, cejas, maquillaje o accesorios."
+          "clave": "FK",
+          "referencia": "categories.key",
+          "descripcion": "La clave foránea impide guardar un producto en una categoría inexistente."
         },
         {
           "nombre": "price",
@@ -64,6 +126,21 @@
           "por_defecto": "now()"
         }
       ],
+      "indices": [
+        {
+          "nombre": "products_category_idx",
+          "columnas": [
+            "category"
+          ],
+          "motivo": "PostgreSQL no indexa solo el origen de una clave foránea. Sin esto, borrar o renombrar una categoría recorre products entero."
+        }
+      ],
+      "relaciones": [
+        {
+          "columna": "category",
+          "referencia": "categories.key"
+        }
+      ],
       "rls": {
         "activo": true,
         "politicas": [
@@ -78,7 +155,8 @@
             "motivo": "El catálogo es información pública; escribirlo requiere el servidor."
           }
         ]
-      }
+      },
+      "filas": 16
     },
     {
       "nombre": "orders",
@@ -153,14 +231,17 @@
           "nombre": "orders_created_at_idx",
           "columnas": [
             "created_at DESC"
-          ]
+          ],
+          "motivo": "El panel lista siempre del más reciente al más viejo."
         }
       ],
+      "relaciones": [],
       "rls": {
         "activo": true,
         "politicas": [],
         "motivo": "Sin políticas y con RLS activo, el acceso público es cero. Guarda datos personales que solo el servidor debe poder leer."
-      }
+      },
+      "filas": 2
     },
     {
       "nombre": "order_items",
@@ -214,17 +295,99 @@
           "nombre": "order_items_order_id_idx",
           "columnas": [
             "order_id"
-          ]
+          ],
+          "motivo": "Cada pedido del panel trae sus líneas anidadas."
+        }
+      ],
+      "relaciones": [
+        {
+          "columna": "order_id",
+          "referencia": "orders.id"
+        },
+        {
+          "columna": "product_id",
+          "referencia": "products.id"
         }
       ],
       "rls": {
         "activo": true,
         "politicas": [],
         "motivo": "Igual que orders: cero acceso público."
-      }
+      },
+      "filas": 3
+    },
+    {
+      "nombre": "order_status_history",
+      "descripcion": "Bitácora de estados de cada pedido. La escribe el trigger orders_registrar_estado, nunca la aplicación.",
+      "clave_primaria": [
+        "id"
+      ],
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "nulo": false,
+          "clave": "PK"
+        },
+        {
+          "nombre": "order_id",
+          "tipo": "integer",
+          "nulo": false,
+          "clave": "FK",
+          "referencia": "orders.id"
+        },
+        {
+          "nombre": "status",
+          "tipo": "text",
+          "nulo": false,
+          "restriccion": "status IN ('pendiente','confirmado','enviado','entregado','cancelado')"
+        },
+        {
+          "nombre": "note",
+          "tipo": "text",
+          "nulo": true,
+          "descripcion": "Solo la primera entrada la trae: cómo entró el pedido."
+        },
+        {
+          "nombre": "changed_at",
+          "tipo": "timestamptz",
+          "nulo": false,
+          "por_defecto": "now()"
+        }
+      ],
+      "indices": [
+        {
+          "nombre": "order_status_history_order_idx",
+          "columnas": [
+            "order_id",
+            "changed_at DESC"
+          ],
+          "motivo": "El panel siempre pide la bitácora de un pedido ordenada por fecha. El índice compuesto cubre la consulta entera."
+        }
+      ],
+      "relaciones": [
+        {
+          "columna": "order_id",
+          "referencia": "orders.id"
+        }
+      ],
+      "rls": {
+        "activo": true,
+        "politicas": [],
+        "motivo": "Está atada a pedidos, que tampoco son públicos."
+      },
+      "filas": 4
     }
   ],
   "relaciones": [
+    {
+      "desde": "products.category",
+      "hacia": "categories.key",
+      "cardinalidad": "N:1",
+      "al_borrar": "RESTRICT",
+      "al_actualizar": "CASCADE",
+      "motivo": "No se borra una categoría que todavía tiene productos, y renombrar la clave arrastra a los productos en lugar de dejarlos huérfanos."
+    },
     {
       "desde": "order_items.order_id",
       "hacia": "orders.id",
@@ -238,6 +401,13 @@
       "cardinalidad": "N:1",
       "al_borrar": "SET NULL",
       "motivo": "Eliminar un producto del catálogo no debe borrar el historial de ventas. La línea conserva product_name y price, así que la venta sigue siendo legible."
+    },
+    {
+      "desde": "order_status_history.order_id",
+      "hacia": "orders.id",
+      "cardinalidad": "N:1",
+      "al_borrar": "CASCADE",
+      "motivo": "La bitácora de un pedido borrado no le sirve a nadie."
     }
   ],
   "funciones": [
@@ -256,6 +426,15 @@
       "retorna": "jsonb",
       "descripcion": "Única vía para registrar un pedido. Bloquea las filas de producto con SELECT ... FOR UPDATE ordenadas por id, valida el stock, calcula el total con los precios de la base, inserta el pedido y sus líneas, y descuenta el inventario. Todo en una transacción.",
       "permisos": "Solo service_role. Revocada de PUBLIC, anon y authenticated."
+    },
+    {
+      "nombre": "registrar_estado_pedido",
+      "tipo": "SECURITY DEFINER",
+      "lenguaje": "plpgsql",
+      "parametros": [],
+      "retorna": "trigger",
+      "descripcion": "Trigger AFTER INSERT OR UPDATE OF status sobre orders. Escribe una fila en order_status_history cuando el pedido nace y cada vez que su estado cambia de verdad (IS DISTINCT FROM, para no registrar un UPDATE que deja el mismo valor).",
+      "permisos": "Lo invoca el trigger; no se llama desde la aplicación."
     }
   ],
   "reglas_de_negocio": [
@@ -278,13 +457,23 @@
       "regla": "El número de pedido nunca se repite",
       "donde": "Secuencia order_number_seq + restricción UNIQUE",
       "por_que": "La primera versión usaba los últimos dígitos de un timestamp, que se repiten cada ~16 minutos y chocaban contra la restricción."
+    },
+    {
+      "regla": "Un producto no puede quedar en una categoría que no existe",
+      "donde": "Clave foránea products.category → categories.key",
+      "por_que": "La validación vivía solo en la aplicación, así que un INSERT hecho desde el panel de Supabase la saltaba entera y dejaba el producto invisible en la tienda."
+    },
+    {
+      "regla": "Todo cambio de estado de un pedido queda registrado",
+      "donde": "Trigger orders_registrar_estado",
+      "por_que": "Si la bitácora dependiera de la ruta de API, cambiar el estado desde el panel de Supabase perdería el registro. En un trigger no hay forma de evitarlo."
     }
   ],
   "notas": [
     "Las citas no se persisten: se solicitan por WhatsApp. Ver docs/adr/ADR-003.",
     "Las tablas services, appointments, appointment_services, business_hours y blocked_dates existieron hasta el 2026-09-01 y fueron eliminadas.",
-    "Los servicios y precios del salón viven en lib/servicios.js, no en la base."
+    "lib/categorias.js es un espejo de la tabla categories, no la fuente de verdad."
   ],
-  "generado": "2026-09-02T00:59:32.511Z",
+  "generado": "2026-09-04T01:43:50.429Z",
   "verificado_contra_produccion": true
 }
