@@ -80,6 +80,6 @@ La aplicación conserva dos responsabilidades: validar la *forma* de lo que lleg
 
 ## Referencias
 
-- Implementación: [`supabase/schema.sql`](../../supabase/schema.sql), [`supabase/citas-v2.sql`](../../supabase/citas-v2.sql)
+- Implementación: [`supabase/migraciones/002_pedidos.sql`](../../supabase/migraciones/002_pedidos.sql), [`supabase/historico/citas-v2.sql`](../../supabase/historico/citas-v2.sql)
 - Traducción de errores: [`pages/api/orders.js`](../../pages/api/orders.js), [`pages/api/appointments.js`](../../pages/api/appointments.js)
 - Relacionada: [ADR-002](ADR-002-acceso-a-supabase-solo-desde-el-servidor.md)

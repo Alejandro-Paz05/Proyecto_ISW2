@@ -83,5 +83,5 @@ La decisión de fondo, la de la [ADR-001](ADR-001-reglas-de-negocio-en-la-base-d
 ## Referencias
 
 - Implementación: [`components/SolicitarCita.jsx`](../../components/SolicitarCita.jsx), [`lib/negocio.js`](../../lib/negocio.js)
-- Eliminación en la base: [`supabase/eliminar-citas.sql`](../../supabase/eliminar-citas.sql)
+- Eliminación en la base: [`supabase/historico/eliminar-citas.sql`](../../supabase/historico/eliminar-citas.sql)
 - El sistema retirado queda en el historial de git, hasta el commit anterior a su eliminación.

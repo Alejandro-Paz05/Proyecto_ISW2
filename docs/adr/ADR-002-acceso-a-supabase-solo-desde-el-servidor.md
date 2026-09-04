@@ -67,5 +67,5 @@ En concreto:
 ## Referencias
 
 - Implementación: [`lib/supabase.js`](../../lib/supabase.js)
-- Políticas RLS: [`supabase/schema.sql`](../../supabase/schema.sql), [`supabase/citas.sql`](../../supabase/citas.sql)
+- Políticas RLS: [`supabase/migraciones/001_catalogo.sql`](../../supabase/migraciones/001_catalogo.sql), [`supabase/historico/citas.sql`](../../supabase/historico/citas.sql)
 - Relacionada: [ADR-001](ADR-001-reglas-de-negocio-en-la-base-de-datos.md)

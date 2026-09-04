@@ -100,16 +100,16 @@ Decisiones registradas:
 ## Configurar Supabase
 
 1. Crea una cuenta gratuita en [supabase.com](https://supabase.com) y un proyecto nuevo.
-2. En **SQL Editor** → **New query**, ejecuta:
-   - [supabase/schema.sql](supabase/schema.sql) — las cinco tablas, los índices, las políticas RLS y las dos funciones
-   - [supabase/seed.sql](supabase/seed.sql) — opcional, 16 productos de ejemplo
+2. En **SQL Editor** → **New query**, ejecuta los archivos de [supabase/migraciones/](supabase/migraciones/) **en orden numérico**, del `000` al `004`. Qué deja cada uno está en [supabase/README.md](supabase/README.md).
 3. En **Project Settings** → **API**, copia la **Project URL** y la clave **`service_role`** (hay que pulsar *Reveal*).
 
-Sobre una base que ya existía desde antes de septiembre de 2026, `schema.sql` no sirve: borra las tablas y las vuelve a crear vacías. Para agregar `categories` y `order_status_history` conservando los datos está [supabase/migracion-categorias-e-historial.sql](supabase/migracion-categorias-e-historial.sql), que es idempotente y corre dentro de una transacción.
+Las migraciones son **idempotentes**: correrlas de nuevo sobre una base que ya está al día no cambia nada y no da error. Vale igual para una base vacía que para una que ya venía funcionando, así que no hay dos caminos que mantener.
+
+Para saber en qué estado está una base, `npm run db:estado` la consulta y dice qué falta. Sale con código 1 si falta alguna migración, así que sirve para cortar un despliegue antes de que el código pida una tabla que todavía no existe.
 
 > **La clave `service_role` es secreta.** Salta las políticas de seguridad de la base. Va únicamente en variables de entorno del servidor; nunca en el repositorio ni en código del navegador.
 
-Los archivos [`citas.sql`](supabase/citas.sql) y [`citas-v2.sql`](supabase/citas-v2.sql) crearon la agenda de reserva en línea, que se retiró según la [ADR-003](docs/adr/ADR-003-solicitud-de-citas-por-whatsapp.md). Se conservan como referencia; para eliminar esas tablas de una base donde ya se ejecutaron, está [`eliminar-citas.sql`](supabase/eliminar-citas.sql).
+En [supabase/historico/](supabase/historico/) quedan los scripts de la agenda de reserva en línea, que se retiró según la [ADR-003](docs/adr/ADR-003-solicitud-de-citas-por-whatsapp.md). **No hay que correrlos**: se conservan porque documentan una decisión que se tomó y se revirtió.
 
 ## Cargar el catálogo
 
@@ -159,10 +159,31 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 | `npm run lint` | Revisa el código con ESLint |
 | `npm run build` | Compila para producción |
 | `npm start` | Sirve la build compilada |
-| `node scripts/generar-iconos.mjs` | Regenera los iconos de la aplicación |
-| `node scripts/exportar-modelo.mjs` | Exporta el modelo de datos, verificándolo contra la base |
+| `npm run db:estado` | Dice qué migraciones le faltan a la base |
+| `npm run db:exportar` | Exporta el modelo de datos, verificándolo contra la base |
+| `npm run iconos` | Regenera los iconos de la aplicación |
 
 > No ejecutes `npm run build` con el servidor de desarrollo encendido: ambos escriben en `.next` y se pisan.
+
+Los tres últimos se pueden correr las veces que haga falta sin pensarlo: los iconos se regeneran byte por byte idénticos, el exportador solo escribe si el modelo cambió de verdad, y `db:estado` no escribe nada.
+
+## Caché
+
+Tres capas, cada una con una regla distinta, porque no todos los datos envejecen igual.
+
+| Dónde | Catálogo (`/api/products`) | Categorías (`/api/categories`) | Panel |
+|---|---|---|---|
+| Memoria del servidor | 10 s, invalidada al escribir | 5 min | no |
+| Navegador y CDN | `private, no-cache` + ETag | `s-maxage=300` + `stale-while-revalidate` | `no-store` |
+| Service worker | nunca | copia mientras revalida | nunca |
+
+**El stock manda.** Un catálogo cacheado muestra como disponible algo que ya se vendió, y el usuario no se entera hasta que paga. Por eso el catálogo obliga a revalidar siempre, no entra al CDN —que compartiría la copia de un visitante con otro— y el service worker no lo toca. La caché en memoria dura diez segundos y **la invalida cualquier escritura**: un pedido descuenta inventario, y el propio `/api/orders` borra la clave antes de responder. Lo mismo hacen las tres rutas del panel que tocan productos.
+
+**El ETag es la parte que rinde.** Aunque el catálogo no se pueda servir de una copia, sí se puede evitar reenviarlo: se consulta la base igual, y si el resultado es idéntico se responde `304` sin cuerpo. Correcto y más barato a la vez.
+
+**Las categorías son lo contrario.** Cambian una vez cada varios meses y ninguna decisión depende de que estén al día, así que son la única ruta de API que el service worker guarda y la única que el CDN puede servir.
+
+Cuando la base parpadea, `lib/cache.js` entrega la copia vencida en vez de fallar: un catálogo de hace un minuto no le hace daño a nadie y la alternativa es una pantalla de error. Y si diez visitas llegan juntas con la caché recién vencida, se agrupan en una sola consulta en lugar de lanzar diez idénticas justo en el peor momento.
 
 ## Pruebas
 
