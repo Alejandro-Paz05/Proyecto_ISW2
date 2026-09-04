@@ -9,11 +9,35 @@
   --gold-dark: #b8942a;
   --black: #0d0d0d;
   --black-soft: #1a1a1a;
+  --black-card: #151515;
   --white: #ffffff;
   --off-white: #faf7f2;
   --gray: #6b6b6b;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+
+  /* Degradados que se repetían escritos a mano en media docena de reglas. */
+  --grad-gold: linear-gradient(135deg, var(--gold-light), var(--gold) 55%, var(--gold-dark));
+  --grad-gold-texto: linear-gradient(100deg, var(--gold) 0%, #fff0c2 45%, var(--gold) 100%);
+
+  /* Sombras en dos capas: una sola, ancha y difusa, se ve como una mancha.
+     La capa corta apoya el elemento en la página y la larga da la altura. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.05), 0 10px 30px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.07), 0 20px 55px rgba(0, 0, 0, 0.2);
+  --shadow-gold: 0 6px 24px rgba(212, 175, 55, 0.35);
+
   --radius: 14px;
+  --radius-sm: 10px;
+
+  /* Movimiento. Antes cada transición declaraba su propia duración a ojo,
+     casi siempre 0.3s ease, que arranca y frena con la misma brusquedad.
+     Estas curvas salen rápido y llegan suave, que es como se percibe
+     natural un movimiento corto. */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-suave: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-rebote: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-1: 0.18s;
+  --dur-2: 0.32s;
+  --dur-3: 0.6s;
 }
 
 * {
@@ -24,6 +48,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* La navbar es fija: sin esto, saltar a un ancla deja el título debajo. */
+  scroll-padding-top: 90px;
 }
 
 body {
@@ -31,10 +57,42 @@ body {
   color: var(--black);
   background: var(--white);
   line-height: 1.6;
+  /* Evita el rebote horizontal de los elementos que entran desplazados. */
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4 {
   font-family: 'Playfair Display', serif;
+}
+
+/* Un foco visible y con la identidad del sitio. Antes se veía el anillo azul
+   del navegador o, peor, nada: varias reglas lo apagaban sin reemplazarlo. */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.3);
+  color: var(--black);
+}
+
+/* Para quien pidió menos movimiento en su sistema, el sitio se queda quieto.
+   No se ocultan cosas: las animaciones de entrada saltan a su estado final,
+   que es la diferencia entre respetar la preferencia y romper la página. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .container {
@@ -45,6 +103,7 @@ h1, h2, h3, h4 {
 
 /* ===== BOTONES ===== */
 .btn {
+  position: relative;
   display: inline-block;
   padding: 14px 32px;
   border: none;
@@ -54,7 +113,40 @@ h1, h2, h3, h4 {
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.3s ease;
+  overflow: hidden;
+  /* Transición por propiedad y no `all`: con `all`, el navegador anima
+     tambien cosas que no queremos, como el color de fondo del :focus. */
+  transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease),
+    background var(--dur-2) var(--ease), color var(--dur-2) var(--ease);
+}
+
+/* El destello que cruza el botón al pasar el mouse. Es un pseudo-elemento
+   inclinado que vive fuera del botón y lo atraviesa; como el botón tiene
+   overflow hidden, solo se ve mientras pasa por dentro. */
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
+}
+
+.btn:hover:not(:disabled)::after {
+  animation: destello 0.75s var(--ease);
+}
+
+@keyframes destello {
+  to {
+    left: 140%;
+  }
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
 }
 
 .btn:disabled {
@@ -63,14 +155,14 @@ h1, h2, h3, h4 {
 }
 
 .btn-gold {
-  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  background: var(--grad-gold);
   color: var(--black);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+  box-shadow: var(--shadow-gold);
 }
 
 .btn-gold:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(212, 175, 55, 0.55);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 34px rgba(212, 175, 55, 0.55);
 }
 
 .btn-outline {
@@ -79,9 +171,11 @@ h1, h2, h3, h4 {
   border: 2px solid var(--gold);
 }
 
-.btn-outline:hover {
+.btn-outline:hover:not(:disabled) {
   background: var(--gold);
   color: var(--black);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-gold);
 }
 
 .btn-block {
@@ -95,9 +189,20 @@ h1, h2, h3, h4 {
   left: 0;
   width: 100%;
   z-index: 1000;
-  background: rgba(13, 13, 13, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  /* Arranca casi transparente para no tapar el hero, y se vuelve sólida al
+     bajar, cuando detrás pasa contenido claro que necesita separación. */
+  background: rgba(13, 13, 13, 0.35);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid transparent;
+  transition: background var(--dur-3) var(--ease), border-color var(--dur-3) var(--ease),
+    box-shadow var(--dur-3) var(--ease), backdrop-filter var(--dur-3) var(--ease);
+}
+
+.navbar.compacta {
+  background: rgba(13, 13, 13, 0.94);
+  backdrop-filter: blur(14px);
+  border-bottom-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
 }
 
 .nav-container {
@@ -105,6 +210,19 @@ h1, h2, h3, h4 {
   align-items: center;
   justify-content: space-between;
   height: 72px;
+  transition: height var(--dur-3) var(--ease);
+}
+
+.navbar.compacta .nav-container {
+  height: 64px;
+}
+
+.logo-icon {
+  transition: transform var(--dur-3) var(--ease-rebote);
+}
+
+.logo:hover .logo-icon {
+  transform: rotate(90deg) scale(1.15);
 }
 
 .logo {
@@ -138,21 +256,47 @@ h1, h2, h3, h4 {
 }
 
 .nav-links a {
+  position: relative;
   color: var(--white);
   text-decoration: none;
   font-size: 15px;
   font-weight: 400;
-  transition: color 0.3s;
+  padding: 4px 0;
+  transition: color var(--dur-2) var(--ease);
+}
+
+/* Subrayado que crece desde la izquierda. Con un pseudo-elemento y no con
+   border-bottom, porque un borde ocuparía espacio y movería el texto. */
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1.5px;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--dur-2) var(--ease);
 }
 
 .nav-links a:hover {
   color: var(--gold);
 }
 
+.nav-links a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
 /* Ahora que hay varias páginas, conviene señalar en cuál se está. */
 .nav-links a.activo {
   color: var(--gold);
   font-weight: 500;
+}
+
+.nav-links a.activo::after {
+  transform: scaleX(1);
 }
 
 .cart-btn {
@@ -162,6 +306,15 @@ h1, h2, h3, h4 {
   cursor: pointer;
   font-size: 24px;
   color: var(--white);
+  transition: transform var(--dur-1) var(--ease);
+}
+
+.cart-btn:hover {
+  transform: scale(1.12);
+}
+
+.cart-btn:active {
+  transform: scale(0.94);
 }
 
 .cart-count {
@@ -180,20 +333,60 @@ h1, h2, h3, h4 {
   justify-content: center;
 }
 
+/* Al agregar algo al carrito, el carrito está fuera de la vista: este rebote
+   es la única señal de que la acción hizo algo. */
+.cart-count.rebota {
+  animation: rebotarContador 0.45s var(--ease-rebote);
+}
+
+@keyframes rebotarContador {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.55); box-shadow: 0 0 0 6px rgba(212, 175, 55, 0.25); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+
 /* ===== HERO ===== */
 .hero {
   position: relative;
-  min-height: 100vh;
+  /* svh y no vh: en el móvil, vh cuenta la barra del navegador que se
+     esconde al bajar, y el hero quedaba cortado en la primera pantalla. */
+  min-height: 100svh;
   display: flex;
   align-items: center;
-  background: linear-gradient(rgba(13, 13, 13, 0.6), rgba(13, 13, 13, 0.8)),
+  overflow: hidden;
+  background: linear-gradient(rgba(13, 13, 13, 0.62), rgba(13, 13, 13, 0.86)),
     url('https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
 }
 
+/* Dos manchas doradas que se desplazan muy lento por detrás del texto. Le
+   dan vida a una foto fija sin pedir un video ni otra descarga. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  background:
+    radial-gradient(closest-side circle at 72% 28%, rgba(212, 175, 55, 0.22), transparent),
+    radial-gradient(closest-side circle at 22% 78%, rgba(240, 217, 140, 0.14), transparent);
+  animation: derivaAurora 22s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes derivaAurora {
+  from {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.12);
+  }
+}
+
+/* Viñeta: oscurece las esquinas para que el texto claro del centro gane
+   contraste sin tener que subirle opacidad a todo el velo. */
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 70% 30%, rgba(212, 175, 55, 0.15), transparent 60%);
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.55) 100%);
+  pointer-events: none;
 }
 
 .hero-content {
@@ -204,27 +397,64 @@ h1, h2, h3, h4 {
 }
 
 .hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   color: var(--gold);
   text-transform: uppercase;
   letter-spacing: 4px;
-  font-size: 14px;
-  margin-bottom: 16px;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+/* La rayita que crece a la par del rótulo. */
+.hero-tag::before {
+  content: '';
+  width: 34px;
+  height: 1px;
+  background: var(--gold);
+  transform-origin: left;
+  animation: crecerLinea 0.9s var(--ease) 0.15s both;
+}
+
+@keyframes crecerLinea {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .hero-title {
-  font-size: 58px;
-  line-height: 1.15;
+  /* clamp en vez de un salto de 58px a 40px en el breakpoint: entre un
+     móvil chico y un monitor grande el tamaño acompaña de forma continua. */
+  font-size: clamp(2.4rem, 6.2vw, 3.9rem);
+  line-height: 1.12;
   margin-bottom: 20px;
+  letter-spacing: -0.5px;
 }
 
+/* El nombre del salón, en oro con un brillo que lo recorre despacio. */
 .hero-title span {
-  color: var(--gold);
+  background: var(--grad-gold-texto);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brilloOro 6s linear infinite;
+}
+
+@keyframes brilloOro {
+  to {
+    background-position: -220% 0;
+  }
 }
 
 .hero-sub {
-  font-size: 18px;
-  color: #d9d9d9;
-  margin-bottom: 32px;
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  color: #dcdcdc;
+  margin-bottom: 34px;
   max-width: 540px;
 }
 
@@ -232,6 +462,88 @@ h1, h2, h3, h4 {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+/* Entrada escalonada: cada pieza sube y aparece un poco después que la
+   anterior, para que la portada se lea de arriba hacia abajo. */
+.hero-tag,
+.hero-title,
+.hero-sub,
+.hero-actions {
+  animation: entrarHero 0.85s var(--ease) both;
+}
+
+.hero-title { animation-delay: 0.1s; }
+.hero-sub { animation-delay: 0.22s; }
+.hero-actions { animation-delay: 0.34s; }
+
+@keyframes entrarHero {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===== Indicador de scroll ===== */
+.hero-scroll {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-decoration: none;
+  animation: entrarHero 0.85s var(--ease) 0.6s both;
+  transition: color var(--dur-2) var(--ease);
+}
+
+.hero-scroll:hover {
+  color: var(--gold);
+}
+
+.hero-scroll-raton {
+  width: 24px;
+  height: 38px;
+  border: 1.5px solid currentColor;
+  border-radius: 12px;
+  position: relative;
+}
+
+/* La ruedita que baja dentro del mouse dibujado. */
+.hero-scroll-raton::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 7px;
+  width: 3px;
+  height: 7px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: currentColor;
+  animation: rueda 1.8s var(--ease-suave) infinite;
+}
+
+@keyframes rueda {
+  0% { opacity: 0; transform: translateY(0); }
+  35% { opacity: 1; }
+  70%, 100% { opacity: 0; transform: translateY(13px); }
+}
+
+@media (max-height: 640px) {
+  .hero-scroll {
+    display: none;
+  }
 }
 
 /* ===== SECCIONES ===== */
@@ -245,16 +557,29 @@ h1, h2, h3, h4 {
 }
 
 .section-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   color: var(--gold);
   text-transform: uppercase;
   letter-spacing: 3px;
-  font-size: 13px;
+  font-size: 12.5px;
   margin-bottom: 10px;
 }
 
+/* La misma rayita del hero, para que los rótulos de sección se lean como
+   parte del mismo sistema y no como cuatro estilos distintos. */
+.section-tag::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+}
+
 .section-title {
-  font-size: 40px;
+  font-size: clamp(1.85rem, 3.6vw, 2.5rem);
   margin-bottom: 16px;
+  letter-spacing: -0.3px;
 }
 
 .section-sub {
@@ -276,23 +601,49 @@ h1, h2, h3, h4 {
 }
 
 .service-card {
+  position: relative;
   background: var(--off-white);
   border: 1px solid #eee;
   border-radius: var(--radius);
   padding: 36px 28px;
   text-align: center;
-  transition: all 0.3s ease;
+  overflow: hidden;
+  transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease),
+    border-color var(--dur-2) var(--ease);
+}
+
+/* Una franja dorada que se despliega desde el centro del borde superior. */
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--grad-gold);
+  transform: scaleX(0);
+  transition: transform var(--dur-3) var(--ease);
 }
 
 .service-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow);
-  border-color: var(--gold);
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(212, 175, 55, 0.55);
+}
+
+.service-card:hover::before {
+  transform: scaleX(1);
 }
 
 .service-icon {
   font-size: 44px;
   margin-bottom: 16px;
+  display: inline-block;
+  transition: transform var(--dur-3) var(--ease-rebote);
+}
+
+.service-card:hover .service-icon {
+  transform: scale(1.16) rotate(-6deg);
 }
 
 .service-card h3 {
@@ -322,19 +673,28 @@ h1, h2, h3, h4 {
   cursor: pointer;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
-  transition: all 0.3s;
+  transition: background var(--dur-2) var(--ease), color var(--dur-2) var(--ease),
+    border-color var(--dur-2) var(--ease), transform var(--dur-1) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
 }
 
 .filter-btn:hover {
   border-color: var(--gold);
   color: var(--gold);
+  background: rgba(212, 175, 55, 0.08);
+  transform: translateY(-2px);
+}
+
+.filter-btn:active {
+  transform: translateY(0) scale(0.96);
 }
 
 .filter-btn.active {
-  background: var(--gold);
+  background: var(--grad-gold);
   color: var(--black);
   border-color: var(--gold);
   font-weight: 600;
+  box-shadow: var(--shadow-gold);
 }
 
 /* ===== PRODUCTOS ===== */
@@ -345,26 +705,64 @@ h1, h2, h3, h4 {
 }
 
 .product-card {
-  background: var(--black-soft);
+  position: relative;
+  background: var(--black-card);
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid rgba(212, 175, 55, 0.15);
-  transition: all 0.3s ease;
+  transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease),
+    border-color var(--dur-2) var(--ease);
   display: flex;
   flex-direction: column;
 }
 
+/* Un resplandor dorado que sube desde el borde inferior al pasar el mouse.
+   Va en un pseudo-elemento para poder desvanecerlo, en lugar de encender y
+   apagar un box-shadow de golpe. */
+.product-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(to top, rgba(212, 175, 55, 0.16), transparent 42%);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease);
+  pointer-events: none;
+}
+
 .product-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+  transform: translateY(-8px);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(212, 175, 55, 0.35);
   border-color: var(--gold);
+}
+
+.product-card:hover::after {
+  opacity: 1;
+}
+
+/* Lo agotado no debe competir por la atención con lo que sí se puede vender. */
+.product-card.agotado .product-img {
+  filter: grayscale(0.75) brightness(0.75);
+}
+
+/* El marco recorta la imagen para que el zoom no se salga de la tarjeta. */
+.product-img-marco {
+  overflow: hidden;
+  /* aspect-ratio en vez de una altura fija: la tarjeta se adapta al ancho de
+     la columna sin recortar de más en pantallas angostas. */
+  aspect-ratio: 4 / 3;
 }
 
 .product-img {
   width: 100%;
-  height: 240px;
+  height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.65s var(--ease), filter var(--dur-2) var(--ease);
+}
+
+.product-card:hover .product-img {
+  transform: scale(1.07);
 }
 
 .product-body {
@@ -465,6 +863,72 @@ h1, h2, h3, h4 {
 
 .error-text {
   color: #e74c3c;
+}
+
+/* Visible solo para lectores de pantalla. Los esqueletos son decorativos y
+   van con aria-hidden, así que hace falta anunciar la carga por texto. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===== ESQUELETOS DE CARGA ===== */
+.product-esqueleto {
+  background: var(--black-card);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.esq-img {
+  aspect-ratio: 4 / 3;
+}
+
+.esq-cuerpo {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.esq-linea {
+  display: block;
+  height: 11px;
+  border-radius: 6px;
+}
+
+.esq-linea.corta { width: 35%; }
+.esq-linea.larga { width: 85%; height: 15px; }
+.esq-linea.media { width: 60%; }
+
+/* El brillo que recorre el bloque. Se anima background-position y no una
+   capa aparte: es una sola propiedad y la compone la GPU. */
+.esq-img,
+.esq-linea {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(212, 175, 55, 0.13) 50%,
+    rgba(255, 255, 255, 0.04) 70%
+  );
+  background-size: 220% 100%;
+  animation: brilloEsqueleto 1.5s ease-in-out infinite;
+  /* Escalonar el brillo entre tarjetas evita el efecto de cartel luminoso
+     donde todo parpadea a la vez. */
+  animation-delay: calc(var(--i, 0) * 110ms);
+}
+
+@keyframes brilloEsqueleto {
+  to {
+    background-position: -220% 0;
+  }
 }
 
 /* ===== CONTACTO ===== */
@@ -979,11 +1443,10 @@ h1, h2, h3, h4 {
 }
 
 /* ===== RESPONSIVE ===== */
+/* Los tamaños de .hero-title y .section-title ya no se repiten acá: los
+   resuelve clamp(), que escala de forma continua en vez de dar un salto
+   justo en los 768px. */
 @media (max-width: 768px) {
-  .hero-title {
-    font-size: 40px;
-  }
-
   .nav-links {
     display: none;
   }
@@ -1000,8 +1463,10 @@ h1, h2, h3, h4 {
     padding: 60px 0;
   }
 
-  .section-title {
-    font-size: 32px;
+  /* En una sola columna, un escalonado por tarjeta obliga a esperar el
+     retraso completo antes de ver la última. */
+  .js [data-revelar] {
+    transition-delay: 0ms;
   }
 }
 
@@ -1065,6 +1530,7 @@ h1, h2, h3, h4 {
 }
 
 .atajo {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1075,17 +1541,55 @@ h1, h2, h3, h4 {
   border: 1px solid rgba(212, 175, 55, 0.25);
   border-radius: var(--radius);
   padding: 32px 28px;
-  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  overflow: hidden;
+  transition: border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease),
+    background var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease);
+}
+
+/* Un halo dorado que crece desde la esquina superior derecha. */
+.atajo::before {
+  content: '';
+  position: absolute;
+  top: -60%;
+  right: -30%;
+  width: 70%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.22), transparent 70%);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity var(--dur-3) var(--ease), transform var(--dur-3) var(--ease);
+  pointer-events: none;
 }
 
 .atajo:hover {
   border-color: var(--gold);
   background: rgba(212, 175, 55, 0.07);
-  transform: translateY(-3px);
+  transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+.atajo:hover::before {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .atajo-icono {
   font-size: 30px;
+  transition: transform var(--dur-3) var(--ease-rebote);
+}
+
+.atajo:hover .atajo-icono {
+  transform: scale(1.18) rotate(-8deg);
+}
+
+/* La flecha se separa del texto al pasar el mouse: señala que lleva a otro
+   lado sin necesidad de decirlo. */
+.atajo-accion {
+  transition: transform var(--dur-2) var(--ease);
+}
+
+.atajo:hover .atajo-accion {
+  transform: translateX(6px);
 }
 
 .atajo h3 {
