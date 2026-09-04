@@ -1,24 +1,36 @@
 -- ============================================================
--- AKARI STUDIO — Catálogo de ejemplo
+-- 004 · Catálogo de ejemplo (OPCIONAL)
 -- ============================================================
 -- Ejecutar en: Supabase > SQL Editor > New query
+-- Requiere: 000, 001
 --
 -- Productos de demostración, para tener algo con qué probar la tienda
--- antes de contar con el catálogo real del salón.
+-- antes de contar con el catálogo real del salón. Es la única migración
+-- que se puede saltar sin consecuencias.
 --
--- Es SEGURO ejecutarlo las veces que haga falta: si la tabla `products`
--- ya tiene filas, no hace nada. Nunca borra pedidos ni toca la
--- estructura de la base, a diferencia de `schema.sql`.
+-- Idempotente: si `products` ya tiene aunque sea una fila, no hace nada y
+-- lo avisa. Nunca borra pedidos ni toca la estructura.
 --
--- Para cargar los productos REALES, ver la sección "Cargar el catálogo"
--- del README. No modifiques este archivo: dejalo como está para poder
--- levantar un entorno de pruebas cuando haga falta.
+-- No se apoya en un ON CONFLICT sobre el nombre, que habría exigido un
+-- índice único en products.name. Eso es una decisión de modelado —impedir
+-- dos productos con el mismo nombre— y no corresponde tomarla desde un
+-- archivo de datos de ejemplo.
+--
+-- Para cargar los productos REALES, ver "Cargar el catálogo" en el README.
+-- No modifiques este archivo: dejalo como está para poder levantar un
+-- entorno de pruebas cuando haga falta.
 -- ============================================================
 
+BEGIN;
+
 DO $$
+DECLARE
+  v_existentes INTEGER;
 BEGIN
-  IF EXISTS (SELECT 1 FROM products) THEN
-    RAISE NOTICE 'La tabla products ya tiene datos: no se carga el catálogo de ejemplo.';
+  SELECT COUNT(*) INTO v_existentes FROM products;
+
+  IF v_existentes > 0 THEN
+    RAISE NOTICE 'products ya tiene % filas: no se carga el catálogo de ejemplo.', v_existentes;
     RETURN;
   END IF;
 
@@ -42,3 +54,9 @@ BEGIN
 
   RAISE NOTICE 'Catálogo de ejemplo cargado: 16 productos.';
 END $$;
+
+INSERT INTO schema_migraciones (version, nombre)
+VALUES (4, 'catalogo_de_ejemplo')
+ON CONFLICT (version) DO NOTHING;
+
+COMMIT;
