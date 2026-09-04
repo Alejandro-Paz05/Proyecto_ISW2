@@ -18,6 +18,15 @@ function formatFecha(iso) {
   });
 }
 
+// La bitácora la escribe un trigger, así que llega completa pero sin orden
+// garantizado. Se muestra del cambio más viejo al más nuevo, que es como se
+// lee una historia.
+function historialOrdenado(pedido) {
+  return [...(pedido.order_status_history ?? [])].sort(
+    (a, b) => new Date(a.changed_at) - new Date(b.changed_at)
+  );
+}
+
 export default function PedidosAdmin() {
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -46,9 +55,20 @@ export default function PedidosAdmin() {
   async function cambiarEstado(pedido, status) {
     setGuardando(pedido.id);
     // Actualización optimista: la lista responde al instante y se revierte
-    // si el servidor rechaza el cambio.
+    // si el servidor rechaza el cambio. La entrada del historial se agrega
+    // acá solo para que se vea; la de verdad la escribe el trigger, y es la
+    // que se lee en la próxima carga.
     const anterior = pedido.status;
-    setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? { ...p, status } : p)));
+    const historialAnterior = pedido.order_status_history ?? [];
+    const entradaNueva = { status, note: null, changed_at: new Date().toISOString() };
+
+    setPedidos((prev) =>
+      prev.map((p) =>
+        p.id === pedido.id
+          ? { ...p, status, order_status_history: [...historialAnterior, entradaNueva] }
+          : p
+      )
+    );
 
     try {
       const res = await fetch(`/api/admin/orders/${pedido.id}`, {
@@ -58,7 +78,13 @@ export default function PedidosAdmin() {
       });
       if (!res.ok) throw new Error('No se pudo cambiar el estado.');
     } catch (err) {
-      setPedidos((prev) => prev.map((p) => (p.id === pedido.id ? { ...p, status: anterior } : p)));
+      setPedidos((prev) =>
+        prev.map((p) =>
+          p.id === pedido.id
+            ? { ...p, status: anterior, order_status_history: historialAnterior }
+            : p
+        )
+      );
       setError(err.message);
     } finally {
       setGuardando(null);
@@ -190,6 +216,20 @@ export default function PedidosAdmin() {
                                 {pedido.customer_phone}
                               </a>
                             </p>
+                          </div>
+                          <div>
+                            <h4>Historial</h4>
+                            <ol className="admin-historial">
+                              {historialOrdenado(pedido).map((paso) => (
+                                <li key={`${paso.status}-${paso.changed_at}`}>
+                                  <span className={`admin-historial-estado estado-${paso.status}`}>
+                                    {paso.status}
+                                  </span>
+                                  <span className="admin-sub">{formatFecha(paso.changed_at)}</span>
+                                  {paso.note && <span className="admin-sub">{paso.note}</span>}
+                                </li>
+                              ))}
+                            </ol>
                           </div>
                         </div>
                       </td>

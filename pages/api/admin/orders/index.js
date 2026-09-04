@@ -8,14 +8,16 @@ async function handler(req, res) {
   }
 
   try {
-    // Una sola consulta con los items anidados, aprovechando la clave foránea
-    // de order_items hacia orders.
+    // Una sola consulta con los items y la bitácora anidados, aprovechando
+    // las claves foráneas de order_items y order_status_history hacia orders.
+    // Traerlos por separado serían dos viajes más y el mismo resultado.
     const { data, error } = await getSupabaseAdmin()
       .from('orders')
       .select(
         'id, order_number, customer_name, customer_email, customer_phone, ' +
           'customer_address, payment_method, total, status, created_at, ' +
-          'order_items (product_name, quantity, price)'
+          'order_items (product_name, quantity, price), ' +
+          'order_status_history (status, note, changed_at)'
       )
       .order('created_at', { ascending: false })
       .limit(200);

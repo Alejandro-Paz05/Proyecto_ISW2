@@ -314,6 +314,39 @@
 .estado-entregado   { background: #ddf5e3; color: #1d6b35; border-color: #b6e5c4; }
 .estado-cancelado   { background: #ffe3e0; color: #96281b; border-color: #f5c3bd; }
 
+/* ===== Bitácora de estados =====
+   Va después de `.admin-detalle li` a propósito: comparten especificidad, y
+   la bitácora necesita una rejilla en lugar del flex de las otras listas
+   porque la nota, cuando existe, va en una segunda línea. */
+.admin-historial {
+  list-style: none;
+}
+
+.admin-detalle .admin-historial li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 3px 10px;
+  padding: 7px 0;
+}
+
+/* La fecha y la nota se alinean bajo la etiqueta del estado, no debajo del
+   punto de la lista. */
+.admin-historial li .admin-sub {
+  grid-column: 2;
+  margin: 0;
+}
+
+.admin-historial-estado {
+  grid-row: span 2;
+  text-transform: capitalize;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  border-radius: 50px;
+}
+
 /* ===== Mensajes ===== */
 .admin-vacio {
   text-align: center;
