@@ -31,8 +31,7 @@ export default defineConfig({
       // porcentaje que miente hacia abajo.
       include: ['lib/**/*.js', 'pages/api/**/*.js', 'context/**/*.jsx'],
       exclude: [
-        'lib/supabase.js',   // cliente externo; se simula en las pruebas
-        'lib/servicios.js',  // datos sin lógica: no hay nada que ejercitar
+        'lib/supabase.js', // cliente externo; se simula en las pruebas
         '**/*.test.{js,jsx}'
       ],
 
