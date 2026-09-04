@@ -12,7 +12,7 @@
  * Los dos salen de la misma declaración de más abajo, así que no pueden
  * desincronizarse entre sí.
  *
- * La declaración se escribe a mano a partir de supabase/schema.sql, pero el
+ * La declaración se escribe a mano a partir de supabase/migraciones/, pero el
  * script la VERIFICA contra la base en producción antes de escribir nada:
  * comprueba que cada tabla exista, que las columnas coincidan una a una, y
  * consulta cuántas filas tiene realmente cada una. Si algo no cuadra, no
@@ -23,24 +23,13 @@
  * columna en Supabase y se olvida de documentarla.
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { RAIZ, leerEnv, clienteSupabase } from './comun.mjs';
 
-const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
-
-// ===== Credenciales =====
-
-function leerEnv() {
-  const texto = readFileSync(join(RAIZ, '.env.local'), 'utf8');
-  const env = {};
-  for (const linea of texto.split('\n')) {
-    const limpia = linea.trim();
-    if (!limpia || limpia.startsWith('#')) continue;
-    const i = limpia.indexOf('=');
-    if (i > 0) env[limpia.slice(0, i).trim()] = limpia.slice(i + 1).trim();
-  }
-  return env;
-}
+// Cada cuántos días se refresca la fecha aunque no haya cambiado nada. Sin
+// esto, un modelo estable envejecería para siempre; con un valor bajo, el
+// archivo cambiaría en cada corrida y ensuciaría el diff sin aportar nada.
+const DIAS_ANTES_DE_REFRESCAR = 30;
 
 // ===== El modelo =====
 
@@ -55,6 +44,25 @@ const MODELO = {
   repositorio: 'https://github.com/Alejandro-Paz05/Proyecto_ISW2',
 
   entidades: [
+    {
+      nombre: 'schema_migraciones',
+      descripcion:
+        'Qué migraciones de supabase/migraciones/ se aplicaron a esta base. Es ' +
+        'infraestructura, no dominio: no la lee ninguna parte de la aplicación.',
+      clave_primaria: ['version'],
+      columnas: [
+        { nombre: 'version', tipo: 'integer', nulo: false, clave: 'PK' },
+        { nombre: 'nombre', tipo: 'text', nulo: false },
+        { nombre: 'aplicada_en', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' }
+      ],
+      indices: [],
+      relaciones: [],
+      rls: {
+        activo: true,
+        politicas: [],
+        motivo: 'En qué estado está el esquema no es información pública.'
+      }
+    },
     {
       nombre: 'categories',
       descripcion:
@@ -420,40 +428,19 @@ const MODELO = {
 
 // ===== Verificación contra producción =====
 
-async function contarFilas(base, cabeceras, tabla) {
-  // PostgREST devuelve el total en Content-Range cuando se le pide count=exact.
-  // limit=1 evita traer la tabla entera solo para contarla.
-  const res = await fetch(`${base}/${tabla}?select=id&limit=1`, {
-    headers: { ...cabeceras, Prefer: 'count=exact' }
-  });
-
-  if (!res.ok) return null;
-
-  const rango = res.headers.get('content-range');
-  const total = rango?.split('/')[1];
-  return total && total !== '*' ? Number(total) : null;
-}
-
-async function verificar(env) {
-  const base = `${env.SUPABASE_URL}/rest/v1`;
-  const cabeceras = {
-    apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-    Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`
-  };
-
+async function verificar(db) {
   const problemas = [];
 
   for (const entidad of MODELO.entidades) {
-    const res = await fetch(`${base}/${entidad.nombre}?select=*&limit=1`, { headers: cabeceras });
+    const filas = await db.muestra(entidad.nombre);
 
-    if (!res.ok) {
-      problemas.push(`La tabla ${entidad.nombre} no existe o no responde (HTTP ${res.status}).`);
+    if (filas === null) {
+      problemas.push(`La tabla ${entidad.nombre} no existe o no responde.`);
       continue;
     }
 
-    entidad.filas = (await contarFilas(base, cabeceras, entidad.nombre)) ?? 0;
+    entidad.filas = (await db.contar(entidad.nombre)) ?? 0;
 
-    const filas = await res.json();
     if (filas.length === 0) {
       console.log(`  ${entidad.nombre.padEnd(21)} existe y está vacía: no se comparan columnas`);
       continue;
@@ -513,45 +500,101 @@ function aFormatoExport(generadoEn) {
 
 // ===== Salida =====
 
-const env = leerEnv();
+/**
+ * Escribe el archivo solo si su contenido cambió de verdad.
+ *
+ * Antes reescribía siempre, así que dos corridas seguidas sin ningún
+ * cambio en la base producían igual un diff: la única diferencia era la
+ * fecha. Eso convertía a `npm run db:exportar` en algo que ensuciaba el
+ * repositorio en vez de en algo que se puede correr sin pensarlo.
+ *
+ * La fecha se refresca igual si ya pasó bastante tiempo, para que un
+ * modelo estable no envejezca indefinidamente.
+ */
+function escribirSiCambio(nombre, contenido, campoFecha) {
+  const destino = join(RAIZ, 'docs', nombre);
+  const sinFecha = (objeto) => {
+    const copia = { ...objeto };
+    delete copia[campoFecha];
+    return JSON.stringify(copia);
+  };
 
-if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local');
-  process.exit(1);
+  try {
+    const previo = JSON.parse(readFileSync(destino, 'utf8'));
+
+    if (sinFecha(previo) === sinFecha(contenido)) {
+      const dias = (Date.now() - Date.parse(previo[campoFecha])) / 86400000;
+
+      if (Number.isFinite(dias) && dias < DIAS_ANTES_DE_REFRESCAR) {
+        return { escrito: false, motivo: `sin cambios (fecha de hace ${Math.floor(dias)} d)` };
+      }
+
+      return escribirloYa(destino, contenido, `sin cambios, fecha refrescada a los ${DIAS_ANTES_DE_REFRESCAR} d`);
+    }
+  } catch {
+    // No existía, o no era JSON válido: se escribe de cero.
+  }
+
+  return escribirloYa(destino, contenido, 'actualizado');
 }
 
-console.log('Verificando el modelo contra la base en producción:\n');
-const problemas = await verificar(env);
-
-if (problemas.length > 0) {
-  console.error('\nEl modelo no coincide con la base:');
-  for (const p of problemas) console.error(`  - ${p}`);
-  console.error('\nNo se escribió ningún archivo. Corregí el modelo en este script.');
-  process.exit(1);
+function escribirloYa(destino, contenido, motivo) {
+  writeFileSync(destino, JSON.stringify(contenido, null, 2) + '\n', 'utf8');
+  return { escrito: true, motivo };
 }
 
-const generadoEn = new Date().toISOString();
+// process.exitCode y no process.exit(): cortar el proceso mientras fetch
+// todavía tiene sockets abiertos hace abortar a libuv en Windows, y el
+// "Assertion failed" resultante tapa el mensaje de error real.
+async function main() {
+  const env = leerEnv();
+  const db = clienteSupabase(env);
 
-mkdirSync(join(RAIZ, 'docs'), { recursive: true });
+  console.log('Verificando el modelo contra la base en producción:\n');
+  const problemas = await verificar(db);
 
-function escribir(nombre, contenido) {
-  writeFileSync(join(RAIZ, 'docs', nombre), JSON.stringify(contenido, null, 2) + '\n', 'utf8');
+  if (problemas.length > 0) {
+    console.error('\nEl modelo no coincide con la base:');
+    for (const p of problemas) console.error(`  - ${p}`);
+    console.error('\nNo se escribió ningún archivo. Corregí el modelo en este script.');
+    return 1;
+  }
+
+  mkdirSync(join(RAIZ, 'docs'), { recursive: true });
+
+  const generadoEn = new Date().toISOString();
+
+  const resultados = [
+    [
+      'db-export.json',
+      escribirSiCambio('db-export.json', aFormatoExport(generadoEn), 'generado_at')
+    ],
+    [
+      'modelo-de-datos.json',
+      escribirSiCambio(
+        'modelo-de-datos.json',
+        { ...MODELO, generado: generadoEn, verificado_contra_produccion: true },
+        'generado'
+      )
+    ]
+  ];
+
+  console.log('');
+  for (const [nombre, resultado] of resultados) {
+    console.log(`  docs/${nombre.padEnd(22)} ${resultado.motivo}`);
+  }
+
+  const conDatos = MODELO.entidades.filter((e) => (e.filas ?? 0) > 0).length;
+  const politicas = MODELO.entidades.reduce((n, e) => n + e.rls.politicas.length, 0);
+  const indices = MODELO.entidades.reduce((n, e) => n + e.indices.length, 0);
+
+  console.log(
+    `\n  ${MODELO.entidades.length} tablas (${conDatos} con datos) · ` +
+      `${MODELO.relaciones.length} relaciones · ${indices} índices · ` +
+      `${politicas} políticas RLS · ${MODELO.funciones.length} funciones`
+  );
+
+  return 0;
 }
 
-escribir('db-export.json', aFormatoExport(generadoEn));
-escribir('modelo-de-datos.json', {
-  ...MODELO,
-  generado: generadoEn,
-  verificado_contra_produccion: true
-});
-
-const conDatos = MODELO.entidades.filter((e) => (e.filas ?? 0) > 0).length;
-const politicas = MODELO.entidades.reduce((n, e) => n + e.rls.politicas.length, 0);
-const indices = MODELO.entidades.reduce((n, e) => n + e.indices.length, 0);
-
-console.log('\nExportado a docs/db-export.json y docs/modelo-de-datos.json');
-console.log(
-  `  ${MODELO.entidades.length} tablas (${conDatos} con datos) · ` +
-    `${MODELO.relaciones.length} relaciones · ${indices} índices · ` +
-    `${politicas} políticas RLS · ${MODELO.funciones.length} funciones`
-);
+process.exitCode = await main();
