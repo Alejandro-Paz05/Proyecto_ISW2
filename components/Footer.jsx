@@ -4,7 +4,6 @@ import { NEGOCIO } from '@/lib/negocio';
 const ENLACES = [
   { href: '/akaristudio', label: 'Inicio' },
   { href: '/akaristudio#servicios', label: 'Servicios' },
-  { href: '/akaristudio/citas', label: 'Citas' },
   { href: '/akaristudio/productos', label: 'Productos' },
   { href: '/akaristudio#contacto', label: 'Contacto' }
 ];

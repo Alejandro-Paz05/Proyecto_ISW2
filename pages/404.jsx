@@ -20,8 +20,8 @@ export default function NoEncontrada() {
           <Link href="/akaristudio" className="btn btn-gold">
             Ir al inicio
           </Link>
-          <Link href="/akaristudio/citas" className="btn btn-outline">
-            Reservar una cita
+          <Link href="/akaristudio/productos" className="btn btn-outline">
+            Ver la tienda
           </Link>
         </div>
       </main>

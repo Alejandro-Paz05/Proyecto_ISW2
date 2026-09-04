@@ -1,9 +1,17 @@
 # ADR-003 — Reemplazar la reserva en línea por una solicitud enviada por WhatsApp
 
-- **Estado:** aceptada
+- **Estado:** aceptada, con una segunda iteración
 - **Fecha:** 2026-09-01
 - **Decide:** Alejandro Paz, a pedido de la dueña de Akari Studio
 - **Reemplaza parcialmente a:** [ADR-001](ADR-001-reglas-de-negocio-en-la-base-de-datos.md)
+
+> **Actualización del 2026-09-02.** La primera versión de esta decisión mantenía un formulario: la clienta elegía servicios, día y franja horaria, y el sitio armaba con eso el mensaje de WhatsApp. Al mostrárselo, la dueña pidió sacar también ese formulario y dejar únicamente un botón flotante que abra la conversación.
+>
+> Su argumento fue el mismo que la primera vez, llevado un paso más allá: **si de todos modos va a preguntar por chat, el formulario le agrega una pantalla a la clienta sin ahorrarle trabajo a ella.** Prefiere abrir la conversación en frío y conducirla.
+>
+> Lo que se retiró en esta segunda vuelta: el componente del formulario, la página `/akaristudio/citas`, la lista de servicios con precios y las utilidades de fecha. Quedó un enlace `wa.me` con un saludo de una línea.
+>
+> El resto de este documento describe el razonamiento original, que sigue siendo el que explica por qué las citas salieron del sistema.
 
 ---
 

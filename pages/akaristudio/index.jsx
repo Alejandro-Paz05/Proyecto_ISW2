@@ -3,6 +3,7 @@ import TiendaLayout from '@/components/TiendaLayout';
 import Hero from '@/components/Hero';
 import Services from '@/components/Services';
 import Contact from '@/components/Contact';
+import { NEGOCIO, enlaceWhatsApp } from '@/lib/negocio';
 
 export default function Inicio() {
   return (
@@ -10,23 +11,28 @@ export default function Inicio() {
       <Hero />
       <Services />
 
-      {/* Las citas y los productos son páginas propias, así que la portada
-          necesita llevar hasta ellas de forma evidente. */}
+      {/* La tienda es una página propia y las citas se piden por chat, así
+          que la portada tiene que llevar a las dos de forma evidente. */}
       <section className="section section-dark">
         <div className="container">
           <p className="section-tag">¿Qué querés hacer?</p>
           <h2 className="section-title">Empezá por acá</h2>
 
           <div className="atajos">
-            <Link href="/akaristudio/citas" className="atajo">
+            <a
+              className="atajo"
+              href={enlaceWhatsApp(`¡Hola ${NEGOCIO.nombre}! Quiero agendar una cita.`)}
+              target="_blank"
+              rel="noreferrer"
+            >
               <span className="atajo-icono">💬</span>
-              <h3>Solicitar una cita</h3>
+              <h3>Agendar una cita</h3>
               <p>
-                Elegí el servicio y el día que te quede cómodo. Se envía por WhatsApp y te
-                confirmamos por ahí mismo.
+                Escribinos por WhatsApp y coordinamos el servicio, el día y la hora que mejor te
+                queden.
               </p>
-              <span className="atajo-accion">Pedir por WhatsApp →</span>
-            </Link>
+              <span className="atajo-accion">Escribir por WhatsApp →</span>
+            </a>
 
             <Link href="/akaristudio/productos" className="atajo">
               <span className="atajo-icono">🛍️</span>

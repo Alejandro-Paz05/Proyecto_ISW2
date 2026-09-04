@@ -5,6 +5,7 @@ import CartDrawer from '@/components/CartDrawer';
 import CheckoutModal from '@/components/CheckoutModal';
 import ConfirmModal from '@/components/ConfirmModal';
 import Toast from '@/components/Toast';
+import BotonWhatsApp from '@/components/BotonWhatsApp';
 import { CatalogoProvider, useCatalogo } from '@/context/CatalogoContext';
 import { CartProvider } from '@/context/CartContext';
 
@@ -39,6 +40,7 @@ export default function TiendaLayout({ titulo, descripcion, children }) {
           <CheckoutModal />
           <ConfirmModal />
           <Toast />
+          <BotonWhatsApp />
         </ConCarrito>
       </CatalogoProvider>
     </Layout>

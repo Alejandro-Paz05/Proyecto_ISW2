@@ -11,7 +11,11 @@
   "orientation": "portrait-primary",
   "background_color": "#0d0d0d",
   "theme_color": "#0d0d0d",
-  "categories": ["beauty", "shopping", "lifestyle"],
+  "categories": [
+    "beauty",
+    "shopping",
+    "lifestyle"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
@@ -34,18 +38,16 @@
   ],
   "shortcuts": [
     {
-      "name": "Reservar una cita",
-      "short_name": "Citas",
-      "description": "Ver los horarios disponibles y reservar",
-      "url": "/akaristudio/citas",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
-    },
-    {
       "name": "Ver productos",
       "short_name": "Tienda",
       "description": "Catálogo con inventario en tiempo real",
       "url": "/akaristudio/productos",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

@@ -4,7 +4,7 @@
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Alejandro-Paz05_Proyecto_ISW2&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Alejandro-Paz05_Proyecto_ISW2)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Alejandro-Paz05_Proyecto_ISW2&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Alejandro-Paz05_Proyecto_ISW2)
 
-Sitio del salón de belleza **Akari Studio** (Honduras): tienda en línea con inventario en tiempo real, solicitud de citas por WhatsApp y un panel de administración para gestionar pedidos y catálogo.
+Sitio del salón de belleza **Akari Studio** (Honduras): tienda en línea con inventario en tiempo real, contacto directo por WhatsApp para agendar citas, y un panel de administración para gestionar pedidos y catálogo.
 
 Proyecto de la asignatura **Ingeniería de Software II**.
 
@@ -15,7 +15,6 @@ Proyecto de la asignatura **Ingeniería de Software II**.
 | | |
 |---|---|
 | Inicio | https://www.alejandropaz.xyz/akaristudio |
-| Solicitar una cita | https://www.alejandropaz.xyz/akaristudio/citas |
 | Tienda | https://www.alejandropaz.xyz/akaristudio/productos |
 | Panel de administración | https://www.alejandropaz.xyz/akaristudio/admin |
 | Estado del servicio | https://www.alejandropaz.xyz/api/health |
@@ -44,16 +43,15 @@ lib/
   admin-auth.js        Sesión del panel, con token firmado
   validar-producto.js  Validación del alta y edición de productos
   negocio.js           Datos de contacto y enlace de WhatsApp
-  servicios.js         Servicios y precios del salón
-  fechas.js            Zona horaria de Honduras
+  use-escape.js        Cierra los diálogos con la tecla Escape
   categorias.js        Categorías de productos y servicios
 pages/
-  akaristudio/         Sitio público: inicio, citas, productos
+  akaristudio/         Sitio público: inicio y productos
   akaristudio/admin/   Panel: pedidos y productos
   api/                 Rutas de API
 public/                Manifiesto, service worker, iconos, robots
 scripts/               Generación de iconos y exportación del modelo
-styles/                globals.css, citas.css, admin.css
+styles/                globals.css, whatsapp.css, admin.css
 supabase/              Esquema, migraciones y datos de ejemplo
 tests/                 Pruebas, espejando la estructura del código
 docs/                  Arquitectura, ADR y modelo de datos
@@ -86,7 +84,7 @@ Decisiones registradas:
 
 **El panel se cierra solo si falta configuración.** Sin la variable `ADMIN_PASSWORD` responde 503 en vez de quedar abierto.
 
-**Las citas no pasan por el servidor.** La solicitud se arma en el navegador y sale hacia WhatsApp. No hay ruta de API ni tabla detrás: la confirma la dueña por chat.
+**Las citas no pasan por el sistema.** Un botón flotante abre WhatsApp con un saludo, y ahí la dueña acuerda el servicio, el día y la hora. No hay página, ruta de API ni tabla detrás.
 
 ## Configurar Supabase
 
@@ -115,8 +113,6 @@ INSERT INTO products (name, category, price, description, image, stock) VALUES
 ```
 
 Categorías válidas: `unas`, `pestanas`, `cejas`, `maquillaje` y `accesorios`.
-
-Los **servicios** del salón, en cambio, viven en [`lib/servicios.js`](lib/servicios.js): desde que las citas se piden por WhatsApp esa lista solo se muestra, así que no justifica una tabla.
 
 ## Variables de entorno
 
@@ -157,7 +153,7 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 
 ## Pruebas
 
-211 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura es del **89%** sobre el código con lógica:
+206 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura es del **89%** sobre el código con lógica:
 
 | Archivo | Qué cubre |
 |---|---|
@@ -165,8 +161,8 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 | `tests/api/orders.test.js` | Validación de pedidos y traducción de errores de la base |
 | `tests/lib/admin-auth.test.js` | Tokens de sesión, firma y protección de rutas |
 | `tests/lib/validar-producto.test.js` | Alta y edición de productos |
-| `tests/lib/fechas.test.js` | Manejo de fechas en la zona horaria del salón |
 | `tests/lib/negocio.test.js` | Enlace de WhatsApp y codificación del mensaje |
+| `tests/lib/use-escape.test.jsx` | Cierre de diálogos con Escape |
 | `tests/api/health.test.js` | Healthcheck: 503 ante base caída, sin filtrar detalles |
 | `tests/api/products.test.js` | Catálogo público y manejo de errores |
 | `tests/api/admin-sesion.test.js` | Login, cierre de sesión y retardo ante intentos fallidos |
@@ -193,10 +189,8 @@ Las variables se leen al construir: después de cambiar una hay que redesplegar.
 
 **Citas**
 
-- Selección de uno o varios servicios, con duración y precio a la vista
-- Día y franja horaria preferidos
-- El mensaje se muestra tal como va a llegar al chat, antes de enviarlo
-- Un toque abre WhatsApp con todo escrito
+- Botón flotante que abre WhatsApp con un saludo ya escrito
+- El servicio, el día y la hora los acuerda la dueña por chat
 
 **Tienda**
 

@@ -1,6 +1,6 @@
 # Arquitectura — Akari Studio
 
-Documento de arquitectura del sitio de Akari Studio: tienda en línea con inventario, solicitud de citas por WhatsApp y panel de administración.
+Documento de arquitectura del sitio de Akari Studio: tienda en línea con inventario, contacto por WhatsApp para las citas, y panel de administración.
 
 Código de verificación: `LEARN-CAP-76080609`
 
@@ -14,18 +14,18 @@ Quiénes usan el sistema y con qué se conecta.
 C4Context
     title Diagrama de contexto — Akari Studio
 
-    Person(clienta, "Clienta", "Compra productos y pide su cita. Entra desde el celular, sin crear cuenta.")
+    Person(clienta, "Clienta", "Compra productos y escribe para su cita. Entra desde el celular, sin crear cuenta.")
     Person(duena, "Dueña del salón", "Gestiona pedidos y catálogo desde el panel. Confirma las citas por chat.")
 
-    System(akari, "Akari Studio", "Tienda con inventario, solicitud de citas y panel de administración.")
+    System(akari, "Akari Studio", "Tienda con inventario y panel de administración.")
 
     System_Ext(whatsapp, "WhatsApp", "Canal por el que se piden y confirman las citas.")
     System_Ext(supabase, "Supabase", "PostgreSQL gestionado. Guarda productos y pedidos.")
     System_Ext(vercel, "Vercel", "Alojamiento y despliegue continuo desde GitHub.")
     System_Ext(github, "GitHub", "Repositorio e integración continua.")
 
-    Rel(clienta, akari, "Compra productos y arma su solicitud", "HTTPS")
-    Rel(clienta, whatsapp, "Envía la solicitud de cita", "wa.me")
+    Rel(clienta, akari, "Compra productos", "HTTPS")
+    Rel(clienta, whatsapp, "Escribe para pedir su cita", "wa.me")
     Rel(duena, whatsapp, "Confirma o propone otro horario")
     Rel(duena, akari, "Administra el negocio", "HTTPS, con contraseña")
     Rel(akari, supabase, "Lee y escribe datos", "HTTPS, clave service_role")
@@ -37,7 +37,7 @@ C4Context
 Dos cosas que vale señalar en este diagrama:
 
 - **No hay ninguna flecha entre la clienta y Supabase.** Es deliberado y es el eje de la [ADR-002](adr/ADR-002-acceso-a-supabase-solo-desde-el-servidor.md): el navegador nunca habla con la base de datos.
-- **Las citas salen del sistema.** El sitio ayuda a armar la solicitud, pero quien confirma es la dueña, por chat. Es el resultado de la [ADR-003](adr/ADR-003-solicitud-de-citas-por-whatsapp.md).
+- **Las citas salen del sistema.** El sitio solo abre la conversación con un botón; el servicio, el día y la hora los acuerda la dueña por chat. Es el resultado de la [ADR-003](adr/ADR-003-solicitud-de-citas-por-whatsapp.md).
 
 ---
 
@@ -48,7 +48,7 @@ Las piezas desplegables y cómo se comunican.
 ```mermaid
 flowchart TB
     subgraph navegador["Navegador de la clienta"]
-        spa["Páginas React<br/>Next.js Pages Router<br/><br/>Portada · Citas · Productos · Panel"]
+        spa["Páginas React<br/>Next.js Pages Router<br/><br/>Portada · Productos · Panel"]
         sw["Service Worker<br/>Cache de estáticos<br/>y respaldo sin conexión"]
         ls[("localStorage<br/>Carrito: solo ids y cantidades")]
     end
@@ -70,7 +70,7 @@ flowchart TB
     spa <-->|"lee y escribe"| ls
     sw -.->|"intercepta"| spa
     spa -->|"solicita"| estaticos
-    spa -->|"enlace wa.me<br/>con el mensaje armado"| wa
+    spa -->|"botón flotante<br/>enlace wa.me"| wa
     api -->|"clave service_role"| funciones
     funciones --> tablas
     rls -.->|"protege"| tablas
@@ -89,7 +89,7 @@ flowchart TB
 | Función SQL | PL/pgSQL | Reglas de negocio: precios y stock. |
 | PostgreSQL | Supabase | Persistencia e integridad. |
 
-La solicitud de cita **no tiene contenedor de servidor**: se arma entera en el navegador y sale hacia WhatsApp. No hay ruta de API ni tabla detrás.
+El pedido de cita **no tiene contenedor de ningún tipo**: es un enlace `wa.me` en un botón flotante. No hay página, ni ruta de API, ni tabla, ni estado.
 
 ---
 
@@ -110,9 +110,8 @@ flowchart LR
     end
 
     subgraph estaticos["Datos en el código"]
-        servicios["servicios<br/>Lista de servicios y precios"]
         negocio["negocio<br/>Contacto y enlace wa.me"]
-        fechas["fechas<br/>Zona horaria de Honduras"]
+        categorias["categorias<br/>Categorías del catálogo"]
     end
 
     subgraph base["PostgreSQL"]
@@ -165,18 +164,16 @@ sequenceDiagram
     end
 ```
 
-## 4b. Flujo de una solicitud de cita
+## 4b. Flujo de un pedido de cita
 
 ```mermaid
 flowchart LR
-    a["Elige servicios<br/>día y franja"] --> b["Escribe su nombre"]
-    b --> c["Ve el mensaje<br/>tal como va a llegar"]
-    c --> d["Toca Enviar<br/>por WhatsApp"]
-    d --> e["Se abre el chat<br/>con el texto listo"]
-    e --> f["La dueña confirma<br/>o propone otro horario"]
+    a["Toca el botón<br/>flotante"] --> b["Se abre WhatsApp<br/>con un saludo"]
+    b --> c["La dueña pregunta<br/>servicio, día y hora"]
+    c --> d["Acuerdan la cita<br/>en el chat"]
 ```
 
-Sin servidor, sin base de datos y sin estado. El sitio ahorra el ida y vuelta de preguntar qué servicio, qué día y a qué hora; la decisión sigue siendo de la dueña.
+Sin servidor, sin base de datos, sin página y sin estado. Es el flujo más simple del sistema porque, según la [ADR-003](adr/ADR-003-solicitud-de-citas-por-whatsapp.md), la dueña prefiere conducir esa conversación ella.
 
 ---
 
@@ -240,8 +237,9 @@ La ADR-003 retiró una funcionalidad completa que ya estaba en producción, a pe
 flowchart LR
     dev["git push"] --> ci["GitHub Actions"]
     ci --> lint["ESLint"]
-    ci --> test["127 pruebas<br/>Vitest"]
+    ci --> test["206 pruebas<br/>Vitest<br/>89% de cobertura"]
     ci --> build["next build"]
+    ci --> sonar["SonarQube Cloud"]
     dev --> vercel["Vercel"]
     vercel --> prod["alejandropaz.xyz/akaristudio"]
     prod --> health["/api/health<br/>consulta la base de verdad"]
