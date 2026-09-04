@@ -3,20 +3,30 @@
  *
  * Dos estrategias distintas, según qué se pide:
  *
- *   - Estáticos (iconos, manifiesto): cache primero. No cambian, y servirlos
- *     desde el disco evita una ida al servidor en cada visita.
+ *   - Estáticos (iconos, manifiesto, bundles): cache primero. No cambian de
+ *     contenido sin cambiar de nombre, y servirlos desde el disco evita una
+ *     ida al servidor en cada visita.
  *   - Páginas: red primero, con la copia en caché como respaldo. Al revés
- *     sería peor: el catálogo y la disponibilidad de citas cambian, y una
- *     versión vieja mostraría horarios que ya no existen.
+ *     sería peor: el catálogo y el stock cambian, y una versión vieja
+ *     mostraría precios o disponibilidad que ya no son ciertos.
  *
- * Las llamadas a la API nunca se cachean. Un stock o una agenda desactualizada
- * es peor que un error de red, porque el usuario no se entera de que está
- * mirando algo viejo.
+ * Las llamadas a la API nunca se cachean. Un stock desactualizado es peor que
+ * un error de red, porque el usuario no se entera de que está mirando algo
+ * viejo: agrega al carrito algo que no existe y lo descubre al pagar.
+ *
+ * Los nombres de cache se escriben completos y no se arman por interpolación.
+ * Un `${VERSION}-estatico` es más corto, pero el nombre real deja de existir
+ * como texto en el archivo, y cualquiera que audite qué caches abre este
+ * worker —una herramienta o una persona— tiene que ejecutarlo mentalmente
+ * para saberlo.
  */
 
-const VERSION = 'akari-v1';
-const CACHE_ESTATICO = `${VERSION}-estatico`;
-const CACHE_PAGINAS = `${VERSION}-paginas`;
+const CACHE_ESTATICO = 'akari-v2-estatico';
+const CACHE_PAGINAS = 'akari-v2-paginas';
+
+// Todo lo que no esté en esta lista se borra al activar una versión nueva.
+const CACHES_VIGENTES = [CACHE_ESTATICO, CACHE_PAGINAS];
+
 const PAGINA_SIN_CONEXION = '/offline.html';
 
 const PRECARGA = [
@@ -45,7 +55,7 @@ self.addEventListener('activate', (evento) => {
       .then((nombres) =>
         Promise.all(
           nombres
-            .filter((nombre) => !nombre.startsWith(VERSION))
+            .filter((nombre) => !CACHES_VIGENTES.includes(nombre))
             .map((nombre) => caches.delete(nombre))
         )
       )
@@ -56,8 +66,8 @@ self.addEventListener('activate', (evento) => {
 self.addEventListener('fetch', (evento) => {
   const peticion = evento.request;
 
-  // Solo GET del mismo origen: un POST de pedido o de reserva tiene que
-  // llegar al servidor sí o sí.
+  // Solo GET del mismo origen: un POST de pedido tiene que llegar al servidor
+  // sí o sí, porque descuenta inventario.
   if (peticion.method !== 'GET') return;
 
   const url = new URL(peticion.url);
@@ -66,7 +76,7 @@ self.addEventListener('fetch', (evento) => {
   // La API siempre va a la red. Un dato viejo aquí engaña al usuario.
   if (url.pathname.startsWith('/api/')) return;
 
-  // El panel no se cachea: es contenido privado.
+  // El panel no se cachea: es contenido privado y detrás de sesión.
   if (url.pathname.startsWith('/akaristudio/admin')) return;
 
   const esEstatico =
