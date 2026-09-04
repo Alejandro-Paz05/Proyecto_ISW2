@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import '@/styles/globals.css';
+import '@/styles/motion.css';
 import '@/styles/whatsapp.css';
 import '@/styles/admin.css';
 

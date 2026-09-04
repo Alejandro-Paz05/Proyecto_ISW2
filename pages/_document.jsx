@@ -4,6 +4,17 @@ export default function Document() {
   return (
     <Html lang="es">
       <Head>
+        {/* Marca que el JavaScript está corriendo, antes de que se pinte
+            nada. Las animaciones de entrada esconden su elemento hasta que
+            aparece en pantalla, y sin JS no habría quién las revele: la
+            clase `js` es la condición para que styles/motion.css oculte
+            algo. Sin ella, el contenido se ve normal. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js')"
+          }}
+        />
+
         {/* Prueba de propiedad del proyecto para la evaluación del curso.
             También disponible en /verificacion.txt */}
         <meta name="learn-cap" content="LEARN-CAP-76080609" />

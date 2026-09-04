@@ -4,7 +4,7 @@ export default function Contact() {
   return (
     <section id="contacto" className="section">
       <div className="container contact-container">
-        <div className="contact-info">
+        <div className="contact-info" data-revelar="izquierda">
           <p className="section-tag">Visítanos</p>
           <h2 className="section-title">Contacto</h2>
           <p>
@@ -22,7 +22,7 @@ export default function Contact() {
             <strong>🕐 Horario:</strong> {NEGOCIO.horario}
           </p>
         </div>
-        <div className="contact-map">
+        <div className="contact-map" data-revelar="derecha">
           <div className="map-placeholder">
             <span>📍</span>
             <p>Mapa de ubicación</p>

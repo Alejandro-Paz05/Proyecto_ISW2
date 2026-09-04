@@ -1,0 +1,62 @@
+/* ============================================
+   AKARI STUDIO — Movimiento
+   Animaciones de entrada al hacer scroll.
+   La lógica que agrega .revelado está en lib/use-revelar.js.
+   ============================================ */
+
+/* Solo se oculta algo si el JavaScript está corriendo. La clase `js` la pone
+   un script en línea de _document.jsx antes de que se pinte la página; si el
+   JS está desactivado o falló, esta regla nunca aplica y el contenido se ve
+   normal en vez de quedar invisible para siempre. */
+.js [data-revelar] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.7s var(--ease);
+  /* Avisa al navegador qué va a cambiar, para que prepare la capa antes de
+     animar y no haya un tirón en el primer fotograma. */
+  will-change: opacity, transform;
+}
+
+.js [data-revelar].revelado {
+  opacity: 1;
+  transform: none;
+  /* Terminada la animación, mantener la capa reservada solo gasta memoria. */
+  will-change: auto;
+}
+
+/* Escalonado dentro de una grilla: cada tarjeta entra un pelo después que la
+   anterior, así la fila se lee de izquierda a derecha en vez de aparecer de
+   golpe como un bloque. El índice lo pone el componente con --i. */
+.js [data-revelar] {
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+/* Variantes para secciones donde subir no queda bien. */
+.js [data-revelar='izquierda'] {
+  transform: translateX(-28px);
+}
+
+.js [data-revelar='derecha'] {
+  transform: translateX(28px);
+}
+
+.js [data-revelar='escala'] {
+  transform: scale(0.94);
+}
+
+.js [data-revelar='izquierda'].revelado,
+.js [data-revelar='derecha'].revelado,
+.js [data-revelar='escala'].revelado {
+  transform: none;
+}
+
+/* La regla global de prefers-reduced-motion ya recorta las duraciones, pero
+   el retraso escalonado sobrevive: sin esto, con movimiento reducido las
+   tarjetas seguirían apareciendo de a una con medio segundo de espera. */
+@media (prefers-reduced-motion: reduce) {
+  .js [data-revelar] {
+    transition-delay: 0ms !important;
+  }
+}
