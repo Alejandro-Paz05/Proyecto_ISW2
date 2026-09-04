@@ -3,8 +3,16 @@ import Products from '@/components/Products';
 import { useCatalogo } from '@/context/CatalogoContext';
 
 function Catalogo() {
-  const { productos, cargando, error } = useCatalogo();
-  return <Products products={productos} loading={cargando} error={error} />;
+  const { productos, categorias, etiquetas, cargando, error } = useCatalogo();
+  return (
+    <Products
+      products={productos}
+      loading={cargando}
+      error={error}
+      categorias={categorias}
+      etiquetas={etiquetas}
+    />
+  );
 }
 
 export default function ProductosPagina() {

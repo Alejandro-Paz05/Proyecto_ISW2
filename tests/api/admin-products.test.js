@@ -202,4 +202,43 @@ describe('rutas de productos del panel', () => {
       expect(res.headers.Allow).toBe('PATCH, DELETE');
     });
   });
+
+  // La clave foranea products.category -> categories.key solo puede saltar si
+  // el espejo de lib/categorias.js quedo desfasado de la tabla, porque
+  // validarProducto ya filtro contra el espejo. Cuando pasa, un 500 generico
+  // manda a leer logs de servidor por algo que se arregla con una fila.
+  describe('cuando la categoria no existe en la base', () => {
+    const VIOLACION_FK = {
+      code: '23503',
+      message: 'insert or update on table "products" violates foreign key constraint'
+    };
+
+    beforeEach(() => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      responder({ data: null, error: VIOLACION_FK });
+    });
+
+    it('responde 400 al crear, no 500', async () => {
+      const res = await llamar(catalogo, conSesion({ method: 'POST', body: VALIDO }));
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toMatch(/categoría/i);
+    });
+
+    it('responde 400 al editar, no 500', async () => {
+      const res = await llamar(
+        producto,
+        conSesion({ method: 'PATCH', query: { id: '7' }, body: { category: 'unas' } })
+      );
+
+      expect(res.statusCode).toBe(400);
+      expect(res.body.error).toMatch(/categoría/i);
+    });
+
+    it('no expone el texto de la restriccion', async () => {
+      const res = await llamar(catalogo, conSesion({ method: 'POST', body: VALIDO }));
+
+      expect(res.body.error).not.toMatch(/constraint|foreign key/i);
+    });
+  });
 });

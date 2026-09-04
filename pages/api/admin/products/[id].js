@@ -34,6 +34,12 @@ async function editar(id, req, res) {
 
     return res.status(200).json(data);
   } catch (error) {
+    // Ver la nota del mismo caso en index.js: la clave foránea contra
+    // `categories` rechazó la categoría.
+    if (error?.code === '23503') {
+      return res.status(400).json({ error: 'Esa categoría no existe en la base de datos.' });
+    }
+
     console.error('Error al editar el producto:', error);
     return res.status(500).json({ error: 'Error al editar el producto' });
   }

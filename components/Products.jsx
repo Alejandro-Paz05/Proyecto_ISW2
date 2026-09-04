@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { CATEGORIAS, ETIQUETAS_CATEGORIA } from '@/lib/categorias';
 
-const categories = [{ key: 'todos', label: 'Todos' }, ...CATEGORIAS];
-
 // Por debajo de este stock se avisa al cliente. Anunciar "quedan 25" no
 // aporta nada; anunciar "quedan 2" sí.
 const UMBRAL_STOCK_BAJO = 5;
@@ -12,9 +10,20 @@ function formatPrice(amount) {
   return 'L ' + Number(amount).toFixed(2);
 }
 
-export default function Products({ products, loading, error }) {
+// Las categorías llegan de la tabla `categories`. Los valores por defecto
+// cubren dos casos reales: el arranque, antes de que responda la API, y
+// cualquier prueba o página que monte el catálogo sin pasarlas.
+export default function Products({
+  products,
+  loading,
+  error,
+  categorias = CATEGORIAS,
+  etiquetas = ETIQUETAS_CATEGORIA
+}) {
   const [filter, setFilter] = useState('todos');
   const { addToCart, cart } = useCart();
+
+  const categories = [{ key: 'todos', label: 'Todos' }, ...categorias];
 
   const filtered = filter === 'todos'
     ? products
@@ -64,7 +73,7 @@ export default function Products({ products, loading, error }) {
                 <div className="product-card" key={product.id}>
                   <img src={product.image} alt={product.name} className="product-img" loading="lazy" />
                   <div className="product-body">
-                    <span className="product-category">{ETIQUETAS_CATEGORIA[product.category]}</span>
+                    <span className="product-category">{etiquetas[product.category]}</span>
                     <h3 className="product-name">{product.name}</h3>
                     <p className="product-desc">{product.description}</p>
                     <div className="product-footer">

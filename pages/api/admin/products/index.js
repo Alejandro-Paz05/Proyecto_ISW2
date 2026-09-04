@@ -44,6 +44,14 @@ async function crear(req, res) {
 
     return res.status(201).json(data);
   } catch (error) {
+    // 23503: la clave foránea contra `categories` rechazó la categoría.
+    // Solo puede pasar si el espejo de lib/categorias.js quedó desfasado de
+    // la tabla, porque validarProducto ya filtró contra el espejo. Decirlo
+    // así ahorra media hora de buscar un 500 sin explicación.
+    if (error?.code === '23503') {
+      return res.status(400).json({ error: 'Esa categoría no existe en la base de datos.' });
+    }
+
     console.error('Error al crear el producto:', error);
     return res.status(500).json({ error: 'Error al crear el producto' });
   }
