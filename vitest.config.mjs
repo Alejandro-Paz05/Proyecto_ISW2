@@ -35,9 +35,9 @@ export default defineConfig({
         '**/*.test.{js,jsx}'
       ],
 
-      // El umbral está apenas por debajo de la cobertura actual (~89%). No
-      // es una aspiración: sirve para que el CI falle si alguien agrega
-      // código sin probarlo, no para adornar el informe.
+      // El umbral queda por debajo de la cobertura actual (~96%). No es una
+      // aspiración: sirve para que el CI falle si alguien agrega código sin
+      // probarlo, no para adornar el informe.
       thresholds: {
         lines: 85,
         functions: 85,
