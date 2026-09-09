@@ -1,4 +1,4 @@
-name: CI
+name: AkariStudio CI/CD
 
 on:
   push:
@@ -54,3 +54,135 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ==========================================================================
+  # Despliegue continuo
+  #
+  # Los dos jobs de abajo dependen de `verificar`: si el lint, las pruebas o
+  # el build fallan, no se despliega nada. Ese es el motivo de moverlos acá y
+  # apagar el despliegue automático de Vercel, que construía por su cuenta y
+  # publicaba aunque las pruebas estuvieran en rojo.
+  # ==========================================================================
+
+  desplegar:
+    name: Desplegar a producción
+    needs: verificar
+    # Solo lo que ya está en main. Un pull request nunca toca producción.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    # Un despliegue a producción por vez. No se cancela el que está en curso:
+    # interrumpirlo a mitad dejaría el sitio en un estado indefinido.
+    concurrency:
+      group: produccion
+      cancel-in-progress: false
+
+    # Deja el despliegue anotado en la pestaña Environments, con su URL y su
+    # historial. Es también donde se agregarían revisores obligatorios si
+    # alguna vez se quiere aprobar a mano cada salida a producción.
+    environment:
+      name: produccion
+      url: ${{ steps.publicar.outputs.url }}
+
+    # La CLI de Vercel lee estas tres variables sola. Pasarlas por `env` y no
+    # interpolarlas dentro de cada `run` evita que el token quede escrito en
+    # el script que ejecuta el runner.
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Instalar la CLI de Vercel
+        run: npm install --global vercel@latest
+
+      # Baja las variables de entorno y la configuración del proyecto que
+      # están guardadas en Vercel, para que el build de acá salga idéntico al
+      # que Vercel haría por su cuenta.
+      - name: Traer la configuración del proyecto
+        run: vercel pull --yes --environment=production
+
+      # Se compila en el runner y se sube ya construido (`--prebuilt`). Es
+      # trabajo repetido respecto del build de `verificar`, pero necesario:
+      # Vercel espera su propio formato de salida en .vercel/output.
+      - name: Construir para producción
+        run: vercel build --prod
+
+      # La URL que imprime es la del despliegue concreto. El dominio propio
+      # (www.alejandropaz.xyz) lo apunta Vercel solo, por ser un despliegue
+      # de producción.
+      - name: Publicar
+        id: publicar
+        run: |
+          url=$(vercel deploy --prebuilt --prod)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Producción: $url" >> "$GITHUB_STEP_SUMMARY"
+
+  vista-previa:
+    name: Desplegar vista previa
+    needs: verificar
+    # Igual que el paso de Sonar: un fork no tiene acceso a los secretos.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    # Acá sí conviene cancelar: si llega un commit nuevo al pull request, la
+    # vista previa anterior ya no interesa.
+    concurrency:
+      group: vista-previa-${{ github.ref }}
+      cancel-in-progress: true
+
+    permissions:
+      contents: read
+      pull-requests: write # para dejar la URL como comentario en el PR
+
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Instalar la CLI de Vercel
+        run: npm install --global vercel@latest
+
+      - name: Traer la configuración del proyecto
+        run: vercel pull --yes --environment=preview
+
+      - name: Construir la vista previa
+        run: vercel build
+
+      - name: Publicar la vista previa
+        id: publicar
+        run: |
+          url=$(vercel deploy --prebuilt)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Vista previa: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      # Se edita el comentario anterior en vez de sumar uno por cada push. Si
+      # la versión de la CLI no soporta --edit-last, se crea uno nuevo.
+      - name: Comentar la URL en el pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.publicar.outputs.url }}
+        run: |
+          cuerpo="Vista previa de este pull request: $URL"
+          gh pr comment "$PR" --body "$cuerpo" --edit-last \
+            || gh pr comment "$PR" --body "$cuerpo"
