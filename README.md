@@ -1,6 +1,6 @@
 # Akari Studio
 
-[![CI](https://github.com/Alejandro-Paz05/Proyecto_ISW2/actions/workflows/ci.yml/badge.svg)](https://github.com/Alejandro-Paz05/Proyecto_ISW2/actions/workflows/ci.yml)
+[![AkariStudio CI/CD](https://github.com/Alejandro-Paz05/Proyecto_ISW2/actions/workflows/ci.yml/badge.svg)](https://github.com/Alejandro-Paz05/Proyecto_ISW2/actions/workflows/ci.yml)
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Alejandro-Paz05_Proyecto_ISW2&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Alejandro-Paz05_Proyecto_ISW2)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Alejandro-Paz05_Proyecto_ISW2&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Alejandro-Paz05_Proyecto_ISW2)
 
@@ -226,14 +226,32 @@ Están fuera de `pages/` a propósito. Next.js convierte en ruta todo lo que hay
 
 Cada push ejecuta lint, pruebas con cobertura, build y análisis de SonarQube Cloud en GitHub Actions ([ci.yml](.github/workflows/ci.yml)). La configuración del análisis está en [sonar-project.properties](sonar-project.properties).
 
-## Desplegar en Vercel
+## Integración y despliegue continuos
 
-1. Sube el repositorio a GitHub.
-2. En [vercel.com](https://vercel.com): **Add New** → **Project** → importa el repositorio.
-3. En **Environment Variables** agrega las tres variables de arriba, en los tres entornos.
-4. **Deploy**.
+Todo vive en un solo workflow, [ci.yml](.github/workflows/ci.yml), con tres jobs:
 
-Las variables se leen al construir: después de cambiar una hay que redesplegar.
+| Job | Cuándo corre | Qué hace |
+| --- | --- | --- |
+| `verificar` | Cada push y cada pull request a `main` | `npm ci`, lint, pruebas con cobertura, build y SonarQube Cloud |
+| `desplegar` | Solo en push a `main` | Publica en producción con la CLI de Vercel |
+| `vista-previa` | Pull requests del propio repositorio | Publica una vista previa y deja la URL como comentario en el PR |
+
+Los dos jobs de despliegue declaran `needs: verificar`, así que **nada sale a producción si el lint, las pruebas o el build fallan**. Por eso el despliegue automático de la integración de Vercel con GitHub queda apagado: construía por su cuenta, en paralelo, y publicaba sin esperar al resultado de las pruebas.
+
+### Configurar el despliegue
+
+1. En Vercel, **Settings** → **Git** → desactiva el despliegue automático, para que no haya dos caminos publicando lo mismo.
+2. Crea un token en **Account Settings** → **Tokens**.
+3. Toma `Project ID` y `Team ID` de **Project Settings** → **General**.
+4. En GitHub, **Settings** → **Secrets and variables** → **Actions**, agrega:
+
+   | Secreto | De dónde sale |
+   | --- | --- |
+   | `VERCEL_TOKEN` | El token del paso 2 |
+   | `VERCEL_ORG_ID` | El `Team ID` del paso 3 |
+   | `VERCEL_PROJECT_ID` | El `Project ID` del paso 3 |
+
+Las variables de entorno de la aplicación (las tres de Supabase) siguen viviendo en Vercel: `vercel pull` las baja durante el pipeline. No hace falta duplicarlas en GitHub.
 
 ## Funcionalidades
 
