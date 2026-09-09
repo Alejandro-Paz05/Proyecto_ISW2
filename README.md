@@ -236,20 +236,27 @@ Todo vive en un solo workflow, [ci.yml](.github/workflows/ci.yml), con tres jobs
 | `desplegar` | Solo en push a `main` | Publica en producción con la CLI de Vercel |
 | `vista-previa` | Pull requests del propio repositorio | Publica una vista previa y deja la URL como comentario en el PR |
 
-Los dos jobs de despliegue declaran `needs: verificar`, así que **nada sale a producción si el lint, las pruebas o el build fallan**. Por eso el despliegue automático de la integración de Vercel con GitHub queda apagado: construía por su cuenta, en paralelo, y publicaba sin esperar al resultado de las pruebas.
+Los dos jobs de despliegue declaran `needs: verificar`, así que **nada sale a producción si el lint, las pruebas o el build fallan**.
+
+Ese es el motivo de [vercel.json](vercel.json), que solo tiene una cosa:
+
+```json
+{ "git": { "deploymentEnabled": false } }
+```
+
+Sin eso, la integración de Vercel con GitHub construye por su cuenta en cada push, en paralelo al pipeline y sin esperarlo: un commit con las pruebas rotas se publicaba igual. Apagarlo desde el repositorio y no desde el panel de Vercel deja la decisión versionada y a la vista de cualquiera que lea el código. No afecta a los despliegues que manda el pipeline, porque esos son explícitos y no los dispara Git.
 
 ### Configurar el despliegue
 
-1. En Vercel, **Settings** → **Git** → desactiva el despliegue automático, para que no haya dos caminos publicando lo mismo.
-2. Crea un token en **Account Settings** → **Tokens**.
-3. Toma `Project ID` y `Team ID` de **Project Settings** → **General**.
-4. En GitHub, **Settings** → **Secrets and variables** → **Actions**, agrega:
+1. Crea un token en **Account Settings** → **Tokens**. El alcance tiene que ser **All Projects**: uno acotado a un solo proyecto no puede leer su configuración y `vercel pull` falla con `Could not retrieve Project Settings`.
+2. Toma el `Project ID` de **Project Settings** → **General** y el `Team ID` de los ajustes del equipo. Empiezan con `prj_` y `team_`. Si hace falta comprobarlos, `npx vercel link` los escribe en `.vercel/`.
+3. En GitHub, **Settings** → **Secrets and variables** → **Actions**, agrega:
 
    | Secreto | De dónde sale |
    | --- | --- |
-   | `VERCEL_TOKEN` | El token del paso 2 |
-   | `VERCEL_ORG_ID` | El `Team ID` del paso 3 |
-   | `VERCEL_PROJECT_ID` | El `Project ID` del paso 3 |
+   | `VERCEL_TOKEN` | El token del paso 1 |
+   | `VERCEL_ORG_ID` | El `Team ID` del paso 2 |
+   | `VERCEL_PROJECT_ID` | El `Project ID` del paso 2 |
 
 Las variables de entorno de la aplicación (las tres de Supabase) siguen viviendo en Vercel: `vercel pull` las baja durante el pipeline. No hace falta duplicarlas en GitHub.
 
