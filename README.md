@@ -101,13 +101,13 @@ Decisiones registradas:
 
 1. Crea una cuenta gratuita en [supabase.com](https://supabase.com) y un proyecto nuevo.
 2. En **SQL Editor** → **New query**, ejecuta los archivos de [supabase/migraciones/](supabase/migraciones/) **en orden numérico**, del `000` al `004`. Qué deja cada uno está en [supabase/README.md](supabase/README.md).
-3. En **Project Settings** → **API**, copia la **Project URL** y la clave **`service_role`** (hay que pulsar *Reveal*).
+3. En **Project Settings** → **Data API** copia la **Project URL**, y en **Project Settings** → **API Keys** crea o copia una **Secret key** (hay que pulsar *Reveal*).
 
 Las migraciones son **idempotentes**: correrlas de nuevo sobre una base que ya está al día no cambia nada y no da error. Vale igual para una base vacía que para una que ya venía funcionando, así que no hay dos caminos que mantener.
 
 Para saber en qué estado está una base, `npm run db:estado` la consulta y dice qué falta. Sale con código 1 si falta alguna migración, así que sirve para cortar un despliegue antes de que el código pida una tabla que todavía no existe.
 
-> **La clave `service_role` es secreta.** Salta las políticas de seguridad de la base. Va únicamente en variables de entorno del servidor; nunca en el repositorio ni en código del navegador.
+> **La Secret key no se comparte.** Salta las políticas de seguridad de la base. Va únicamente en variables de entorno del servidor; nunca en el repositorio ni en código del navegador. Las claves *legacy* basadas en JWT están desactivadas en este proyecto, así que no sirven como reemplazo.
 
 En [supabase/historico/](supabase/historico/) quedan los scripts de la agenda de reserva en línea, que se retiró según la [ADR-003](docs/adr/ADR-003-solicitud-de-citas-por-whatsapp.md). **No hay que correrlos**: se conservan porque documentan una decisión que se tomó y se revirtió.
 
@@ -129,17 +129,11 @@ Categorías válidas: `unas`, `pestanas`, `cejas`, `maquillaje` y `accesorios`.
 
 ## Variables de entorno
 
-Copia `env.example` a `.env.local` y completa:
-
-```env
-SUPABASE_URL=https://tu-proyecto.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<la clave service_role de tu proyecto>
-ADMIN_PASSWORD=<una contraseña de 8 caracteres o más>
-```
+Copia [`env.example`](env.example) a `.env.local` y completa las tres variables que lista: la URL del proyecto de Supabase, su Secret key y la contraseña del panel, de 8 caracteres o más. Cada una tiene al lado un comentario que dice de dónde sale.
 
 Las mismas tres hacen falta en el despliegue.
 
-Los valores de arriba son marcadores de posición: en este repositorio no hay ninguna credencial real, ni en los archivos ni en el historial. Las reales viven en `.env.local`, que está en `.gitignore`, y en las variables de entorno de Vercel.
+En este repositorio no hay ninguna credencial real, ni en los archivos ni en el historial. Las reales viven en `.env.local`, que está en `.gitignore`, y en las variables de entorno de Vercel.
 
 ## Ejecutar localmente
 
