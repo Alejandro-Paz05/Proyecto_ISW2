@@ -195,7 +195,7 @@ El código de `respuesta-cacheable.js` no sobra por eso: es lo que responde en d
 
 ## Pruebas
 
-226 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura de líneas es del **97%** sobre el código con lógica. Los resúmenes que leen las herramientas —[`coverage/lcov.info`](coverage/lcov.info) y [`coverage/coverage-summary.json`](coverage/coverage-summary.json)— están versionados, para que la cifra se pueda comprobar leyendo el repositorio en vez de confiar en una captura.
+271 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura de líneas es del **97%** sobre el código con lógica. Los resúmenes que leen las herramientas —[`coverage/lcov.info`](coverage/lcov.info) y [`coverage/coverage-summary.json`](coverage/coverage-summary.json)— están versionados, para que la cifra se pueda comprobar leyendo el repositorio en vez de confiar en una captura.
 
 | Archivo | Qué cubre |
 |---|---|
