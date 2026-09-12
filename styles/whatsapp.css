@@ -6,7 +6,14 @@
   position: fixed;
   right: 22px;
   bottom: 22px;
-  z-index: 2500;
+
+  /* Por encima de la página (la barra está en 1000) y por debajo de cualquier
+     capa que la atenúe: el carrito abre en 2000 y 2001, y los modales en 3000.
+     Estaba en 2500, o sea flotando sobre el carrito abierto, y como comparten
+     la esquina inferior derecha se comía el clic de "Realizar Pedido": quien
+     iba a pagar terminaba en WhatsApp. Lo detectó e2e/checkout.spec.js, que
+     ahora es lo que impide que vuelva a pasar. */
+  z-index: 1900;
 
   display: inline-flex;
   align-items: center;
