@@ -26,9 +26,10 @@ export default defineConfig({
       reportsDirectory: './coverage',
 
       // Se mide lo que tiene lógica. Quedan fuera las páginas y los
-      // componentes de presentación: cubrirlos exigiría pruebas de
-      // navegador que hoy no existen, y contarlos sin probarlos daría un
-      // porcentaje que miente hacia abajo.
+      // componentes de presentación: a esos los recorre Playwright desde un
+      // navegador de verdad (e2e/), que no aporta a este informe, y
+      // contarlos acá sin probarlos daría un porcentaje que miente hacia
+      // abajo.
       include: ['lib/**/*.js', 'pages/api/**/*.js', 'context/**/*.jsx'],
       exclude: [
         'lib/supabase.js', // cliente externo; se simula en las pruebas

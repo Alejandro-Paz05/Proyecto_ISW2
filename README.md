@@ -27,6 +27,7 @@ Proyecto de la asignatura **Ingeniería de Software II**.
 | Backend | API Routes de Next.js |
 | Base de datos | Supabase (PostgreSQL) |
 | Pruebas | Vitest + Testing Library |
+| Pruebas E2E | Playwright |
 | Integración continua | GitHub Actions |
 | Despliegue | Vercel |
 
@@ -54,6 +55,7 @@ scripts/               Generación de iconos y exportación del modelo
 styles/                globals.css, whatsapp.css, admin.css
 supabase/              Esquema, migraciones y datos de ejemplo
 tests/                 Pruebas, espejando la estructura del código
+e2e/                   Recorridos completos con Playwright
 docs/                  Arquitectura, ADR y modelo de datos
 .github/workflows/     Integración continua
 ```
@@ -220,17 +222,44 @@ Están fuera de `pages/` a propósito. Next.js convierte en ruta todo lo que hay
 
 Cada push ejecuta lint, pruebas con cobertura, build y análisis de SonarQube Cloud en GitHub Actions ([ci.yml](.github/workflows/ci.yml)). La configuración del análisis está en [sonar-project.properties](sonar-project.properties).
 
+## Pruebas de extremo a extremo
+
+14 pruebas con [Playwright](https://playwright.dev) sobre Chromium, en [e2e/](e2e/). Son la punta de la pirámide: recorren caminos completos —comprar, entrar al panel, quedarse sin internet— y no casos de borde, que en Vitest cuestan milisegundos y acá costarían minutos.
+
+| Archivo | Qué recorre |
+|---|---|
+| `e2e/tienda.spec.js` | Catálogo, filtros, agotado, límite de stock y carrito que sobrevive a una recarga |
+| `e2e/checkout.spec.js` | Un pedido completo hasta el número de pedido, y el rechazo de la base |
+| `e2e/panel.spec.js` | Login real: redirección sin sesión, contraseña incorrecta y cambio de estado |
+| `e2e/offline.spec.js` | Service worker: una página visitada sin internet y la pantalla sin conexión |
+| `e2e/humo.spec.js` | Humo contra el sitio publicado, de solo lectura |
+
+```bash
+npm run e2e         # compila, levanta el servidor y corre los recorridos
+npm run e2e:ui      # modo interactivo, para escribir o depurar una prueba
+npm run e2e:humo    # solo el humo, contra https://www.alejandropaz.xyz
+```
+
+**Corren contra la aplicación real, pero no contra la base real.** Playwright compila el proyecto y levanta `next start`, así que el HTML, el router, el carrito, `localStorage` y la cookie de sesión son los de producción. Lo único simulado son las respuestas de las rutas de API, interceptadas en el navegador desde [e2e/apoyo/api.js](e2e/apoyo/api.js). Por eso no hacen falta credenciales: ninguna petición llega hasta Supabase.
+
+Esa frontera es deliberada. Un E2E que comprara de verdad crearía un pedido en la base de la clienta y descontaría inventario en cada corrida del pipeline. Y al revés: el catálogo real cambia de stock con cada venta, así que una prueba que dependiera de él fallaría el día que alguien compre algo. El catálogo fijo de [e2e/apoyo/datos.js](e2e/apoyo/datos.js) son cuatro productos elegidos para cubrir stock holgado, stock bajo, última unidad y agotado.
+
+Lo que sí es real es la sesión del panel: el servidor firma el token con HMAC, lo manda en una cookie `httpOnly` y `getServerSideProps` la verifica en cada visita. La prueba escribe la contraseña y entra como entraría la dueña. El servidor de pruebas arranca con una `ADMIN_PASSWORD` que [playwright.config.mjs](playwright.config.mjs) sortea en cada corrida, así que en el repositorio no queda ninguna contraseña escrita, ni siquiera de mentira.
+
+El service worker se bloquea en todas las pruebas menos en `offline.spec.js`: si sirviera copias guardadas, las respuestas simuladas dejarían de ser las que llegan a la página.
+
 ## Integración y despliegue continuos
 
-Todo vive en un solo workflow, [ci.yml](.github/workflows/ci.yml), con tres jobs:
+Todo vive en un solo workflow, [ci.yml](.github/workflows/ci.yml), con cuatro jobs:
 
 | Job | Cuándo corre | Qué hace |
 | --- | --- | --- |
 | `verificar` | Cada push y cada pull request a `main` | `npm ci`, lint, pruebas con cobertura, build y SonarQube Cloud |
+| `e2e` | Cada push y cada pull request a `main` | Compila, levanta la app y corre los recorridos de Playwright |
 | `desplegar` | Solo en push a `main` | Publica en producción con la CLI de Vercel |
 | `vista-previa` | Pull requests del propio repositorio | Publica una vista previa y deja la URL como comentario en el PR |
 
-Los dos jobs de despliegue declaran `needs: verificar`, así que **nada sale a producción si el lint, las pruebas o el build fallan**.
+Los dos jobs de despliegue declaran `needs: [verificar, e2e]`, así que **nada sale a producción si el lint, las pruebas, el build o un recorrido completo fallan**. `verificar` y `e2e` corren en paralelo: el pipeline tarda lo que el más lento, no la suma.
 
 Ese es el motivo de [vercel.json](vercel.json), que solo tiene una cosa:
 
