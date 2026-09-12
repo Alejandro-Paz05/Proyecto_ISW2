@@ -56,17 +56,63 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # ==========================================================================
+  # Pruebas de extremo a extremo
+  #
+  # Job aparte y no un paso más de `verificar`: corre en paralelo, así el
+  # pipeline no tarda la suma de los dos, y un fallo se lee de una vez en la
+  # lista de checks sin abrir el log.
+  # ==========================================================================
+
+  e2e:
+    name: Pruebas E2E (Playwright)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Solo Chromium. Bajar los tres navegadores cuesta varios minutos y
+      # estas pruebas no cubren nada específico de Firefox ni de WebKit.
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Playwright compila la aplicación, levanta `next start` antes de la
+      # primera prueba y lo apaga al terminar: ver playwright.config.mjs.
+      - name: Pruebas E2E
+        run: npm run e2e -- --project=local
+
+      # El informe explica un fallo sin tener que reproducirlo a mano: trae la
+      # traza del reintento, la captura y el paso exacto donde se cayó.
+      - name: Guardar el informe
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: informe-playwright
+          path: playwright-report/
+          retention-days: 7
+
+  # ==========================================================================
   # Despliegue continuo
   #
-  # Los dos jobs de abajo dependen de `verificar`: si el lint, las pruebas o
-  # el build fallan, no se despliega nada. Ese es el motivo de moverlos acá y
-  # apagar el despliegue automático de Vercel, que construía por su cuenta y
-  # publicaba aunque las pruebas estuvieran en rojo.
+  # Los dos jobs de abajo dependen de `verificar` y de `e2e`: si el lint, las
+  # pruebas, el build o un recorrido completo fallan, no se despliega nada.
+  # Ese es el motivo de moverlos acá y apagar el despliegue automático de
+  # Vercel, que construía por su cuenta y publicaba aunque las pruebas
+  # estuvieran en rojo.
   # ==========================================================================
 
   desplegar:
     name: Desplegar a producción
-    needs: verificar
+    needs: [verificar, e2e]
     # Solo lo que ya está en main. Un pull request nunca toca producción.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -129,7 +175,7 @@ jobs:
 
   vista-previa:
     name: Desplegar vista previa
-    needs: verificar
+    needs: [verificar, e2e]
     # Igual que el paso de Sonar: un fork no tiene acceso a los secretos.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
