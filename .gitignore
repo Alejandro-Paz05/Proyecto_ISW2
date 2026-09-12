@@ -28,6 +28,16 @@
 !/coverage/lcov.info
 !/coverage/coverage-summary.json
 
+# Pruebas E2E.
+#
+# Todo lo que deja Playwright al correr es reproducible corriéndolo otra vez:
+# el informe HTML, las trazas y las capturas de un fallo. En el pipeline se
+# guardan como artefacto de la corrida, que es donde sirven.
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
 # Misc
 .DS_Store
 *.pem
