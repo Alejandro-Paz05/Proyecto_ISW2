@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Retroalimentacion from '@/components/Retroalimentacion';
 import { NEGOCIO } from '@/lib/negocio';
 
 const ENLACES = [
@@ -37,6 +38,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="footer-bottom">
+        <Retroalimentacion />
         <p>© 2026 Akari Studio. Todos los derechos reservados.</p>
       </div>
     </footer>
