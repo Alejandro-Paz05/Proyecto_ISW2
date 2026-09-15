@@ -53,9 +53,16 @@ export async function completarCheckout(page, { pago = 'Efectivo', clienta = CLI
   return formulario;
 }
 
-/** Entra al panel con la contraseña real del servidor de pruebas. */
+/**
+ * Entra al panel con la contraseña compartida del servidor de pruebas.
+ *
+ * Es el acceso temporal de la transición. El servidor de las E2E arranca sin
+ * las variables públicas de Supabase, así que es el único formulario que se
+ * muestra; los selectores igual nombran el campo completo, para no confundirlo
+ * con el de correo y contraseña cuando los dos convivan.
+ */
 export async function iniciarSesionEnElPanel(page, password) {
   await page.goto('/akaristudio/admin/login');
-  await page.getByLabel('Contraseña').fill(password);
-  await page.getByRole('button', { name: 'Entrar' }).click();
+  await page.getByLabel('Contraseña del panel').fill(password);
+  await page.getByRole('button', { name: 'Entrar con la contraseña del panel' }).click();
 }
