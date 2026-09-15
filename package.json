@@ -19,6 +19,7 @@
     "e2e:humo": "playwright test --config=playwright.config.mjs --project=humo",
     "db:estado": "node scripts/estado-db.mjs",
     "db:exportar": "node scripts/exportar-modelo.mjs",
+    "cuentas:crear": "node scripts/crear-cuenta.mjs",
     "iconos": "node scripts/generar-iconos.mjs"
   },
   "dependencies": {
