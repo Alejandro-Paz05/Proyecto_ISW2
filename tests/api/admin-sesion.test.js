@@ -1,6 +1,20 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { llamar } from '../helpers/http';
-import { COOKIE_SESION, tokenEsValido } from '@/lib/admin-auth';
+import { llamar, crearRes } from '../helpers/http';
+import { COOKIE_SESION, tokenEsValido, cookieDeCierre } from '@/lib/admin-auth';
+
+const { signOut, capturado } = vi.hoisted(() => ({
+  signOut: vi.fn(),
+  capturado: { cookies: null }
+}));
+
+// Se guardan las funciones de cookies que recibe el cliente, para que una
+// prueba pueda hacer lo que hace Supabase al cerrar sesión: vencer sus cookies.
+vi.mock('@supabase/ssr', () => ({
+  createServerClient: (_url, _clave, opciones) => {
+    capturado.cookies = opciones.cookies;
+    return { auth: { signOut } };
+  }
+}));
 
 import login from '@/pages/api/admin/login';
 import logout from '@/pages/api/admin/logout';
@@ -106,6 +120,59 @@ describe('sesión del panel', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.headers['Set-Cookie']).toContain('Max-Age=0');
+    });
+
+    describe('con cuentas configuradas', () => {
+      beforeEach(() => {
+        process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://proyecto.supabase.co';
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'clave-publicable-de-prueba';
+        signOut.mockReset();
+      });
+
+      afterEach(() => {
+        delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+        delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+      });
+
+      async function cerrarSesion() {
+        const res = crearRes();
+        res.getHeader = (clave) => res.headers[clave];
+        await logout({ method: 'POST', cookies: {} }, res);
+        return res;
+      }
+
+      it('cierra también la sesión de Supabase, solo en este dispositivo', async () => {
+        signOut.mockResolvedValue({ error: null });
+
+        await cerrarSesion();
+
+        expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+      });
+
+      it('suma la cookie del panel sin pisar las que vence Supabase', async () => {
+        signOut.mockImplementation(async () => {
+          capturado.cookies.setAll([
+            { name: 'sb-sesion', value: '', options: { maxAge: 0, path: '/' } }
+          ]);
+          return { error: null };
+        });
+
+        const res = await cerrarSesion();
+
+        expect(res.headers['Set-Cookie']).toEqual([
+          'sb-sesion=; Max-Age=0; Path=/',
+          cookieDeCierre()
+        ]);
+      });
+
+      it('si Supabase no responde, igual borra la cookie del panel', async () => {
+        signOut.mockRejectedValue(new Error('fetch failed'));
+
+        const res = await cerrarSesion();
+
+        expect(res.statusCode).toBe(200);
+        expect(res.headers['Set-Cookie']).toBe(cookieDeCierre());
+      });
     });
   });
 });
