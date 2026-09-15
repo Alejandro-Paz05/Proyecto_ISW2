@@ -13,8 +13,10 @@ En **Supabase → SQL Editor → New query**, pegá y ejecutá los archivos **en
 | 002 | `pedidos.sql` | `orders`, `order_items`, la secuencia del número de pedido y `create_order` |
 | 003 | `bitacora_de_estados.sql` | `order_status_history` y el trigger que la escribe |
 | 004 | `catalogo_de_ejemplo.sql` | 16 productos de prueba — **opcional** |
+| 005 | `perfiles_y_roles.sql` | `profiles` con el rol de cada cuenta, `orders.user_id`, `create_order` con cuenta y la RLS por usuario |
+| 006 | `retroalimentacion_y_tickets.sql` | `feedback`, `tickets`, `registrar_error` y el ticket automático de cada problema reportado |
 
-Sobre una base que ya está al día, correrlos de nuevo no cambia nada y no da error. Esa es la idea.
+Sobre una base que ya está al día, correrlos de nuevo no cambia nada y no da error. Esa es la idea, y desde la 005 no es solo una promesa: [tests/db/migraciones.test.js](../tests/db/migraciones.test.js) las corre dos veces seguidas sobre un Postgres real (PGlite) y compara tablas, filas, políticas, funciones, triggers y privilegios antes y después.
 
 Para ver en qué estado quedó, `estado.sql` responde en una sola consulta qué migraciones están aplicadas, qué tablas hay con cuántas filas, qué políticas protegen cada una y qué triggers corren solos. Solo lee.
 

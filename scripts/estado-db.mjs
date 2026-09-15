@@ -21,7 +21,9 @@ const MIGRACIONES = [
   { version: 1, nombre: 'catalogo', tablas: ['categories', 'products'] },
   { version: 2, nombre: 'pedidos', tablas: ['orders', 'order_items'] },
   { version: 3, nombre: 'bitacora_de_estados', tablas: ['order_status_history'] },
-  { version: 4, nombre: 'catalogo_de_ejemplo', tablas: [], opcional: true }
+  { version: 4, nombre: 'catalogo_de_ejemplo', tablas: [], opcional: true },
+  { version: 5, nombre: 'perfiles_y_roles', tablas: ['profiles'] },
+  { version: 6, nombre: 'retroalimentacion_y_tickets', tablas: ['feedback', 'tickets'] }
 ];
 
 function archivosDeMigracion() {
