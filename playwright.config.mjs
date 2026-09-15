@@ -118,7 +118,14 @@ export default defineConfig({
           // falla en el acto en vez de ir a la base de la clienta. Sin esto,
           // `next start` toma las credenciales reales de .env.local.
           SUPABASE_URL: 'http://127.0.0.1:9999',
-          SUPABASE_SERVICE_ROLE_KEY: 'las-pruebas-no-tocan-la-base'
+          SUPABASE_SERVICE_ROLE_KEY: 'las-pruebas-no-tocan-la-base',
+
+          // Vacías y no ausentes. Next solo carga de .env.local las variables
+          // que no están definidas, así que si faltaran acá el servidor de
+          // pruebas tomaría las reales y validaría sesiones contra Supabase.
+          // Vacías, lib/sesion.js ni lo intenta y usa la contraseña del panel.
+          NEXT_PUBLIC_SUPABASE_URL: '',
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ''
         }
       }
 });

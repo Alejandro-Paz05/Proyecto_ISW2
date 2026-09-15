@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { soloAdmin } from '@/lib/admin-auth';
+import { conRol, PANEL_TIENDA } from '@/lib/sesion';
 import { validarProducto } from '@/lib/validar-producto';
 import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
 
@@ -71,4 +71,4 @@ async function eliminar(id, res) {
   }
 }
 
-export default soloAdmin(handler);
+export default conRol(PANEL_TIENDA, handler);

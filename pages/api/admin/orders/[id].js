@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { soloAdmin } from '@/lib/admin-auth';
+import { conRol, PANEL_TIENDA } from '@/lib/sesion';
 
 // Debe coincidir con el CHECK de orders.status en
 // supabase/migraciones/002_pedidos.sql.
@@ -39,4 +39,4 @@ async function handler(req, res) {
   }
 }
 
-export default soloAdmin(handler);
+export default conRol(PANEL_TIENDA, handler);

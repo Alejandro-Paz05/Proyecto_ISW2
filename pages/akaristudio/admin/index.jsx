@@ -1,6 +1,6 @@
 import { Fragment, useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { estaAutenticado } from '@/lib/admin-auth';
+import { protegerPagina, PANEL_TIENDA } from '@/lib/sesion';
 
 const ESTADOS = ['pendiente', 'confirmado', 'enviado', 'entregado', 'cancelado'];
 
@@ -245,9 +245,4 @@ export default function PedidosAdmin() {
   );
 }
 
-export function getServerSideProps({ req }) {
-  if (!estaAutenticado(req)) {
-    return { redirect: { destination: '/akaristudio/admin/login', permanent: false } };
-  }
-  return { props: {} };
-}
+export const getServerSideProps = protegerPagina(PANEL_TIENDA);

@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { soloAdmin } from '@/lib/admin-auth';
+import { conRol, PANEL_TIENDA } from '@/lib/sesion';
 
 async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -32,4 +32,4 @@ async function handler(req, res) {
   }
 }
 
-export default soloAdmin(handler);
+export default conRol(PANEL_TIENDA, handler);

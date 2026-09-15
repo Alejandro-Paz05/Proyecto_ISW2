@@ -18,7 +18,8 @@ const PASSWORD = process.env.ADMIN_PASSWORD;
 test('sin sesión, el panel redirige al login', async ({ page }) => {
   await page.goto('/akaristudio/admin');
 
-  await expect(page).toHaveURL(/\/akaristudio\/admin\/login$/);
+  // Con o sin ?volver=: el login recuerda a dónde se quería ir.
+  await expect(page).toHaveURL(/\/akaristudio\/admin\/login(\?|$)/);
   await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible();
 });
 
@@ -26,7 +27,8 @@ test('una contraseña incorrecta no abre el panel', async ({ page }) => {
   await iniciarSesionEnElPanel(page, 'esta-no-es-la-buena');
 
   await expect(page.getByText('Contraseña incorrecta.')).toBeVisible();
-  await expect(page).toHaveURL(/\/akaristudio\/admin\/login$/);
+  // Con o sin ?volver=: el login recuerda a dónde se quería ir.
+  await expect(page).toHaveURL(/\/akaristudio\/admin\/login(\?|$)/);
 });
 
 test('con la contraseña correcta se entra y se ven los pedidos', async ({ page }) => {
