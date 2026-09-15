@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { reportarError } from '@/lib/errores';
 import { conRol, PANEL_TIENDA } from '@/lib/sesion';
 
 async function handler(req, res) {
@@ -28,6 +29,7 @@ async function handler(req, res) {
     return res.status(200).json(data);
   } catch (error) {
     console.error('Error al listar pedidos:', error);
+    await reportarError(error, { ruta: '/api/admin/orders', metodo: req.method });
     return res.status(500).json({ error: 'Error al obtener los pedidos' });
   }
 }

@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { reportarError } from '@/lib/errores';
 import { conRol, PANEL_TIENDA } from '@/lib/sesion';
 
 // Debe coincidir con el CHECK de orders.status en
@@ -35,6 +36,7 @@ async function handler(req, res) {
     return res.status(200).json(data);
   } catch (error) {
     console.error('Error al actualizar el pedido:', error);
+    await reportarError(error, { ruta: '/api/admin/orders/[id]', metodo: req.method });
     return res.status(500).json({ error: 'Error al actualizar el pedido' });
   }
 }

@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { reportarError } from '@/lib/errores';
 import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
 
 // Códigos de Postgres que corresponden a un error del cliente, no del
@@ -85,6 +86,9 @@ export default async function handler(req, res) {
     return res.status(201).json({ success: true, order: data });
   } catch (error) {
     console.error('Error al crear pedido:', error);
+    // Solo los errores inesperados llegan acá: los de validación ya salieron
+    // como 400 y no son un bug. El cuerpo del pedido no viaja al ticket.
+    await reportarError(error, { ruta: '/api/orders', metodo: req.method });
     return res.status(500).json({ error: 'Error al procesar el pedido' });
   }
 }

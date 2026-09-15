@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { reportarError } from '@/lib/errores';
 import { conRol, PANEL_TIENDA } from '@/lib/sesion';
 import { validarProducto } from '@/lib/validar-producto';
 import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
@@ -29,6 +30,7 @@ async function listar(req, res) {
     return res.status(200).json(data);
   } catch (error) {
     console.error('Error al listar productos:', error);
+    await reportarError(error, { ruta: '/api/admin/products', metodo: req.method });
     return res.status(500).json({ error: 'Error al obtener los productos' });
   }
 }
@@ -59,6 +61,7 @@ async function crear(req, res) {
     }
 
     console.error('Error al crear el producto:', error);
+    await reportarError(error, { ruta: '/api/admin/products', metodo: req.method });
     return res.status(500).json({ error: 'Error al crear el producto' });
   }
 }
