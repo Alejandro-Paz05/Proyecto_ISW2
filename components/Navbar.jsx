@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCart } from '@/context/CartContext';
 import { useSesionAbierta } from '@/lib/use-sesion';
+import { useCerrarConEscape } from '@/lib/use-escape';
 
 const ENLACES = [
   { href: '/akaristudio', label: 'Inicio' },
@@ -19,7 +20,11 @@ export default function Navbar() {
   const { getCartCount, setCartOpen } = useCart();
   const router = useRouter();
   const [compacta, setCompacta] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const sesionAbierta = useSesionAbierta();
+
+  const cerrarMenu = useCallback(() => setMenuAbierto(false), []);
+  useCerrarConEscape(menuAbierto, cerrarMenu);
 
   const cantidad = getCartCount();
   const [rebota, setRebota] = useState(false);
@@ -50,13 +55,13 @@ export default function Navbar() {
   }, [cantidad]);
 
   return (
-    <header className={`navbar ${compacta ? 'compacta' : ''}`}>
+    <header className={`navbar ${compacta ? 'compacta' : ''} ${menuAbierto ? 'con-menu' : ''}`}>
       <div className="container nav-container">
         <Link href="/akaristudio" className="logo">
           <span className="logo-icon">✦</span>
           <span className="logo-text">Akari <em>Studio</em></span>
         </Link>
-        <nav className="nav-links">
+        <nav id="menu-principal" className={`nav-links ${menuAbierto ? 'abierto' : ''}`}>
           {ENLACES.map((enlace) => {
             // Solo se marca activa una sección que sea página propia: los
             // enlaces con ancla apuntan todos a la portada.
@@ -68,6 +73,10 @@ export default function Navbar() {
                 href={enlace.href}
                 className={activo ? 'activo' : undefined}
                 aria-current={activo ? 'page' : undefined}
+                // Un enlace con ancla a la misma página no cambia de ruta, así
+                // que esperar al router dejaría el menú abierto tapando justo
+                // la sección a la que se acaba de ir.
+                onClick={cerrarMenu}
               >
                 {enlace.label}
               </Link>
@@ -87,6 +96,22 @@ export default function Navbar() {
           <button className="cart-btn" onClick={() => setCartOpen(true)} aria-label="Abrir carrito">
             <span className="cart-icon">🛒</span>
             <span className={`cart-count ${rebota ? 'rebota' : ''}`}>{cantidad}</span>
+          </button>
+
+          {/* Solo se ve en el teléfono, que es donde .nav-links se esconde.
+              Hasta acá la barra en móvil tenía el logo y el carrito, y a
+              Servicios, Productos y Contacto no se llegaba por ningún lado. */}
+          <button
+            type="button"
+            className={`nav-menu-btn ${menuAbierto ? 'abierto' : ''}`}
+            onClick={() => setMenuAbierto((abierto) => !abierto)}
+            aria-expanded={menuAbierto}
+            aria-controls="menu-principal"
+            aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
+          >
+            <span className="nav-menu-barra" />
+            <span className="nav-menu-barra" />
+            <span className="nav-menu-barra" />
           </button>
         </div>
       </div>

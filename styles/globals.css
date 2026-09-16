@@ -504,6 +504,46 @@ h1, h2, h3, h4 {
   transition: transform var(--dur-1) var(--ease);
 }
 
+/* El botón del menú solo existe en el teléfono: acá queda oculto y la media
+   query de abajo lo muestra, junto con el panel desplegable. */
+.nav-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  /* 44px es el mínimo cómodo para un dedo; el área se extiende con padding
+     aunque las barras midan 20. */
+  width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.nav-menu-barra {
+  display: block;
+  height: 2px;
+  width: 20px;
+  background: var(--white);
+  border-radius: 2px;
+  transition: transform var(--dur-2) var(--ease), opacity var(--dur-1) var(--ease);
+}
+
+/* Las tres barras se convierten en una cruz: la de arriba y la de abajo
+   rotan hasta cruzarse y la del medio se desvanece. */
+.nav-menu-btn.abierto .nav-menu-barra:first-child {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-menu-btn.abierto .nav-menu-barra:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-menu-btn.abierto .nav-menu-barra:last-child {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
 .cart-btn:hover {
   transform: scale(1.12);
 }
@@ -1642,7 +1682,55 @@ h1, h2, h3, h4 {
    resuelve clamp(), que escala de forma continua en vez de dar un salto
    justo en los 768px. */
 @media (max-width: 768px) {
+  .nav-menu-btn {
+    display: flex;
+  }
+
+  /* Cerrado no es solo invisible: con display none los enlaces tampoco
+     reciben foco, así que quien navega con teclado no cae en un menú que no
+     se está viendo. */
   .nav-links {
+    display: none;
+  }
+
+  /* Con el menú desplegado la barra se vuelve sólida aunque la página esté
+     arriba del todo: si no, el título del hero se transparenta detrás de los
+     enlaces y no se lee ninguno de los dos. */
+  .navbar.con-menu {
+    background: var(--black);
+    backdrop-filter: blur(14px);
+  }
+
+  .nav-links.abierto {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    /* Cuelga de la barra, que es fixed, y ocupa todo el ancho. */
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: 8px 24px 16px;
+    background: var(--black);
+    border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  .nav-links.abierto a {
+    /* Alto de dedo, y la línea separadora hace visible dónde termina cada
+       zona tocable. */
+    padding: 14px 0;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .nav-links.abierto a:last-child {
+    border-bottom: none;
+  }
+
+  /* El subrayado animado del escritorio no aporta nada acá y se superpone
+     con la línea separadora. */
+  .nav-links.abierto a::after {
     display: none;
   }
 
