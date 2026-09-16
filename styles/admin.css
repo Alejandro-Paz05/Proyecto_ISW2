@@ -668,6 +668,26 @@
   cursor: default;
 }
 
+/* Cambiar entre ingresar y crear cuenta. Es un botón y no un enlace porque
+   no lleva a ninguna parte: cambia el mismo formulario. */
+.admin-login-cambiar {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 6px;
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-family: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.admin-login-cambiar:hover {
+  color: var(--black);
+}
+
 /* El acceso con la contraseña compartida, mientras dure la transición:
    separado y en segundo plano, para que no compita con las cuentas. */
 .admin-login-temporal {

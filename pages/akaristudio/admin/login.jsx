@@ -10,18 +10,20 @@ import {
 } from '@/lib/sesion';
 
 /**
- * Página de ingreso.
+ * Ingreso y registro.
  *
  * Ofrece lo que esté configurado: correo y contraseña, Google, y durante la
- * transición la contraseña compartida del panel. Después de ingresar no
- * decide a dónde ir: pasa por /api/auth/continuar, que manda a cada quien a
- * su portal según el rol.
+ * transición la contraseña compartida del panel. Después de entrar no decide
+ * a dónde ir: pasa por /api/auth/continuar, que manda a cada quien a su
+ * portal según el rol.
  */
 
 const MENSAJES_DE_ERROR = {
   google: 'No se pudo iniciar sesión con Google. Probá de nuevo.',
   cuentas_no_disponibles: 'El ingreso con cuenta todavía no está disponible.'
 };
+
+const LARGO_MINIMO_CONTRASENA = 8;
 
 function urlDeContinuar(volver) {
   return volver ? `/api/auth/continuar?volver=${encodeURIComponent(volver)}` : '/api/auth/continuar';
@@ -39,12 +41,23 @@ function LogoDeGoogle() {
 }
 
 export default function Ingreso({ cuentasDisponibles, contrasenaDelPanel, volver, error: motivo }) {
+  const [modo, setModo] = useState('ingresar');
+  const [nombre, setNombre] = useState('');
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [passwordDelPanel, setPasswordDelPanel] = useState('');
   const [error, setError] = useState(MENSAJES_DE_ERROR[motivo] ?? null);
+  const [confirmacionEnviada, setConfirmacionEnviada] = useState(false);
   // Qué forma de ingreso está en curso, para no aceptar dos a la vez.
   const [enviando, setEnviando] = useState(null);
+
+  const registrando = modo === 'registro';
+
+  function cambiarDeModo() {
+    setModo(registrando ? 'ingresar' : 'registro');
+    setError(null);
+    setPassword('');
+  }
 
   async function ingresarConCuenta(evento) {
     evento.preventDefault();
@@ -74,6 +87,48 @@ export default function Ingreso({ cuentasDisponibles, contrasenaDelPanel, volver
     // Navegación completa y no del router: la cookie de sesión recién puesta
     // tiene que viajar en la próxima petición al servidor.
     window.location.assign(urlDeContinuar(volver));
+  }
+
+  async function crearCuenta(evento) {
+    evento.preventDefault();
+
+    if (password.length < LARGO_MINIMO_CONTRASENA) {
+      setError(`La contraseña tiene que tener al menos ${LARGO_MINIMO_CONTRASENA} caracteres.`);
+      return;
+    }
+
+    setEnviando('cuenta');
+    setError(null);
+
+    const { data, error: fallo } = await supabaseNavegador().auth.signUp({
+      email: correo.trim(),
+      password,
+      options: {
+        // El trigger de la base toma el nombre de acá para armar el perfil.
+        data: { full_name: nombre.trim() },
+        emailRedirectTo: `${window.location.origin}${urlDeContinuar(volver)}`
+      }
+    });
+
+    if (fallo) {
+      setError(
+        fallo.code === 'user_already_exists'
+          ? 'Ese correo ya tiene cuenta. Probá iniciando sesión.'
+          : 'No pudimos crear la cuenta. Revisá el correo y la contraseña.'
+      );
+      setEnviando(null);
+      return;
+    }
+
+    // Con la confirmación de correo activada, el registro no abre sesión: la
+    // cuenta queda esperando a que se abra el enlace del correo.
+    if (data?.session) {
+      window.location.assign(urlDeContinuar(volver));
+      return;
+    }
+
+    setConfirmacionEnviada(true);
+    setEnviando(null);
   }
 
   async function ingresarConGoogle() {
@@ -126,7 +181,9 @@ export default function Ingreso({ cuentasDisponibles, contrasenaDelPanel, volver
         <div className="admin-login-card">
           <span className="logo-icon">✦</span>
           <h1>Akari Studio</h1>
-          <p className="admin-login-sub">Ingresá a tu cuenta</p>
+          <p className="admin-login-sub">
+            {registrando ? 'Creá tu cuenta' : 'Ingresá a tu cuenta'}
+          </p>
 
           {error && (
             <p className="admin-alerta" role="alert">
@@ -134,53 +191,86 @@ export default function Ingreso({ cuentasDisponibles, contrasenaDelPanel, volver
             </p>
           )}
 
-          {cuentasDisponibles && (
-            <>
-              <form onSubmit={ingresarConCuenta}>
-                <label htmlFor="correo">Correo</label>
-                <input
-                  id="correo"
-                  name="correo"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={correo}
-                  onChange={(e) => setCorreo(e.target.value)}
-                />
+          {confirmacionEnviada ? (
+            <p className="admin-aviso" role="status">
+              Te enviamos un correo a <strong>{correo}</strong> para confirmar la cuenta. Abrí ese
+              enlace y volvé a entrar acá.
+            </p>
+          ) : (
+            cuentasDisponibles && (
+              <>
+                <form onSubmit={registrando ? crearCuenta : ingresarConCuenta}>
+                  {registrando && (
+                    <>
+                      <label htmlFor="nombre">Tu nombre</label>
+                      <input
+                        id="nombre"
+                        name="nombre"
+                        type="text"
+                        autoComplete="name"
+                        required
+                        minLength={2}
+                        maxLength={80}
+                        value={nombre}
+                        onChange={(e) => setNombre(e.target.value)}
+                      />
+                    </>
+                  )}
 
-                <label htmlFor="password">Contraseña</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                  <label htmlFor="correo">Correo</label>
+                  <input
+                    id="correo"
+                    name="correo"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={correo}
+                    onChange={(e) => setCorreo(e.target.value)}
+                  />
 
-                <button type="submit" className="btn btn-gold btn-block" disabled={enviando !== null}>
-                  {enviando === 'cuenta' ? 'Verificando...' : 'Ingresar'}
+                  <label htmlFor="password">Contraseña</label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete={registrando ? 'new-password' : 'current-password'}
+                    required
+                    minLength={registrando ? LARGO_MINIMO_CONTRASENA : undefined}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+
+                  <button type="submit" className="btn btn-gold btn-block" disabled={enviando !== null}>
+                    {enviando === 'cuenta'
+                      ? 'Un momento...'
+                      : registrando
+                        ? 'Crear cuenta'
+                        : 'Ingresar'}
+                  </button>
+                </form>
+
+                <div className="admin-login-divisor">
+                  <span>o</span>
+                </div>
+
+                <button
+                  type="button"
+                  className="boton-google"
+                  onClick={ingresarConGoogle}
+                  disabled={enviando !== null}
+                >
+                  <LogoDeGoogle />
+                  {enviando === 'google' ? 'Abriendo Google...' : 'Continuar con Google'}
                 </button>
-              </form>
 
-              <div className="admin-login-divisor">
-                <span>o</span>
-              </div>
-
-              <button
-                type="button"
-                className="boton-google"
-                onClick={ingresarConGoogle}
-                disabled={enviando !== null}
-              >
-                <LogoDeGoogle />
-                {enviando === 'google' ? 'Abriendo Google...' : 'Continuar con Google'}
-              </button>
-            </>
+                <button type="button" className="admin-login-cambiar" onClick={cambiarDeModo}>
+                  {registrando ? '¿Ya tenés cuenta? Ingresá' : '¿No tenés cuenta? Creala'}
+                </button>
+              </>
+            )
           )}
 
-          {contrasenaDelPanel && (
+          {contrasenaDelPanel && !confirmacionEnviada && (
             <form
               onSubmit={ingresarConPasswordDelPanel}
               className={cuentasDisponibles ? 'admin-login-temporal' : undefined}
