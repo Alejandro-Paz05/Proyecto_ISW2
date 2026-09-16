@@ -287,7 +287,6 @@ export default function Ingreso({ cuentasDisponibles, contrasenaDelPanel, volver
                 name="password-panel"
                 type="password"
                 autoComplete="current-password"
-                autoFocus={!cuentasDisponibles}
                 required
                 value={passwordDelPanel}
                 onChange={(e) => setPasswordDelPanel(e.target.value)}
