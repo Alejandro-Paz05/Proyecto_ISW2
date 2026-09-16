@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import LimiteDeErrores from '@/components/LimiteDeErrores';
+import { instalarCapturaDeErrores } from '@/lib/capturar-errores';
 import '@/styles/globals.css';
 import '@/styles/motion.css';
 import '@/styles/whatsapp.css';
@@ -28,5 +30,16 @@ export default function App({ Component, pageProps }) {
     }
   }, []);
 
-  return <Component {...pageProps} />;
+  // Solo en producción, igual que el service worker: en desarrollo cada error
+  // a medio escribir abriría un ticket.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') return undefined;
+    return instalarCapturaDeErrores();
+  }, []);
+
+  return (
+    <LimiteDeErrores>
+      <Component {...pageProps} />
+    </LimiteDeErrores>
+  );
 }

@@ -19,15 +19,18 @@
     "e2e:humo": "playwright test --config=playwright.config.mjs --project=humo",
     "db:estado": "node scripts/estado-db.mjs",
     "db:exportar": "node scripts/exportar-modelo.mjs",
+    "cuentas:crear": "node scripts/crear-cuenta.mjs",
     "iconos": "node scripts/generar-iconos.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.45.0",
     "next": "14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

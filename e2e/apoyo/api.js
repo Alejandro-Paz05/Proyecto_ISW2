@@ -60,3 +60,15 @@ export async function conCambioDeEstado(page, idDelPedido) {
 
   return enviados;
 }
+
+/** La retroalimentación se guarda bien. Devuelve lo que envió el navegador. */
+export async function conRetroalimentacion(page) {
+  const enviados = [];
+
+  await page.route('**/api/feedback', (ruta) => {
+    enviados.push(ruta.request().postDataJSON());
+    return ruta.fulfill(comoJSON({ ok: true }, 201));
+  });
+
+  return enviados;
+}

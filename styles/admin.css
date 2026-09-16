@@ -377,6 +377,43 @@
   margin-bottom: 18px;
 }
 
+/* Aviso de la cuenta que solo mira. Amarillo y no rojo: no es un error, es
+   una advertencia de que los controles no van a hacer nada. */
+.admin-banner-lectura {
+  background: #fff6d8;
+  color: #7a5c00;
+  border: 1px solid #f0dca0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* La pila de llamadas de un ticket: texto preformateado que no puede
+   ensanchar la tabla ni crecer sin fin. */
+.admin-pila {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-detalle textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
 /* ===== Productos ===== */
 .admin-boton-nuevo {
   margin-bottom: 20px;
@@ -575,6 +612,107 @@
   padding: 1px 5px;
   border-radius: 4px;
   font-size: 12px;
+}
+
+/* Separador "o" entre el ingreso con correo y el de Google. */
+.admin-login-divisor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--gray);
+  font-size: 12px;
+}
+
+.admin-login-divisor::before,
+.admin-login-divisor::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e5e5;
+}
+
+/* Sigue las pautas de marca de Google: fondo blanco, borde gris y el logo a
+   color. Un botón de Google con otro aspecto genera desconfianza justo en el
+   momento en que se pide entrar con la cuenta. */
+.boton-google {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid #dadce0;
+  border-radius: 50px;
+  background: #fff;
+  color: #3c4043;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.boton-google:hover:not(:disabled) {
+  background: #f8f9fa;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3);
+}
+
+.boton-google:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.boton-google:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Cambiar entre ingresar y crear cuenta. Es un botón y no un enlace porque
+   no lleva a ninguna parte: cambia el mismo formulario. */
+.admin-login-cambiar {
+  display: block;
+  width: 100%;
+  margin-top: 16px;
+  padding: 6px;
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-family: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.admin-login-cambiar:hover {
+  color: var(--black);
+}
+
+/* El acceso con la contraseña compartida, mientras dure la transición:
+   separado y en segundo plano, para que no compita con las cuentas. */
+.admin-login-temporal {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px dashed #ddd;
+}
+
+.admin-login-nota {
+  text-align: left;
+  font-size: 12px;
+  color: var(--gray);
+  margin-bottom: 12px;
+}
+
+/* .btn-outline tiene texto blanco para fondos oscuros; en la tarjeta blanca
+   del login hace falta el mismo botón con texto oscuro. */
+.btn-outline-oscuro {
+  background: transparent;
+  color: var(--black);
+  border: 2px solid var(--gold);
+}
+
+.btn-outline-oscuro:hover:not(:disabled) {
+  background: var(--gold);
 }
 
 @media (max-width: 720px) {

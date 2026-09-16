@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { estaAutenticado } from '@/lib/admin-auth';
+import { protegerPagina, PANEL_TIENDA } from '@/lib/sesion';
 import { CATEGORIAS, ETIQUETAS_CATEGORIA } from '@/lib/categorias';
 
 const VACIO = { name: '', category: 'unas', price: '', stock: '', description: '', image: '' };
@@ -9,13 +9,16 @@ function formatPrice(amount) {
   return 'L ' + Number(amount).toFixed(2);
 }
 
-export default function ProductosAdmin() {
+export default function ProductosAdmin({ sesion }) {
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [aviso, setAviso] = useState(null);
   const [formulario, setFormulario] = useState(null);
   const [guardando, setGuardando] = useState(false);
+
+  // Ver el catálogo sí; tocarlo no. Ver arriba, en pages/akaristudio/admin.
+  const soloLectura = sesion?.soloLectura;
 
   const cargar = useCallback(async () => {
     try {
@@ -111,7 +114,7 @@ export default function ProductosAdmin() {
   const valorInventario = productos.reduce((suma, p) => suma + Number(p.price) * p.stock, 0);
 
   return (
-    <AdminLayout titulo="Productos">
+    <AdminLayout titulo="Productos" portal="tienda" sesion={sesion}>
       <div className="admin-tarjetas">
         <div className="admin-tarjeta">
           <span className="admin-tarjeta-valor">{productos.length}</span>
@@ -130,7 +133,7 @@ export default function ProductosAdmin() {
       {aviso && <p className="admin-aviso">{aviso}</p>}
       {error && <p className="admin-alerta">{error}</p>}
 
-      {!formulario && (
+      {!formulario && !soloLectura && (
         <button type="button" className="btn btn-gold admin-boton-nuevo" onClick={abrirNuevo}>
           + Agregar producto
         </button>
@@ -274,12 +277,16 @@ export default function ProductosAdmin() {
                     </span>
                   </td>
                   <td className="derecha admin-acciones-fila">
-                    <button type="button" onClick={() => abrirEdicion(producto)}>
-                      Editar
-                    </button>
-                    <button type="button" className="peligro" onClick={() => eliminar(producto)}>
-                      Eliminar
-                    </button>
+                    {!soloLectura && (
+                      <>
+                        <button type="button" onClick={() => abrirEdicion(producto)}>
+                          Editar
+                        </button>
+                        <button type="button" className="peligro" onClick={() => eliminar(producto)}>
+                          Eliminar
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -291,9 +298,4 @@ export default function ProductosAdmin() {
   );
 }
 
-export function getServerSideProps({ req }) {
-  if (!estaAutenticado(req)) {
-    return { redirect: { destination: '/akaristudio/admin/login', permanent: false } };
-  }
-  return { props: {} };
-}
+export const getServerSideProps = protegerPagina(PANEL_TIENDA);

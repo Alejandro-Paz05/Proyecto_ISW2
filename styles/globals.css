@@ -182,6 +182,201 @@ h1, h2, h3, h4 {
   width: 100%;
 }
 
+/* ===== RETROALIMENTACIÓN ===== */
+.footer-retro {
+  background: none;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: var(--gold);
+  border-radius: 50px;
+  padding: 8px 18px;
+  margin-bottom: 14px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.footer-retro:hover {
+  background: var(--gold);
+  color: var(--black);
+}
+
+.footer-retro:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* Fuera de la pantalla y no display:none: algunos bots se saltan los campos
+   ocultos, pero completan todo lo que existe en el formulario. */
+.campo-trampa {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.retro-gracias {
+  text-align: center;
+}
+
+/* ===== BARRA: ENLACE A LA CUENTA ===== */
+.nav-acciones {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-cuenta {
+  color: var(--white);
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.nav-cuenta:hover {
+  color: var(--gold);
+}
+
+.nav-cuenta:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 4px;
+}
+
+/* ===== MI CUENTA ===== */
+.cuenta-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 26px 0 8px;
+}
+
+.cuenta-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #ddd;
+}
+
+.cuenta-form input {
+  min-width: 260px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.cuenta-form input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.cuenta-aviso {
+  color: #9fe3b0;
+  font-size: 14px;
+}
+
+.cuenta-titulo {
+  margin: 30px 0 16px;
+  font-size: 20px;
+}
+
+.cuenta-pedidos {
+  list-style: none;
+  display: grid;
+  gap: 14px;
+  padding: 0;
+}
+
+.cuenta-pedido {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.cuenta-pedido-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  color: #c9c9c9;
+  font-size: 14px;
+}
+
+.cuenta-pedido ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  color: #c9c9c9;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.cuenta-pedido-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cuenta-estado {
+  padding: 4px 12px;
+  border-radius: 50px;
+  background: rgba(212, 175, 55, 0.15);
+  color: var(--gold);
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+.cuenta-salir {
+  margin-top: 28px;
+  padding: 10px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50px;
+  background: none;
+  color: #ddd;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.cuenta-salir:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ===== PANTALLA DE ERROR ===== */
+.pantalla-de-error {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: var(--black);
+  color: var(--white);
+}
+
+.pantalla-de-error .logo-icon {
+  color: var(--gold);
+  font-size: 36px;
+}
+
+.pantalla-de-error p {
+  color: #b9b9b9;
+  max-width: 36ch;
+}
+
 /* ===== NAVBAR ===== */
 .navbar {
   position: fixed;

@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { soloAdmin } from '@/lib/admin-auth';
+import { reportarError } from '@/lib/errores';
+import { conRol, PANEL_TIENDA } from '@/lib/sesion';
 import { validarProducto } from '@/lib/validar-producto';
 import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
 
@@ -44,6 +45,7 @@ async function editar(id, req, res) {
     }
 
     console.error('Error al editar el producto:', error);
+    await reportarError(error, { ruta: '/api/admin/products/[id]', metodo: req.method });
     return res.status(500).json({ error: 'Error al editar el producto' });
   }
 }
@@ -67,8 +69,9 @@ async function eliminar(id, res) {
     return res.status(200).json({ ok: true, id: data.id });
   } catch (error) {
     console.error('Error al eliminar el producto:', error);
+    await reportarError(error, { ruta: '/api/admin/products/[id]', metodo: 'DELETE' });
     return res.status(500).json({ error: 'Error al eliminar el producto' });
   }
 }
 
-export default soloAdmin(handler);
+export default conRol(PANEL_TIENDA, handler);

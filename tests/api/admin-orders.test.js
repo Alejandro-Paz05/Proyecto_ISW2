@@ -3,13 +3,18 @@ import { llamar } from '../helpers/http';
 import { crearCadena } from '../helpers/supabase';
 import { COOKIE_SESION, crearToken } from '@/lib/admin-auth';
 
-const { from, estado } = vi.hoisted(() => ({
+const { from, estado, getUser } = vi.hoisted(() => ({
   from: vi.fn(),
-  estado: { resultado: null }
+  estado: { resultado: null },
+  getUser: vi.fn()
 }));
 
 vi.mock('@/lib/supabase', () => ({
   getSupabaseAdmin: () => ({ from })
+}));
+
+vi.mock('@supabase/ssr', () => ({
+  createServerClient: () => ({ auth: { getUser } })
 }));
 
 import listar from '@/pages/api/admin/orders/index';
@@ -185,6 +190,57 @@ describe('rutas de pedidos del panel', () => {
 
       expect(res.statusCode).toBe(405);
       expect(res.headers.Allow).toBe('PATCH');
+    });
+  });
+
+  // lib/sesion.test.js prueba las reglas de los roles. Esto prueba otra cosa:
+  // que estas rutas estén envueltas con la lista correcta. Un descuido ahí
+  // —PORTAL_SISTEMA en vez de PANEL_TIENDA— dejaría a la dueña afuera sin
+  // que ninguna otra prueba lo note.
+  describe('con cuentas y roles', () => {
+    function conCuenta(rol) {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://proyecto.supabase.co';
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'clave-publicable-de-prueba';
+      getUser.mockResolvedValue({
+        data: { user: { id: 'cuenta-1', email: 'cuenta@ejemplo.com' } },
+        error: null
+      });
+      from.mockImplementation((tabla) =>
+        tabla === 'profiles'
+          ? crearCadena({ data: { role: rol }, error: null })
+          : crearCadena(estado.resultado)
+      );
+    }
+
+    const PATCH = { method: 'PATCH', query: { id: '4' }, body: { status: 'enviado' }, cookies: {} };
+
+    afterEach(() => {
+      delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+      delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+      getUser.mockReset();
+    });
+
+    it('la dueña ve los pedidos y les cambia el estado', async () => {
+      conCuenta('duena');
+
+      expect((await llamar(listar, { cookies: {} })).statusCode).toBe(200);
+      expect((await llamar(cambiarEstado, PATCH)).statusCode).toBe(200);
+    });
+
+    it('el super_admin ve los pedidos pero no puede cambiarles el estado', async () => {
+      conCuenta('super_admin');
+
+      expect((await llamar(listar, { cookies: {} })).statusCode).toBe(200);
+
+      const res = await llamar(cambiarEstado, PATCH);
+      expect(res.statusCode).toBe(403);
+      expect(res.body.error).toMatch(/solo lectura/);
+    });
+
+    it('una clienta no ve los pedidos de la tienda', async () => {
+      conCuenta('clienta');
+
+      expect((await llamar(listar, { cookies: {} })).statusCode).toBe(403);
     });
   });
 });

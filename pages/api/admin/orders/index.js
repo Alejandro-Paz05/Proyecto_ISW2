@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { soloAdmin } from '@/lib/admin-auth';
+import { reportarError } from '@/lib/errores';
+import { conRol, PANEL_TIENDA } from '@/lib/sesion';
 
 async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -28,8 +29,9 @@ async function handler(req, res) {
     return res.status(200).json(data);
   } catch (error) {
     console.error('Error al listar pedidos:', error);
+    await reportarError(error, { ruta: '/api/admin/orders', metodo: req.method });
     return res.status(500).json({ error: 'Error al obtener los pedidos' });
   }
 }
 
-export default soloAdmin(handler);
+export default conRol(PANEL_TIENDA, handler);

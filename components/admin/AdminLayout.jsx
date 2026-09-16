@@ -2,17 +2,45 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 
-const SECCIONES = [
-  { href: '/akaristudio/admin', label: 'Pedidos' },
-  { href: '/akaristudio/admin/productos', label: 'Productos' }
-];
+/**
+ * El marco de los dos portales privados.
+ *
+ * Es el mismo componente porque comparten todo lo que se ve alrededor: la
+ * barra, el nombre, salir. Lo único que cambia son las secciones, y quién
+ * puede saltar de un portal al otro.
+ */
 
-export default function AdminLayout({ titulo, children }) {
+const SECCIONES = {
+  tienda: [
+    { href: '/akaristudio/admin', label: 'Pedidos' },
+    { href: '/akaristudio/admin/productos', label: 'Productos' },
+    { href: '/akaristudio/admin/retroalimentacion', label: 'Retroalimentación' }
+  ],
+  sistema: [
+    { href: '/akaristudio/sistema', label: 'Tickets' },
+    { href: '/akaristudio/sistema/cuentas', label: 'Cuentas' },
+    { href: '/akaristudio/admin/retroalimentacion', label: 'Retroalimentación' }
+  ]
+};
+
+const OTRO_PORTAL = {
+  tienda: { href: '/akaristudio/sistema', label: 'Sistema' },
+  sistema: { href: '/akaristudio/admin', label: 'Tienda' }
+};
+
+export default function AdminLayout({ titulo, portal = 'tienda', sesion, children }) {
   const router = useRouter();
+  const secciones = SECCIONES[portal];
+
+  // Solo quien entra a los dos portales necesita el atajo entre ellos.
+  const puedeVerElSistema = sesion?.rol === 'admin' || sesion?.rol === 'super_admin';
+  const otro = OTRO_PORTAL[portal];
 
   async function cerrarSesion() {
     await fetch('/api/admin/logout', { method: 'POST' });
-    router.replace('/akaristudio/admin/login');
+    // Navegación completa y no del router: el servidor tiene que ver la
+    // petición ya sin las cookies que se acaban de vencer.
+    window.location.assign('/akaristudio/admin/login');
   }
 
   return (
@@ -26,13 +54,13 @@ export default function AdminLayout({ titulo, children }) {
       <div className="admin">
         <header className="admin-header">
           <div className="admin-header-inner">
-            <Link href="/akaristudio/admin" className="admin-marca">
+            <Link href={secciones[0].href} className="admin-marca">
               <span className="logo-icon">✦</span>
               <span>Akari <em>Studio</em></span>
             </Link>
 
             <nav className="admin-nav">
-              {SECCIONES.map((seccion) => (
+              {secciones.map((seccion) => (
                 <Link
                   key={seccion.href}
                   href={seccion.href}
@@ -45,6 +73,11 @@ export default function AdminLayout({ titulo, children }) {
             </nav>
 
             <div className="admin-acciones">
+              {puedeVerElSistema && (
+                <Link href={otro.href} className="admin-link-tienda">
+                  {otro.label} →
+                </Link>
+              )}
               <Link href="/akaristudio" className="admin-link-tienda" target="_blank" rel="noreferrer">
                 Ver tienda ↗
               </Link>
@@ -56,6 +89,13 @@ export default function AdminLayout({ titulo, children }) {
         </header>
 
         <main className="admin-contenido">
+          {sesion?.soloLectura && (
+            <p className="admin-banner-lectura">
+              Modo lectura{sesion.email ? ` · ${sesion.email}` : ''}. Esta cuenta ve todo el sistema
+              y no modifica nada.
+            </p>
+          )}
+
           <h1 className="admin-titulo">{titulo}</h1>
           {children}
         </main>

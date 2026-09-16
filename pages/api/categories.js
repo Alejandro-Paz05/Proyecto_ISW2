@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { reportarError } from '@/lib/errores';
 import { conCache, CLAVE_CATEGORIAS } from '@/lib/cache';
 import { responderJSON, CACHE_CATEGORIAS } from '@/lib/respuesta-cacheable';
 
@@ -26,6 +27,7 @@ export default async function handler(req, res) {
     return responderJSON(req, res, categorias, CACHE_CATEGORIAS);
   } catch (error) {
     console.error('Error al obtener categorías:', error);
+    await reportarError(error, { ruta: '/api/categories', metodo: req.method });
     return res.status(500).json({ error: 'Error al obtener categorías' });
   }
 }

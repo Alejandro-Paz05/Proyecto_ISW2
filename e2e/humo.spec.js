@@ -30,7 +30,8 @@ test('el catálogo real muestra productos con precio', async ({ page }) => {
 test('el panel privado no se abre sin sesión', async ({ page }) => {
   await page.goto('/akaristudio/admin');
 
-  await expect(page).toHaveURL(/\/akaristudio\/admin\/login$/);
+  // Con o sin ?volver=: el login recuerda a dónde se quería ir.
+  await expect(page).toHaveURL(/\/akaristudio\/admin\/login(\?|$)/);
   await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible();
 });
 

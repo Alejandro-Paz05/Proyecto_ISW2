@@ -2,10 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // vi.mock se eleva por encima de los imports, así que la función espía tiene
 // que crearse con vi.hoisted para existir cuando se evalúa la factory.
-const { rpc } = vi.hoisted(() => ({ rpc: vi.fn() }));
+const { rpc, getUser } = vi.hoisted(() => ({ rpc: vi.fn(), getUser: vi.fn() }));
 
 vi.mock('@/lib/supabase', () => ({
   getSupabaseAdmin: () => ({ rpc })
+}));
+
+vi.mock('@supabase/ssr', () => ({
+  createServerClient: () => ({ auth: { getUser } })
 }));
 
 import handler from '@/pages/api/orders';
@@ -52,6 +56,7 @@ describe('POST /api/orders', () => {
   beforeEach(() => {
     rpc.mockReset();
     rpc.mockResolvedValue(PEDIDO_OK);
+    getUser.mockReset();
   });
 
   describe('metodo HTTP', () => {
@@ -209,6 +214,45 @@ describe('POST /api/orders', () => {
       // hace GROUP BY antes de bloquear cada fila de producto.
       const [, argumentos] = rpc.mock.calls[0];
       expect(argumentos.p_items).toEqual([{ id: 4, qty: 1 }, { id: 4, qty: 2 }]);
+    });
+  });
+
+  describe('la cuenta de quien compra', () => {
+    afterEach(() => {
+      delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+      delete process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    });
+
+    function conCuentas() {
+      process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://proyecto.supabase.co';
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'clave-publicable-de-prueba';
+    }
+
+    it('comprar como invitada deja el pedido sin cuenta', async () => {
+      await pedir({ customer: CLIENTE, payment: 'efectivo', items: [{ id: 1, qty: 1 }] });
+
+      expect(rpc.mock.calls[0][1].p_user_id).toBeNull();
+    });
+
+    it('con sesion iniciada, el pedido queda asociado a esa cuenta', async () => {
+      conCuentas();
+      getUser.mockResolvedValue({ data: { user: { id: 'cuenta-de-maria' } }, error: null });
+
+      await pedir({ customer: CLIENTE, payment: 'efectivo', items: [{ id: 1, qty: 1 }] });
+
+      expect(rpc.mock.calls[0][1].p_user_id).toBe('cuenta-de-maria');
+    });
+
+    // Perder una venta porque no se pudo leer la sesion seria mucho peor que
+    // registrarla como de invitada.
+    it('si la sesion no se puede leer, el pedido entra igual', async () => {
+      conCuentas();
+      getUser.mockRejectedValue(new Error('fetch failed'));
+
+      const res = await pedir({ customer: CLIENTE, payment: 'efectivo', items: [{ id: 1, qty: 1 }] });
+
+      expect(res.statusCode).toBe(201);
+      expect(rpc.mock.calls[0][1].p_user_id).toBeNull();
     });
   });
 });
