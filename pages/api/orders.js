@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { reportarError } from '@/lib/errores';
+import { cuentaDeSesion } from '@/lib/sesion';
 import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
 
 // Códigos de Postgres que corresponden a un error del cliente, no del
@@ -58,6 +59,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'El método de pago no es válido.' });
   }
 
+  // Si hay sesión, el pedido queda asociado a esa cuenta y la clienta lo ve
+  // después en "Mis pedidos". Comprar como invitada sigue siendo la forma
+  // normal, y deja la cuenta vacía. Si la sesión no se puede leer, el pedido
+  // se toma como de invitada: perder una venta por eso sería mucho peor.
+  const cuenta = await cuentaDeSesion(req, res).catch(() => null);
+
   try {
     // Una sola llamada: valida, reserva stock, crea el pedido y sus
     // items dentro de la misma transacción.
@@ -68,7 +75,8 @@ export default async function handler(req, res) {
       p_customer_phone: customer?.phone ?? '',
       p_customer_address: customer?.address ?? '',
       p_payment_method: payment ?? '',
-      p_items: normalizedItems
+      p_items: normalizedItems,
+      p_user_id: cuenta?.id ?? null
     });
 
     if (error) {
