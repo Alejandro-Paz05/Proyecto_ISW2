@@ -157,7 +157,7 @@ export async function crearProducto(db, { stock = 10 } = {}) {
 }
 
 /** Un pedido hecho por create_order, con cuenta o como invitada. */
-export async function crearPedido(db, { producto, usuario = null }) {
+export async function crearPedido(db, { producto, usuario = null, cantidad = 1 }) {
   const {
     rows: [{ pedido }]
   } = await db.query(
@@ -168,7 +168,7 @@ export async function crearPedido(db, { producto, usuario = null }) {
       '+504 9999-0000',
       'San Pedro Sula, Bosques de Jucutuma 1',
       'efectivo',
-      JSON.stringify([{ id: producto, qty: 1 }]),
+      JSON.stringify([{ id: producto, qty: cantidad }]),
       usuario
     ]
   );

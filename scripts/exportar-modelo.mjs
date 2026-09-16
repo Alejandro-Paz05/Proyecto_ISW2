@@ -724,6 +724,19 @@ const MODELO = {
       permisos: 'Lo invoca el trigger; no se llama desde la aplicación.'
     },
     {
+      nombre: 'reponer_stock_al_cancelar',
+      tipo: 'SECURITY DEFINER',
+      lenguaje: 'plpgsql',
+      parametros: [],
+      retorna: 'trigger',
+      descripcion:
+        'Trigger AFTER UPDATE OF status sobre orders. Al pasar a cancelado devuelve ' +
+        'al catálogo las unidades del pedido; al salir de cancelado las vuelve a ' +
+        'descontar, bloqueando las filas con SELECT ... FOR UPDATE, y rechaza la ' +
+        'reapertura si mientras tanto se vendió lo que quedaba.',
+      permisos: 'Lo invoca el trigger orders_reponer_stock.'
+    },
+    {
       nombre: 'crear_perfil_de_usuario',
       tipo: 'SECURITY DEFINER',
       lenguaje: 'plpgsql',
@@ -803,6 +816,14 @@ const MODELO = {
       regla: 'Las líneas de un pedido guardan copia del nombre y el precio',
       donde: 'order_items',
       por_que: 'Una venta cerrada debe conservar lo que se cobró, aunque cambie la tarifa.'
+    },
+    {
+      regla: 'Cancelar un pedido devuelve su inventario al catálogo',
+      donde: 'Trigger orders_reponer_stock',
+      por_que:
+        'El stock solo sabía restarse: cancelar dejaba las unidades descontadas para ' +
+        'siempre y la tienda mostraba "Agotado" con el producto en la mano de la dueña. ' +
+        'Va en la base porque el estado también se cambia desde el panel de Supabase.'
     },
     {
       regla: 'El número de pedido nunca se repite',
