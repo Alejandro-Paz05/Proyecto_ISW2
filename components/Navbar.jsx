@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCart } from '@/context/CartContext';
+import { useSesionAbierta } from '@/lib/use-sesion';
 
 const ENLACES = [
   { href: '/akaristudio', label: 'Inicio' },
@@ -18,6 +19,7 @@ export default function Navbar() {
   const { getCartCount, setCartOpen } = useCart();
   const router = useRouter();
   const [compacta, setCompacta] = useState(false);
+  const sesionAbierta = useSesionAbierta();
 
   const cantidad = getCartCount();
   const [rebota, setRebota] = useState(false);
@@ -72,10 +74,21 @@ export default function Navbar() {
             );
           })}
         </nav>
-        <button className="cart-btn" onClick={() => setCartOpen(true)} aria-label="Abrir carrito">
-          <span className="cart-icon">🛒</span>
-          <span className={`cart-count ${rebota ? 'rebota' : ''}`}>{cantidad}</span>
-        </button>
+        <div className="nav-acciones">
+          {/* Fuera de .nav-links a propósito: esa lista se esconde en el
+              teléfono, y entrar a la cuenta tiene que poder hacerse ahí. */}
+          <Link
+            href={sesionAbierta ? '/akaristudio/cuenta' : '/akaristudio/admin/login'}
+            className="nav-cuenta"
+          >
+            {sesionAbierta ? 'Mi cuenta' : 'Ingresar'}
+          </Link>
+
+          <button className="cart-btn" onClick={() => setCartOpen(true)} aria-label="Abrir carrito">
+            <span className="cart-icon">🛒</span>
+            <span className={`cart-count ${rebota ? 'rebota' : ''}`}>{cantidad}</span>
+          </button>
+        </div>
       </div>
     </header>
   );
