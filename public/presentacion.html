@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Akari Studio · Presentación del producto</title>
+<meta name="description" content="Tienda en línea con inventario en tiempo real para el salón de belleza Akari Studio: problema, solución, arquitectura y manual de uso.">
+<style>
+  :root {
+    --oro: #d4af37;
+    --oro-oscuro: #9a7d1e;
+    --negro: #0d0d0d;
+    --tinta: #1f1f1f;
+    --gris: #5f5b54;
+    --papel: #faf7f2;
+    --linea: #e5e0d6;
+    --blanco: #fff;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--papel);
+    color: var(--tinta);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .envoltorio { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+
+  header {
+    background: var(--negro);
+    color: var(--blanco);
+    padding: 56px 0 44px;
+  }
+
+  .marca { font-size: 13px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--oro); margin: 0 0 14px; }
+  header h1 { margin: 0 0 12px; font-size: 38px; line-height: 1.15; font-weight: 700; }
+  header p.bajada { margin: 0 0 26px; font-size: 18px; color: #d8d4cc; max-width: 640px; }
+
+  .enlaces { display: flex; flex-wrap: wrap; gap: 10px; }
+  .enlaces a {
+    display: inline-block;
+    padding: 11px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .principal { background: var(--oro); color: var(--negro); }
+  .secundario { border: 1px solid #4a4a4a; color: #e8e5df; }
+
+  .codigo {
+    margin-top: 26px;
+    font-size: 13px;
+    color: #9d9890;
+  }
+  .codigo strong { color: var(--oro); font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; letter-spacing: 0.06em; }
+
+  .cifras {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--linea);
+    border-top: 1px solid var(--linea);
+    border-bottom: 1px solid var(--linea);
+  }
+  .cifra { background: var(--blanco); padding: 20px; text-align: center; }
+  .cifra b { display: block; font-size: 26px; color: var(--negro); }
+  .cifra span { font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gris); }
+
+  section { padding: 44px 0; border-bottom: 1px solid var(--linea); }
+  section:last-of-type { border-bottom: none; }
+
+  h2 {
+    font-size: 13px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--oro-oscuro);
+    margin: 0 0 8px;
+  }
+  h2 + p.titular { margin: 0 0 20px; font-size: 26px; line-height: 1.25; color: var(--negro); font-weight: 700; }
+  h3 { font-size: 17px; margin: 28px 0 8px; color: var(--negro); }
+
+  p { margin: 0 0 16px; }
+  ul { margin: 0 0 16px; padding-left: 20px; }
+  li { margin-bottom: 8px; }
+
+  .cita {
+    border-left: 3px solid var(--oro);
+    padding: 4px 0 4px 18px;
+    margin: 0 0 20px;
+    color: var(--gris);
+    font-style: italic;
+  }
+
+  figure { margin: 26px 0; }
+  figure svg { width: 100%; height: auto; display: block; background: var(--blanco); border: 1px solid var(--linea); border-radius: 12px; }
+  figcaption { font-size: 13px; color: var(--gris); margin-top: 10px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; margin-bottom: 16px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--linea); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gris); }
+
+  code { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 14px; background: #efece5; padding: 1px 5px; border-radius: 4px; }
+
+  ol.pasos { counter-reset: paso; list-style: none; padding: 0; }
+  ol.pasos li {
+    position: relative;
+    padding-left: 44px;
+    margin-bottom: 16px;
+  }
+  ol.pasos li::before {
+    counter-increment: paso;
+    content: counter(paso);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--negro);
+    color: var(--oro);
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  footer { background: var(--negro); color: #b6b2aa; padding: 34px 0; font-size: 14px; }
+  footer a { color: var(--oro); }
+
+  @media (max-width: 560px) {
+    header { padding: 40px 0 34px; }
+    header h1 { font-size: 28px; }
+    h2 + p.titular { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="envoltorio">
+    <p class="marca">Akari Studio · Honduras</p>
+    <h1>La tienda del salón, con el inventario que de verdad hay</h1>
+    <p class="bajada">Una tienda en línea para un salón de belleza real, donde el stock, los precios y los pedidos los decide la base de datos y no el navegador de quien compra.</p>
+    <div class="enlaces">
+      <a class="principal" href="https://www.alejandropaz.xyz/akaristudio">Ver el producto en vivo</a>
+      <a class="secundario" href="https://github.com/Alejandro-Paz05/Proyecto_ISW2">Código en GitHub</a>
+      <a class="secundario" href="https://www.alejandropaz.xyz/akaristudio/productos">Ir a la tienda</a>
+    </div>
+    <p class="codigo">Código de verificación de autoría: <strong>LEARN-CAP-76080609</strong></p>
+  </div>
+</header>
+
+<div class="cifras">
+  <div class="cifra"><b>541</b><span>Pruebas unitarias</span></div>
+  <div class="cifra"><b>19</b><span>Recorridos E2E</span></div>
+  <div class="cifra"><b>94%</b><span>Cobertura de líneas</span></div>
+  <div class="cifra"><b>0</b><span>Code smells en Sonar</span></div>
+</div>
+
+<div class="envoltorio">
+
+<section id="problema">
+  <h2>Problema</h2>
+  <p class="titular">Vender por WhatsApp funciona hasta que dos personas compran lo mismo</p>
+  <p>Akari Studio es un salón de belleza que además vende producto: esmaltes, kits de uñas, insumos de pestañas y cejas, maquillaje. Todo se vendía por mensaje. La clienta preguntaba si había, la dueña revisaba, contestaba, coordinaba el pago y anotaba el pedido donde pudiera. El catálogo eran fotos sueltas en un chat y el inventario, la memoria de una persona ocupada.</p>
+  <p>Eso tiene tres costos que se pagan todos los días. El primero es el tiempo: la misma conversación, repetida, para responder lo que un catálogo contestaría solo. El segundo es la sobreventa: dos clientas preguntan por la última unidad con minutos de diferencia, las dos reciben un sí, y alguien termina llamando a una para decirle que no hay. El tercero es la trazabilidad: sin un pedido registrado no se sabe qué se vendió, a quién, ni en qué estado está, y un reclamo se resuelve buscando hacia atrás en el chat.</p>
+  <p class="cita">El cuello de botella no era la falta de una página bonita. Era que la información de qué hay y qué se vendió no vivía en ningún lado.</p>
+</section>
+
+<section id="solucion">
+  <h2>Solución</h2>
+  <p class="titular">Un catálogo que sabe cuánto queda, y un pedido que no se puede duplicar</p>
+  <p>Akari Studio es una tienda en línea donde el catálogo muestra el inventario real, la clienta arma su pedido y lo confirma sin cuenta si no quiere crearse una, y la dueña ve cada pedido con su detalle, sus datos de contacto y su estado en un panel privado.</p>
+  <p>La decisión que sostiene todo lo demás es dónde viven las reglas. No están en el JavaScript de la aplicación: están escritas en PostgreSQL. Un pedido se crea con una función que bloquea las filas de producto, verifica el stock, calcula el total con los precios de la base, inserta el pedido con sus líneas y descuenta el inventario, todo dentro de una única transacción. No importa si la escritura viene de la tienda, del panel o de un script: la regla se aplica igual y no se puede esquivar.</p>
+  <p>Eso resuelve dos cosas de una vez. La sobreventa desaparece de verdad, no se vuelve menos probable: dos compras simultáneas de la última unidad se serializan en la base y una de las dos recibe un error honesto en el momento. Y el precio deja de ser negociable desde el navegador: enviar un total de un lempira para un pedido de mil trescientos sesenta termina cobrando los mil trescientos sesenta reales, porque el total no se acepta, se calcula.</p>
+</section>
+
+<section id="funcionalidades">
+  <h2>Funcionalidades</h2>
+  <p class="titular">Qué hace hoy, en producción</p>
+  <h3>Para quien compra</h3>
+  <ul>
+    <li>Catálogo con filtros por categoría, precios en lempiras y stock real, incluido el aviso de agotado.</li>
+    <li>Carrito que respeta el límite de existencias y sobrevive a cerrar la pestaña.</li>
+    <li>Compra como invitada, sin crear cuenta, que sigue siendo la forma normal de comprar.</li>
+    <li>Cuenta opcional con correo o con Google, con su historial de pedidos en "Mi cuenta".</li>
+    <li>Solicitud de cita por WhatsApp, con un botón que abre la conversación con la dueña.</li>
+    <li>Formulario de retroalimentación para dejar una sugerencia, un elogio o reportar un problema.</li>
+    <li>Aplicación instalable: la tienda ya visitada vuelve a abrir sin conexión.</li>
+  </ul>
+  <h3>Para quien vende</h3>
+  <ul>
+    <li>Panel con todos los pedidos, su detalle, los datos de contacto y el cambio de estado.</li>
+    <li>Alta, edición y baja de productos, con la foto subida desde la computadora o pegando su dirección.</li>
+    <li>Bitácora automática: cada cambio de estado de un pedido queda registrado por la propia base.</li>
+    <li>Retroalimentación de las clientas, para leerla y archivarla.</li>
+    <li>Portal del sistema con tickets: los errores que la aplicación captura sola se agrupan por huella, así una página rota produce un ticket con cien ocurrencias y no cien tickets.</li>
+    <li>Cuatro roles —clienta, dueña, administrador y un revisor de solo lectura— con lo que cada uno puede ver y tocar.</li>
+  </ul>
+</section>
+
+<section id="arquitectura">
+  <h2>Arquitectura</h2>
+  <p class="titular">Tres piezas, una frontera clara</p>
+  <p>El navegador nunca habla con la base de datos para leer o escribir el negocio. Habla con las rutas de API que corren en el servidor, y solo esas tienen la clave secreta. La única excepción es la autenticación: para iniciar sesión, el navegador usa una clave publicable que por diseño es pública y a la que protege la seguridad a nivel de fila de la propia base.</p>
+  <figure>
+    <svg viewBox="0 0 860 300" role="img" aria-label="Diagrama de arquitectura: navegador, servidor en Vercel y base de datos en Supabase">
+      <rect x="14" y="40" width="240" height="220" rx="12" fill="#faf7f2" stroke="#e5e0d6"/>
+      <text x="134" y="68" text-anchor="middle" font-size="14" font-weight="700" fill="#0d0d0d">Navegador</text>
+      <text x="134" y="94" text-anchor="middle" font-size="12" fill="#5f5b54">React 18 · PWA</text>
+      <rect x="38" y="112" width="192" height="40" rx="8" fill="#fff" stroke="#e5e0d6"/>
+      <text x="134" y="137" text-anchor="middle" font-size="12" fill="#1f1f1f">Tienda, carrito y panel</text>
+      <rect x="38" y="162" width="192" height="40" rx="8" fill="#fff" stroke="#e5e0d6"/>
+      <text x="134" y="187" text-anchor="middle" font-size="12" fill="#1f1f1f">Service worker · caché</text>
+      <rect x="38" y="212" width="192" height="34" rx="8" fill="#fff" stroke="#e5e0d6"/>
+      <text x="134" y="234" text-anchor="middle" font-size="12" fill="#1f1f1f">Cookie de sesión firmada</text>
+
+      <rect x="310" y="40" width="240" height="220" rx="12" fill="#0d0d0d"/>
+      <text x="430" y="68" text-anchor="middle" font-size="14" font-weight="700" fill="#d4af37">Servidor · Vercel</text>
+      <text x="430" y="94" text-anchor="middle" font-size="12" fill="#b6b2aa">Next.js 14 · funciones</text>
+      <rect x="334" y="112" width="192" height="40" rx="8" fill="#1f1f1f"/>
+      <text x="430" y="137" text-anchor="middle" font-size="12" fill="#fff">Páginas renderizadas</text>
+      <rect x="334" y="162" width="192" height="40" rx="8" fill="#1f1f1f"/>
+      <text x="430" y="187" text-anchor="middle" font-size="12" fill="#fff">API Routes · validación</text>
+      <rect x="334" y="212" width="192" height="34" rx="8" fill="#1f1f1f"/>
+      <text x="430" y="234" text-anchor="middle" font-size="12" fill="#d4af37">Clave secreta (solo acá)</text>
+
+      <rect x="606" y="40" width="240" height="220" rx="12" fill="#faf7f2" stroke="#e5e0d6"/>
+      <text x="726" y="68" text-anchor="middle" font-size="14" font-weight="700" fill="#0d0d0d">Supabase</text>
+      <text x="726" y="94" text-anchor="middle" font-size="12" fill="#5f5b54">PostgreSQL gestionado</text>
+      <rect x="630" y="112" width="192" height="40" rx="8" fill="#fff" stroke="#e5e0d6"/>
+      <text x="726" y="137" text-anchor="middle" font-size="12" fill="#1f1f1f">9 tablas · RLS · triggers</text>
+      <rect x="630" y="162" width="192" height="40" rx="8" fill="#fff" stroke="#e5e0d6"/>
+      <text x="726" y="187" text-anchor="middle" font-size="12" fill="#1f1f1f">Auth: correo y Google</text>
+      <rect x="630" y="212" width="192" height="34" rx="8" fill="#fff" stroke="#e5e0d6"/>
+      <text x="726" y="234" text-anchor="middle" font-size="12" fill="#1f1f1f">Storage: fotos</text>
+
+      <line x1="254" y1="150" x2="310" y2="150" stroke="#d4af37" stroke-width="2"/>
+      <polygon points="310,150 300,145 300,155" fill="#d4af37"/>
+      <text x="282" y="140" text-anchor="middle" font-size="11" fill="#5f5b54">HTTPS</text>
+
+      <line x1="550" y1="150" x2="606" y2="150" stroke="#d4af37" stroke-width="2"/>
+      <polygon points="606,150 596,145 596,155" fill="#d4af37"/>
+      <text x="578" y="140" text-anchor="middle" font-size="11" fill="#5f5b54">SQL</text>
+
+      <path d="M 134 276 L 726 276" stroke="#c9c3b8" stroke-width="1" stroke-dasharray="5 5"/>
+      <text x="430" y="292" text-anchor="middle" font-size="11" fill="#5f5b54">Solo para autenticarse, el navegador habla directo con Supabase Auth</text>
+    </svg>
+    <figcaption>Figura 1. Las tres piezas del sistema y qué vive en cada una.</figcaption>
+  </figure>
+
+  <p>Adentro de la base, la garantía que más importa es cómo nace un pedido. La función <code>create_order</code> es la única vía para registrarlo, y hace todo en una transacción: si algo falla, no queda un pedido a medias ni inventario descontado de una venta que no ocurrió.</p>
+  <figure>
+    <svg viewBox="0 0 860 210" role="img" aria-label="Flujo de creación de un pedido, desde el carrito hasta el descuento de inventario">
+      <rect x="10" y="60" width="150" height="58" rx="10" fill="#fff" stroke="#e5e0d6"/>
+      <text x="85" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">Carrito</text>
+      <text x="85" y="103" text-anchor="middle" font-size="11" fill="#5f5b54">id y cantidad</text>
+
+      <rect x="190" y="60" width="160" height="58" rx="10" fill="#fff" stroke="#e5e0d6"/>
+      <text x="270" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">POST /api/orders</text>
+      <text x="270" y="103" text-anchor="middle" font-size="11" fill="#5f5b54">valida la forma</text>
+
+      <rect x="380" y="26" width="290" height="126" rx="10" fill="#0d0d0d"/>
+      <text x="525" y="50" text-anchor="middle" font-size="12" font-weight="700" fill="#d4af37">create_order · una transacción</text>
+      <text x="525" y="74" text-anchor="middle" font-size="11" fill="#fff">1. Bloquea las filas con SELECT … FOR UPDATE</text>
+      <text x="525" y="93" text-anchor="middle" font-size="11" fill="#fff">2. Verifica el stock disponible</text>
+      <text x="525" y="112" text-anchor="middle" font-size="11" fill="#fff">3. Calcula el total con los precios reales</text>
+      <text x="525" y="131" text-anchor="middle" font-size="11" fill="#fff">4. Inserta el pedido y descuenta inventario</text>
+
+      <rect x="700" y="60" width="150" height="58" rx="10" fill="#fff" stroke="#e5e0d6"/>
+      <text x="775" y="84" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">AK-001042</text>
+      <text x="775" y="103" text-anchor="middle" font-size="11" fill="#5f5b54">número correlativo</text>
+
+      <line x1="160" y1="89" x2="190" y2="89" stroke="#d4af37" stroke-width="2"/>
+      <polygon points="190,89 180,84 180,94" fill="#d4af37"/>
+      <line x1="350" y1="89" x2="380" y2="89" stroke="#d4af37" stroke-width="2"/>
+      <polygon points="380,89 370,84 370,94" fill="#d4af37"/>
+      <line x1="670" y1="89" x2="700" y2="89" stroke="#d4af37" stroke-width="2"/>
+      <polygon points="700,89 690,84 690,94" fill="#d4af37"/>
+
+      <text x="430" y="184" text-anchor="middle" font-size="11" fill="#5f5b54">Si el stock no alcanza, nada de esto queda escrito: la transacción se deshace entera</text>
+    </svg>
+    <figcaption>Figura 2. Cómo se registra un pedido y por qué no puede vender dos veces la misma unidad.</figcaption>
+  </figure>
+
+  <p>Las decisiones que costaron discusión están escritas en cinco registros de decisión de arquitectura dentro del repositorio, con su contexto, la decisión y lo que se sacrificó. Dos de ellas revisan a una anterior, que es justamente para lo que sirven.</p>
+</section>
+
+<section id="tecnologias">
+  <h2>Tecnologías</h2>
+  <p class="titular">Qué se usó y por qué esa y no otra</p>
+  <table>
+    <tr><th>Capa</th><th>Tecnología</th><th>Por qué</th></tr>
+    <tr><td>Interfaz</td><td>Next.js 14 y React 18</td><td>Renderizado en el servidor para que el catálogo cargue rápido, y rutas de API en el mismo proyecto.</td></tr>
+    <tr><td>Servidor</td><td>API Routes sobre funciones de Vercel</td><td>Sin servidor que administrar, y la clave secreta nunca sale de ahí.</td></tr>
+    <tr><td>Base de datos</td><td>PostgreSQL en Supabase</td><td>Transacciones, claves foráneas y seguridad a nivel de fila: las reglas del negocio viven acá.</td></tr>
+    <tr><td>Cuentas</td><td>Supabase Auth con correo y Google</td><td>Registro, ingreso y OAuth resueltos sin construir autenticación a mano.</td></tr>
+    <tr><td>Archivos</td><td>Supabase Storage</td><td>Las fotos de los productos dejan de depender de un servidor ajeno.</td></tr>
+    <tr><td>Pruebas</td><td>Vitest, Testing Library, PGlite y Playwright</td><td>Lógica, base de datos real en memoria y recorridos completos en un navegador.</td></tr>
+    <tr><td>Calidad</td><td>ESLint y SonarQube Cloud</td><td>Un umbral de cobertura y un quality gate que frenan lo que no está probado.</td></tr>
+    <tr><td>Entrega</td><td>GitHub Actions y Vercel</td><td>Nada llega a producción sin pasar antes por lint, pruebas, cobertura, build y E2E.</td></tr>
+  </table>
+  <figure>
+    <svg viewBox="0 0 860 240" role="img" aria-label="Pirámide de pruebas: 541 unitarias, pruebas de base de datos y 19 recorridos de extremo a extremo">
+      <polygon points="430,20 530,84 330,84" fill="#0d0d0d"/>
+      <text x="430" y="62" text-anchor="middle" font-size="12" font-weight="700" fill="#d4af37">19 E2E</text>
+      <polygon points="330,88 530,88 590,152 270,152" fill="#c9a227"/>
+      <text x="430" y="126" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">Base de datos real con PGlite</text>
+      <polygon points="270,156 590,156 650,220 210,220" fill="#efece5" stroke="#e5e0d6"/>
+      <text x="430" y="194" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">541 pruebas unitarias</text>
+
+      <text x="676" y="60" font-size="11" fill="#5f5b54">Pocas, lentas, de punta a punta</text>
+      <text x="676" y="126" font-size="11" fill="#5f5b54">Migraciones, transacciones y RLS</text>
+      <text x="676" y="194" font-size="11" fill="#5f5b54">Rápidas: 34 archivos, 10 segundos</text>
+    </svg>
+    <figcaption>Figura 3. Las tres alturas de la pirámide de pruebas del proyecto.</figcaption>
+  </figure>
+  <figure>
+    <svg viewBox="0 0 860 150" role="img" aria-label="Pipeline de integración y despliegue continuo">
+      <rect x="10" y="44" width="130" height="56" rx="10" fill="#fff" stroke="#e5e0d6"/>
+      <text x="75" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">git push</text>
+      <text x="75" y="88" text-anchor="middle" font-size="11" fill="#5f5b54">a main</text>
+
+      <rect x="176" y="14" width="250" height="56" rx="10" fill="#fff" stroke="#e5e0d6"/>
+      <text x="301" y="38" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">Lint · pruebas · cobertura</text>
+      <text x="301" y="56" text-anchor="middle" font-size="11" fill="#5f5b54">build y análisis de Sonar</text>
+
+      <rect x="176" y="80" width="250" height="56" rx="10" fill="#fff" stroke="#e5e0d6"/>
+      <text x="301" y="104" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">19 recorridos E2E</text>
+      <text x="301" y="122" text-anchor="middle" font-size="11" fill="#5f5b54">Chromium, en paralelo</text>
+
+      <rect x="462" y="44" width="170" height="56" rx="10" fill="#0d0d0d"/>
+      <text x="547" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#d4af37">Desplegar</text>
+      <text x="547" y="88" text-anchor="middle" font-size="11" fill="#fff">solo si todo pasó</text>
+
+      <rect x="668" y="44" width="182" height="56" rx="10" fill="#fff" stroke="#e5e0d6"/>
+      <text x="759" y="70" text-anchor="middle" font-size="12" font-weight="700" fill="#0d0d0d">alejandropaz.xyz</text>
+      <text x="759" y="88" text-anchor="middle" font-size="11" fill="#5f5b54">producción</text>
+
+      <line x1="140" y1="72" x2="176" y2="42" stroke="#d4af37" stroke-width="2"/>
+      <line x1="140" y1="72" x2="176" y2="108" stroke="#d4af37" stroke-width="2"/>
+      <line x1="426" y1="42" x2="462" y2="72" stroke="#d4af37" stroke-width="2"/>
+      <line x1="426" y1="108" x2="462" y2="72" stroke="#d4af37" stroke-width="2"/>
+      <line x1="632" y1="72" x2="668" y2="72" stroke="#d4af37" stroke-width="2"/>
+      <polygon points="668,72 658,67 658,77" fill="#d4af37"/>
+    </svg>
+    <figcaption>Figura 4. Si cualquiera de los dos trabajos falla, el despliegue no corre y producción queda en la versión anterior.</figcaption>
+  </figure>
+</section>
+
+<section id="manual">
+  <h2>Manual de uso</h2>
+  <p class="titular">Paso a paso, de los dos lados del mostrador</p>
+  <h3>Comprar un producto</h3>
+  <ol class="pasos">
+    <li>Entrar a la tienda en <code>/akaristudio/productos</code> y filtrar por categoría: uñas, pestañas, cejas, maquillaje o accesorios.</li>
+    <li>Tocar "Agregar" en el producto. Si quedan tres unidades, el carrito no deja poner cuatro.</li>
+    <li>Abrir el carrito con el botón flotante, revisar las cantidades y tocar "Realizar Pedido".</li>
+    <li>Completar nombre, correo, teléfono, dirección y forma de pago: efectivo, tarjeta o transferencia.</li>
+    <li>Confirmar. La pantalla devuelve el número de pedido, con el formato AK-001042, que es el que sirve para reclamar o preguntar.</li>
+    <li>Opcional: crear una cuenta con correo o con Google para ver el historial en "Mi cuenta". Comprar como invitada funciona igual.</li>
+  </ol>
+  <h3>Administrar la tienda</h3>
+  <ol class="pasos">
+    <li>Ingresar en <code>/akaristudio/admin</code> con la cuenta de Google del salón.</li>
+    <li>En "Pedidos", abrir cualquiera para ver su detalle, los datos de contacto y la bitácora de estados.</li>
+    <li>Cambiar el estado con el selector: pendiente, confirmado, enviado, entregado o cancelado. El cambio queda registrado solo.</li>
+    <li>En "Productos", usar "+ Agregar producto", cargar nombre, categoría, precio y stock, y subir la foto desde la computadora.</li>
+    <li>En "Retroalimentación", leer lo que dejaron las clientas y archivar lo atendido.</li>
+    <li>En el portal del sistema, revisar los tickets: cada error capturado trae dónde ocurrió y cuántas veces pasó.</li>
+  </ol>
+</section>
+
+<section id="cliente">
+  <h2>Cliente</h2>
+  <p class="titular">Akari Studio, un salón de belleza en Honduras</p>
+  <p>El cliente es real y el producto se construyó con ella, no para una consigna. Es la dueña de Akari Studio, que atiende clientas en el salón y vende producto en paralelo, casi siempre por WhatsApp.</p>
+  <p>La decisión que más enseñó del proyecto fue una que ella rechazó. Durante dos días se construyó una agenda de reserva en línea completa: servicios con duración, horarios de atención, días bloqueados, cálculo de franjas libres y una restricción en la base que hacía imposible que dos citas se solaparan. Funcionaba, estaba probada y estaba publicada.</p>
+  <p class="cita">Dijo que no la quería. Ya trabaja por WhatsApp y no quiere revisar dos lugares; necesita poder decir que no o proponer otro horario según con quién esté hablando; y quiere confirmar ella, no que el sitio confirme solo.</p>
+  <p>Ninguna de esas razones es técnica y ninguna se arreglaba con más funcionalidad. El sistema resolvía bien un problema que ella no tenía. Se retiró la agenda entera y quedó un botón que abre la conversación por WhatsApp. Esa decisión, con su contexto y lo que costó, está registrada en el repositorio junto con las demás.</p>
+</section>
+
+<section id="autor">
+  <h2>Autor</h2>
+  <p class="titular">Alejandro Paz</p>
+  <p>Estudiante de Ingeniería en Sistemas, UNITEC. Este producto es el proyecto de la asignatura Ingeniería de Software II, y está en producción con un cliente real usándolo.</p>
+  <p>El trabajo incluye el diseño de la base de datos y sus migraciones versionadas, las rutas de API, la interfaz, el sistema de cuentas y roles, la captura automática de errores, las pruebas en sus tres alturas y el pipeline de integración y despliegue continuo. Las decisiones de arquitectura están documentadas con su contexto y sus consecuencias, incluidas las que hubo que revisar después.</p>
+  <p>Código: <a href="https://github.com/Alejandro-Paz05/Proyecto_ISW2">github.com/Alejandro-Paz05/Proyecto_ISW2</a> · Producto: <a href="https://www.alejandropaz.xyz/akaristudio">www.alejandropaz.xyz/akaristudio</a></p>
+</section>
+
+</div>
+
+<footer>
+  <div class="envoltorio">
+    <p>Akari Studio · Tienda en línea con inventario en tiempo real · Honduras</p>
+    <p>Código de verificación: <strong>LEARN-CAP-76080609</strong> — <a href="https://www.alejandropaz.xyz/akaristudio">ver el producto</a> · <a href="https://github.com/Alejandro-Paz05/Proyecto_ISW2">ver el código</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
