@@ -233,6 +233,7 @@ El código de `respuesta-cacheable.js` no sobra por eso: es lo que responde en d
 | `tests/api/admin-sesion.test.js` | Login, cierre de sesión y retardo ante intentos fallidos |
 | `tests/api/admin-orders.test.js` | Pedidos del panel: acceso, estados y validaciones |
 | `tests/api/admin-products.test.js` | Alta, edición y baja de productos |
+| `tests/api/admin-imagen.test.js` | Subida de fotos: quién puede, qué se acepta y cuánto pesa |
 | `tests/lib/sesion.test.js` | Quién entra a dónde, y el modo lectura del super admin |
 | `tests/lib/errores.test.js` | La huella de un error: qué agrupa y qué separa |
 | `tests/api/feedback.test.js` | Retroalimentación: validación, trampa para bots y límite |
@@ -337,6 +338,7 @@ Las variables de entorno de la aplicación (las tres de Supabase) siguen viviend
 
 - Pedidos con detalle, datos de contacto y cambio de estado
 - Alta, edición y baja de productos con precio, stock e imagen
+- La foto se sube desde la computadora o se pega su dirección, como prefiera quien carga
 - La retroalimentación que dejan las clientas, para leerla y archivarla
 
 **Portal del sistema**

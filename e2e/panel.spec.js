@@ -1,6 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { PEDIDOS_DEL_PANEL } from './apoyo/datos.js';
-import { conPedidosDelPanel, conCambioDeEstado } from './apoyo/api.js';
+import {
+  conPedidosDelPanel,
+  conCambioDeEstado,
+  conCatalogoDelPanel,
+  conImagenSubida
+} from './apoyo/api.js';
 import { iniciarSesionEnElPanel } from './apoyo/flujos.js';
 
 /**
@@ -42,6 +47,43 @@ test('con la contraseña correcta se entra y se ven los pedidos', async ({ page 
 
   // El total facturado excluye los cancelados: 1110 + 420.
   await expect(page.getByText('L 1530.00')).toBeVisible();
+});
+
+// Un PNG de 1x1 transparente: lo mínimo que el servidor reconoce como imagen.
+const PNG_MINIMO = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64'
+);
+
+test('una foto elegida en la computadora se sube y queda en el formulario', async ({ page }) => {
+  await conCatalogoDelPanel(page, []);
+  const subidas = await conImagenSubida(page, 'https://ejemplo.test/foto-subida.png');
+
+  await iniciarSesionEnElPanel(page, PASSWORD);
+  // El ingreso todavía está navegando: pedir otra página en el medio la aborta.
+  await expect(page).toHaveURL(/\/akaristudio\/admin$/);
+
+  await page.goto('/akaristudio/admin/productos');
+  await page.getByRole('button', { name: '+ Agregar producto' }).click();
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: 'esmalte.png',
+    mimeType: 'image/png',
+    buffer: PNG_MINIMO
+  });
+
+  // La dirección que devolvió el servidor queda en el campo y en la vista previa.
+  await expect(page.getByPlaceholder('https://...')).toHaveValue(
+    'https://ejemplo.test/foto-subida.png'
+  );
+  await expect(page.locator('.admin-vista-previa img')).toHaveAttribute(
+    'src',
+    'https://ejemplo.test/foto-subida.png'
+  );
+
+  // Viajaron los bytes del archivo, no su nombre.
+  expect(subidas).toHaveLength(1);
+  expect(Buffer.from(subidas[0])).toEqual(PNG_MINIMO);
 });
 
 test('cambiar el estado de un pedido lo envía al servidor', async ({ page }) => {

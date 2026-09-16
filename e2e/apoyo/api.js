@@ -49,6 +49,27 @@ export async function conPedidosDelPanel(page, pedidos) {
   await page.route('**/api/admin/orders', (ruta) => ruta.fulfill(comoJSON(pedidos)));
 }
 
+/** El catálogo que ve el panel de productos. */
+export async function conCatalogoDelPanel(page, productos = []) {
+  await page.route('**/api/admin/products', (ruta) => ruta.fulfill(comoJSON(productos)));
+}
+
+/**
+ * La imagen se guarda bien y queda en esa dirección. Devuelve el array donde
+ * se acumulan los bytes que envió el navegador, para comprobar que subió el
+ * archivo y no su nombre.
+ */
+export async function conImagenSubida(page, url) {
+  const enviadas = [];
+
+  await page.route('**/api/admin/products/imagen', (ruta) => {
+    enviadas.push(ruta.request().postDataBuffer());
+    return ruta.fulfill(comoJSON({ url }, 201));
+  });
+
+  return enviadas;
+}
+
 /** El cambio de estado de un pedido, con lo que se envió en cada PATCH. */
 export async function conCambioDeEstado(page, idDelPedido) {
   const enviados = [];

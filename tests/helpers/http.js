@@ -34,12 +34,35 @@ export function crearRes() {
   };
 }
 
-/** Ejecuta un handler y devuelve la respuesta simulada. */
+/**
+ * Ejecuta un handler y devuelve la respuesta simulada.
+ *
+ * Con `cuerpoCrudo` el req además se puede recorrer como un flujo, que es lo
+ * que hacen las rutas que reciben un archivo: ahí Next no parsea el cuerpo y
+ * la ruta lee los bytes a medida que llegan. Se pueden pasar varios trozos
+ * para que la lectura ocurra de a partes, como en la red de verdad.
+ */
 export async function llamar(
   handler,
-  { method = 'GET', body, query = {}, cookies = {}, headers = {} } = {}
+  { method = 'GET', body, query = {}, cookies = {}, headers = {}, cuerpoCrudo } = {}
 ) {
   const res = crearRes();
-  await handler({ method, body, query, cookies, headers }, res);
+  const req = { method, body, query, cookies, headers };
+
+  if (cuerpoCrudo !== undefined) {
+    const trozos = Array.isArray(cuerpoCrudo) ? cuerpoCrudo : [cuerpoCrudo];
+    req.cortado = false;
+    req.destroy = () => {
+      req.cortado = true;
+    };
+    req[Symbol.asyncIterator] = async function* recorrer() {
+      for (const trozo of trozos) {
+        if (req.cortado) return;
+        yield trozo;
+      }
+    };
+  }
+
+  await handler(req, res);
   return res;
 }

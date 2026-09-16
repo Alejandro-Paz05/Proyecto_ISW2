@@ -469,6 +469,91 @@
   border-color: var(--gold);
 }
 
+/* ===== Imagen del producto: subir un archivo o pegar una dirección ===== */
+
+.admin-imagen {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-imagen-titulo {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gray);
+}
+
+.admin-imagen-opciones {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* El input de archivo queda oculto y el label hace de botón: el control que
+   dibuja el navegador no se puede peinar y cambia en cada uno. */
+.admin-subir {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 1px dashed #c9c3b8;
+  border-radius: 10px;
+  background: #faf8f5;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--black);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.admin-subir:hover,
+.admin-subir:focus-within {
+  border-color: var(--gold);
+  background: #fff;
+}
+
+.admin-subir input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.admin-subir.ocupado {
+  cursor: progress;
+  color: var(--gray);
+}
+
+.admin-imagen-o {
+  padding-bottom: 12px;
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.admin-imagen-url {
+  flex: 1;
+  min-width: 220px;
+}
+
+.admin-quitar-imagen {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--gray);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.admin-quitar-imagen:hover {
+  color: var(--black);
+}
+
 .admin-vista-previa {
   margin-top: 16px;
   display: flex;

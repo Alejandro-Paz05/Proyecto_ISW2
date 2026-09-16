@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { protegerPagina, PANEL_TIENDA } from '@/lib/sesion';
 import { CATEGORIAS, ETIQUETAS_CATEGORIA } from '@/lib/categorias';
+import { LIMITE_DE_BYTES, TIPOS_ACEPTADOS, enMegabytes } from '@/lib/imagen';
 
 const VACIO = { name: '', category: 'unas', price: '', stock: '', description: '', image: '' };
 
@@ -16,6 +17,7 @@ export default function ProductosAdmin({ sesion }) {
   const [aviso, setAviso] = useState(null);
   const [formulario, setFormulario] = useState(null);
   const [guardando, setGuardando] = useState(false);
+  const [subiendo, setSubiendo] = useState(false);
 
   // Ver el catálogo sí; tocarlo no. Ver arriba, en pages/akaristudio/admin.
   const soloLectura = sesion?.soloLectura;
@@ -89,6 +91,49 @@ export default function ProductosAdmin({ sesion }) {
       setError(err.message);
     } finally {
       setGuardando(false);
+    }
+  }
+
+  /**
+   * Sube la foto elegida y deja su dirección en el formulario.
+   *
+   * El archivo viaja tal cual en el cuerpo, con su tipo en la cabecera. El
+   * peso se mira acá antes de mandar nada —para no hacerle esperar una subida
+   * que va a terminar rechazada— y otra vez en el servidor, que es donde la
+   * comprobación cuenta.
+   */
+  async function subirImagen(evento) {
+    const archivo = evento.target.files?.[0];
+    // Limpiar el campo permite volver a elegir el mismo archivo si falló.
+    evento.target.value = '';
+    if (!archivo) return;
+
+    if (archivo.size > LIMITE_DE_BYTES) {
+      setError(
+        `Esa imagen pesa ${enMegabytes(archivo.size)} y el máximo es ` +
+          `${enMegabytes(LIMITE_DE_BYTES)}. Probá con una más liviana.`
+      );
+      return;
+    }
+
+    setSubiendo(true);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/admin/products/imagen', {
+        method: 'POST',
+        headers: { 'Content-Type': archivo.type || 'application/octet-stream' },
+        body: archivo
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo subir la imagen.');
+
+      setFormulario((actual) => ({ ...actual, image: data.url }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubiendo(false);
     }
   }
 
@@ -203,26 +248,55 @@ export default function ProductosAdmin({ sesion }) {
               />
             </label>
 
-            <label className="ancho-completo">
-              Dirección de la imagen
-              <input
-                type="url"
-                placeholder="https://..."
-                value={formulario.image}
-                onChange={(e) => setFormulario({ ...formulario, image: e.target.value })}
-              />
-            </label>
+            <div className="ancho-completo admin-imagen">
+              <span className="admin-imagen-titulo">Imagen del producto</span>
+
+              <div className="admin-imagen-opciones">
+                <label className={`admin-subir ${subiendo ? 'ocupado' : ''}`}>
+                  <input
+                    type="file"
+                    accept={TIPOS_ACEPTADOS}
+                    disabled={subiendo}
+                    onChange={subirImagen}
+                  />
+                  {subiendo ? 'Subiendo...' : 'Subir desde esta computadora'}
+                </label>
+
+                <span className="admin-imagen-o">o</span>
+
+                <label className="admin-imagen-url">
+                  Pegar una dirección
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={formulario.image}
+                    onChange={(e) => setFormulario({ ...formulario, image: e.target.value })}
+                  />
+                </label>
+              </div>
+
+              <span className="admin-sub">
+                PNG, JPG o WebP, hasta {enMegabytes(LIMITE_DE_BYTES)}.
+              </span>
+            </div>
           </div>
 
           {formulario.image && (
             <div className="admin-vista-previa">
               <span>Vista previa</span>
               <img src={formulario.image} alt="" />
+              <button
+                type="button"
+                className="admin-quitar-imagen"
+                onClick={() => setFormulario({ ...formulario, image: '' })}
+              >
+                Quitar
+              </button>
             </div>
           )}
 
           <div className="admin-formulario-acciones">
-            <button type="submit" className="btn btn-gold" disabled={guardando}>
+            <button type="submit" className="btn btn-gold" disabled={guardando || subiendo}>
               {guardando ? 'Guardando...' : 'Guardar'}
             </button>
             <button type="button" className="admin-salir" onClick={() => setFormulario(null)}>
