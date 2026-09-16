@@ -26,6 +26,7 @@ Proyecto de la asignatura **Ingeniería de Software II**.
 | Frontend | Next.js 14 (Pages Router) + React 18 |
 | Backend | API Routes de Next.js |
 | Base de datos | Supabase (PostgreSQL) |
+| Cuentas | Supabase Auth: correo y Google |
 | Pruebas | Vitest + Testing Library |
 | Pruebas E2E | Playwright |
 | Integración continua | GitHub Actions |
@@ -41,15 +42,26 @@ context/
   CatalogoContext.jsx  Catálogo, cargado una sola vez
 lib/
   supabase.js          Cliente de Supabase, solo servidor
-  admin-auth.js        Sesión del panel, con token firmado
+  supabase-navegador.js Cliente del navegador: solo para iniciar sesión
+  sesion.js            Quién hace la petición y qué puede hacer
+  roles.js             Roles y destinos. Sirve en el navegador y en el servidor
+  errores.js           Convierte un error en ticket, agrupado por huella
+  limite.js            Tope de peticiones por visitante
+  admin-auth.js        Contraseña compartida del panel, en retirada
   validar-producto.js  Validación del alta y edición de productos
   negocio.js           Datos de contacto y enlace de WhatsApp
   use-escape.js        Cierra los diálogos con la tecla Escape
+  use-sesion.js        Si hay sesión, para el enlace de la barra
   categorias.js        Categorías de productos y servicios
 pages/
   akaristudio/         Sitio público: inicio y productos
-  akaristudio/admin/   Panel: pedidos y productos
+  akaristudio/cuenta/  Mi cuenta: nombre y pedidos propios
+  akaristudio/admin/   Panel de la tienda: pedidos, productos y retroalimentación
+  akaristudio/sistema/ Portal del sistema: tickets y cuentas
   api/                 Rutas de API
+  api/auth/            Adónde va cada quien después de entrar
+  api/cuenta/          Los pedidos y el perfil de quien mira
+  api/sistema/         Tickets y cuentas
 public/                Manifiesto, service worker, iconos, robots
 scripts/               Generación de iconos y exportación del modelo
 styles/                globals.css, whatsapp.css, admin.css
@@ -80,10 +92,16 @@ Decisiones registradas:
 | [ADR-001](docs/adr/ADR-001-reglas-de-negocio-en-la-base-de-datos.md) | Poner las reglas de integridad del negocio en la base de datos, no en la aplicación |
 | [ADR-002](docs/adr/ADR-002-acceso-a-supabase-solo-desde-el-servidor.md) | Acceder a Supabase únicamente desde el servidor, nunca desde el navegador |
 | [ADR-003](docs/adr/ADR-003-solicitud-de-citas-por-whatsapp.md) | Reemplazar la reserva en línea por una solicitud enviada por WhatsApp |
+| [ADR-004](docs/adr/ADR-004-supabase-auth-solo-para-la-identidad.md) | Usar Supabase Auth para la identidad, y solo para eso. Revisa la ADR-002 |
+| [ADR-005](docs/adr/ADR-005-roles-y-portales.md) | Cuatro roles, dos portales y una cuenta que solo mira |
 
 ## Decisiones de diseño en resumen
 
-**El navegador nunca habla con Supabase directamente.** Todo pasa por las API Routes. Por eso las credenciales no llevan el prefijo `NEXT_PUBLIC_`: una variable con ese prefijo queda incrustada en el JavaScript que descarga el usuario y es legible por cualquiera.
+**El navegador habla con Supabase para una sola cosa: iniciar sesión.** Todos los datos pasan por las API Routes, con la clave secreta. Las dos variables `NEXT_PUBLIC_` que existen son la URL y la clave publicable, que es pública por diseño; lo que protege los datos es RLS. El porqué y el costo de esa excepción están en la [ADR-004](docs/adr/ADR-004-supabase-auth-solo-para-la-identidad.md), que revisa la ADR-002 sin borrarla.
+
+**Cada cuenta tiene un rol, y el rol se lee de la base.** Nunca de algo que mande el navegador. Una cuenta nueva siempre nace `clienta`; subir un rol es cosa de un admin. La cuenta que revisa el proyecto (`super_admin`) ve todo y recibe 403 ante cualquier escritura. Ver la [ADR-005](docs/adr/ADR-005-roles-y-portales.md).
+
+**Los errores se convierten en tickets agrupados por huella.** Cien visitas a una página rota son un ticket con cien ocurrencias, no cien tickets. Y un problema que reporta una clienta abre su propio ticket, en la misma transacción que guarda el mensaje.
 
 **Un pedido es una transacción atómica.** `create_order` bloquea las filas de producto con `SELECT ... FOR UPDATE`, verifica el stock, crea el pedido con sus ítems y descuenta el inventario. Si algo falla no quedan pedidos huérfanos, y dos compras simultáneas de la última unidad no pueden vender la misma cosa dos veces.
 
@@ -157,6 +175,7 @@ Abre [http://localhost:3000/akaristudio](http://localhost:3000/akaristudio).
 | `npm start` | Sirve la build compilada |
 | `npm run db:estado` | Dice qué migraciones le faltan a la base |
 | `npm run db:exportar` | Exporta el modelo de datos, verificándolo contra la base |
+| `npm run cuentas:crear` | Da de alta una cuenta del personal y le asigna el rol |
 | `npm run iconos` | Regenera los iconos de la aplicación |
 
 > No ejecutes `npm run build` con el servidor de desarrollo encendido: ambos escriben en `.next` y se pisan.
@@ -197,7 +216,7 @@ El código de `respuesta-cacheable.js` no sobra por eso: es lo que responde en d
 
 ## Pruebas
 
-271 pruebas con Vitest, jsdom y Testing Library, en `tests/`, espejando la estructura del código. La cobertura de líneas es del **97%** sobre el código con lógica. Los resúmenes que leen las herramientas —[`coverage/lcov.info`](coverage/lcov.info) y [`coverage/coverage-summary.json`](coverage/coverage-summary.json)— están versionados, para que la cifra se pueda comprobar leyendo el repositorio en vez de confiar en una captura.
+510 pruebas con Vitest, en `tests/`, espejando la estructura del código. De esas, 44 corren sobre un **PostgreSQL real** —PGlite, Postgres compilado a WebAssembly, sin instalar nada— y son las que comprueban las migraciones y las políticas de RLS rol por rol; el resto usa jsdom y Testing Library. La cobertura de líneas es del **97%** sobre el código con lógica. Los resúmenes que leen las herramientas —[`coverage/lcov.info`](coverage/lcov.info) y [`coverage/coverage-summary.json`](coverage/coverage-summary.json)— están versionados, para que la cifra se pueda comprobar leyendo el repositorio en vez de confiar en una captura.
 
 | Archivo | Qué cubre |
 |---|---|
@@ -214,7 +233,16 @@ El código de `respuesta-cacheable.js` no sobra por eso: es lo que responde en d
 | `tests/api/admin-sesion.test.js` | Login, cierre de sesión y retardo ante intentos fallidos |
 | `tests/api/admin-orders.test.js` | Pedidos del panel: acceso, estados y validaciones |
 | `tests/api/admin-products.test.js` | Alta, edición y baja de productos |
-| `tests/helpers/` | Simulacros de req/res y del cliente de Supabase |
+| `tests/lib/sesion.test.js` | Quién entra a dónde, y el modo lectura del super admin |
+| `tests/lib/errores.test.js` | La huella de un error: qué agrupa y qué separa |
+| `tests/api/feedback.test.js` | Retroalimentación: validación, trampa para bots y límite |
+| `tests/api/sistema-tickets.test.js` | Tickets: filtros, resolución y el choque de huellas |
+| `tests/api/sistema-cuentas.test.js` | Cuentas: cambiar roles, y no poder cambiarse el propio |
+| `tests/api/cuenta.test.js` | Mis pedidos y mi nombre |
+| `tests/db/migraciones.test.js` | Las migraciones, corridas dos veces sobre Postgres |
+| `tests/db/rls.test.js` | Las políticas de RLS, rol por rol y en las dos direcciones |
+| `tests/db/tickets.test.js` | Agrupación de errores, regresiones y tickets de clientas |
+| `tests/helpers/` | Simulacros de req/res, del cliente de Supabase y la base de PGlite |
 
 No hacen falta credenciales ni conexión a Supabase: el cliente de base de datos se simula.
 
@@ -224,7 +252,7 @@ Cada push ejecuta lint, pruebas con cobertura, build y análisis de SonarQube Cl
 
 ## Pruebas de extremo a extremo
 
-14 pruebas con [Playwright](https://playwright.dev) sobre Chromium, en [e2e/](e2e/). Son la punta de la pirámide: recorren caminos completos —comprar, entrar al panel, quedarse sin internet— y no casos de borde, que en Vitest cuestan milisegundos y acá costarían minutos.
+15 pruebas con [Playwright](https://playwright.dev) sobre Chromium, en [e2e/](e2e/). Son la punta de la pirámide: recorren caminos completos —comprar, entrar al panel, quedarse sin internet— y no casos de borde, que en Vitest cuestan milisegundos y acá costarían minutos.
 
 | Archivo | Qué recorre |
 |---|---|
@@ -232,6 +260,7 @@ Cada push ejecuta lint, pruebas con cobertura, build y análisis de SonarQube Cl
 | `e2e/checkout.spec.js` | Un pedido completo hasta el número de pedido, y el rechazo de la base |
 | `e2e/panel.spec.js` | Login real: redirección sin sesión, contraseña incorrecta y cambio de estado |
 | `e2e/offline.spec.js` | Service worker: una página visitada sin internet y la pantalla sin conexión |
+| `e2e/retroalimentacion.spec.js` | Dejar un comentario desde el pie de la tienda |
 | `e2e/humo.spec.js` | Humo contra el sitio publicado, de solo lectura |
 
 ```bash
@@ -298,11 +327,23 @@ Las variables de entorno de la aplicación (las tres de Supabase) siguen viviend
 - Descuento automático de stock, a prueba de pedidos simultáneos
 - Número de pedido correlativo (`AK-001000`, `AK-001001`, …)
 
-**Panel de administración**
+**Cuentas**
+
+- Registro con correo, ingreso con correo o con Google, y compra como invitada
+- "Mi cuenta": el nombre y los pedidos hechos con la sesión iniciada
+- Cuatro roles, dos portales, y una cuenta de revisión que ve todo y no escribe nada
+
+**Panel de la tienda**
 
 - Pedidos con detalle, datos de contacto y cambio de estado
 - Alta, edición y baja de productos con precio, stock e imagen
-- Acceso con contraseña, sesión en cookie httpOnly firmada
+- La retroalimentación que dejan las clientas, para leerla y archivarla
+
+**Portal del sistema**
+
+- Tickets de los errores que el sistema captura solo, agrupados por huella
+- Tickets de los problemas que reportan las clientas, enlazados a su mensaje
+- Cuentas y roles, con el correo y la forma de ingreso de cada una
 
 **Aplicación instalable**
 
