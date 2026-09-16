@@ -13,6 +13,7 @@ vi.mock('@supabase/ssr', () => ({
 }));
 
 import handler from '@/pages/api/orders';
+import { reiniciarLimites } from '@/lib/limite';
 
 const CLIENTE = {
   name: 'María López',
@@ -41,9 +42,9 @@ function crearRes() {
   };
 }
 
-async function pedir(body, method = 'POST') {
+async function pedir(body, method = 'POST', ip = '203.0.113.7') {
   const res = crearRes();
-  await handler({ method, body }, res);
+  await handler({ method, body, headers: { 'x-forwarded-for': ip } }, res);
   return res;
 }
 
@@ -57,6 +58,9 @@ describe('POST /api/orders', () => {
     rpc.mockReset();
     rpc.mockResolvedValue(PEDIDO_OK);
     getUser.mockReset();
+    // El límite por dirección vive en memoria del módulo: sin reiniciarlo, la
+    // sexta prueba que crea un pedido recibiría un 429 heredado de la anterior.
+    reiniciarLimites();
   });
 
   describe('metodo HTTP', () => {
@@ -253,6 +257,44 @@ describe('POST /api/orders', () => {
 
       expect(res.statusCode).toBe(201);
       expect(rpc.mock.calls[0][1].p_user_id).toBeNull();
+    });
+  });
+
+  // Acá el abuso no llena una tabla: cada pedido descuenta inventario real, y
+  // un script en bucle deja el catálogo en cero.
+  describe('limite de pedidos por dispositivo', () => {
+    const unPedido = (ip) =>
+      pedir({ customer: CLIENTE, payment: 'efectivo', items: [{ id: 1, qty: 1 }] }, 'POST', ip);
+
+    it('corta con 429 despues de cinco pedidos seguidos', async () => {
+      for (let i = 0; i < 5; i += 1) {
+        expect((await unPedido('198.51.100.20')).statusCode).toBe(201);
+      }
+
+      const sexto = await unPedido('198.51.100.20');
+
+      expect(sexto.statusCode).toBe(429);
+      expect(sexto.body.error).toMatch(/varios pedidos/i);
+      // Lo importante: la base ni se entera, así que no descuenta inventario.
+      expect(rpc).toHaveBeenCalledTimes(5);
+    });
+
+    it('el limite es por dispositivo y no apaga la tienda entera', async () => {
+      for (let i = 0; i < 5; i += 1) await unPedido('198.51.100.20');
+
+      const otraClienta = await unPedido('198.51.100.21');
+
+      expect(otraClienta.statusCode).toBe(201);
+    });
+
+    it('un carrito invalido no consume el cupo de nadie', async () => {
+      for (let i = 0; i < 6; i += 1) {
+        await pedir({ customer: CLIENTE, payment: 'efectivo', items: [] }, 'POST', '198.51.100.22');
+      }
+
+      const valido = await unPedido('198.51.100.22');
+
+      expect(valido.statusCode).toBe(201);
     });
   });
 });

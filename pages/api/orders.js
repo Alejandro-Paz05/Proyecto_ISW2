@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { reportarError } from '@/lib/errores';
 import { cuentaDeSesion } from '@/lib/sesion';
 import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
+import { permitir, ipDe } from '@/lib/limite';
 
 // Códigos de Postgres que corresponden a un error del cliente, no del
 // servidor. `create_order` los usa para rechazar datos inválidos o
@@ -9,6 +10,13 @@ import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
 const CLIENT_ERROR_CODES = new Set(['22023', 'P0001']);
 
 const MAX_ITEMS = 50;
+
+// Cinco pedidos cada cuarto de hora desde la misma dirección. Una clienta que
+// compra dos veces seguidas porque se olvidó algo entra sin enterarse; un
+// script que crea pedidos en bucle, no. Acá el abuso no llena una tabla: cada
+// pedido DESCUENTA INVENTARIO REAL, así que en media hora deja el catálogo en
+// cero y a la dueña con cien pedidos falsos que cancelar.
+const LIMITE = { maximo: 5, ventanaMs: 15 * 60 * 1000 };
 
 // Debe coincidir con la restricción CHECK de orders.payment_method.
 // Sin esta validación, un método inventado llega hasta el INSERT y la
@@ -57,6 +65,14 @@ export default async function handler(req, res) {
 
   if (!PAYMENT_METHODS.has(payment)) {
     return res.status(400).json({ error: 'El método de pago no es válido.' });
+  }
+
+  if (!permitir(`pedidos:${ipDe(req)}`, LIMITE)) {
+    return res.status(429).json({
+      error:
+        'Recibimos varios pedidos desde este dispositivo. Esperá unos minutos ' +
+        'o escribinos por WhatsApp y lo tomamos por ahí.'
+    });
   }
 
   // Si hay sesión, el pedido queda asociado a esa cuenta y la clienta lo ve
