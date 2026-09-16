@@ -12,7 +12,11 @@ import { permitir, ipDe } from '@/lib/limite';
  */
 
 const TIPOS = ['sugerencia', 'problema', 'elogio'];
-const CORREO_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+// Las partes del dominio no pueden contener otro punto, así cada punto es un
+// separador sin ambigüedad y la expresión se evalúa en tiempo lineal. La
+// versión obvia, [^@\s]+\.[^@\s]+, retrocede de forma cuadrática: en una ruta
+// pública, una cadena larga bastaría para trabar el servidor.
+const CORREO_VALIDO = /^[^@\s]+@[^@\s.]+(?:\.[^@\s.]+)+$/;
 const LARGO_MINIMO = 5;
 const LARGO_MAXIMO = 2000;
 
