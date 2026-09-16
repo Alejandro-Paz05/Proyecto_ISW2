@@ -1,15 +1,21 @@
 /**
  * Crea una cuenta con rol, o le cambia el rol a una que ya existe.
  *
- *   npm run cuentas:crear -- --correo persona@ejemplo.com --rol admin --nombre "Nombre"
+ *   npm run cuentas:crear -- --correo persona@gmail.com --rol admin --nombre "Nombre"
  *
  * Las cuentas del personal no se pueden crear desde la tienda: toda cuenta
  * que se registra nace clienta (migración 005), y subirle el rol exige la
  * clave secreta. Este script es la forma de dar de alta las primeras.
  *
- * La contraseña se genera al azar y se muestra UNA sola vez. No se guarda en
- * ningún archivo. Correlo en tu propia terminal y no pegues la salida en
- * ningún chat.
+ * Por defecto la cuenta se crea SIN contraseña: se entra con "Continuar con
+ * Google" usando el mismo correo. Supabase une la identidad de Google a la
+ * cuenta existente porque el correo ya está confirmado, así que el rol se
+ * conserva. La ventaja es que nunca existe una contraseña que haya que
+ * mandarle a nadie.
+ *
+ * Con --mostrar-contrasena se genera una al azar y se muestra UNA sola vez,
+ * para quien no tenga Google. En ese caso, correlo en tu propia terminal y no
+ * pegues la salida en ningún chat.
  *
  * Idempotente: si la cuenta ya existe, actualiza el rol y el nombre, y NO
  * toca la contraseña.
@@ -23,7 +29,11 @@ import { leerEnv } from './comun.mjs';
 // lib/sesion.js porque ese módulo usa los alias de Next, que Node no resuelve.
 const ROLES = ['clienta', 'duena', 'admin', 'super_admin'];
 
-const CORREO_VALIDO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+// Las partes del dominio no pueden contener otro punto: así cada punto es un
+// separador sin ambigüedad y la expresión se evalúa en tiempo lineal. La
+// versión obvia, [^@\s]+\.[^@\s]+, retrocede de forma cuadrática ante una
+// cadena larga sin punto final.
+const CORREO_VALIDO = /^[^@\s]+@[^@\s.]+(?:\.[^@\s.]+)+$/;
 const TAMANO_DE_PAGINA = 200;
 
 function leerArgumentos() {
@@ -31,7 +41,8 @@ function leerArgumentos() {
     options: {
       correo: { type: 'string' },
       rol: { type: 'string' },
-      nombre: { type: 'string' }
+      nombre: { type: 'string' },
+      'mostrar-contrasena': { type: 'boolean', default: false }
     }
   });
 
@@ -44,7 +55,12 @@ function leerArgumentos() {
     throw new Error(`--rol tiene que ser uno de: ${ROLES.join(', ')}.`);
   }
 
-  return { correo, rol: values.rol, nombre: values.nombre?.trim() || null };
+  return {
+    correo,
+    rol: values.rol,
+    nombre: values.nombre?.trim() || null,
+    conContrasena: values['mostrar-contrasena']
+  };
 }
 
 function clienteDeApi(env) {
@@ -85,7 +101,7 @@ async function buscarCuenta(pedir, correo) {
 }
 
 async function main() {
-  const { correo, rol, nombre } = leerArgumentos();
+  const { correo, rol, nombre, conContrasena } = leerArgumentos();
   const env = leerEnv();
 
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -99,17 +115,17 @@ async function main() {
   if (cuenta) {
     console.log(`La cuenta ${correo} ya existe: se actualiza el rol y no se toca la contraseña.`);
   } else {
-    // 18 bytes al azar: 24 caracteres, unos 144 bits. Nadie la adivina ni la
-    // recuerda, que es justamente la idea para una cuenta con este alcance.
-    contrasena = randomBytes(18).toString('base64url');
+    // 18 bytes al azar: 24 caracteres, unos 144 bits. Solo si se pidió.
+    if (conContrasena) contrasena = randomBytes(18).toString('base64url');
 
     cuenta = await pedir('/auth/v1/admin/users', {
       method: 'POST',
       body: JSON.stringify({
         email: correo,
-        password: contrasena,
+        ...(contrasena ? { password: contrasena } : {}),
         // Confirmada de entrada: la da de alta alguien que ya sabe que el
-        // correo es de esa persona.
+        // correo es de esa persona. Es además lo que permite que Supabase le
+        // una la identidad de Google al entrar.
         email_confirm: true,
         user_metadata: nombre ? { full_name: nombre } : {}
       })
@@ -137,6 +153,8 @@ async function main() {
     console.log('\nContraseña (se muestra una sola vez y no queda guardada en ningún lado):');
     console.log(`  ${contrasena}`);
     console.log('\nPasásela a la persona por un canal privado.');
+  } else if (!cuenta.last_sign_in_at) {
+    console.log(`\nSin contraseña: se entra con "Continuar con Google" usando ${correo}.`);
   }
 
   return 0;
