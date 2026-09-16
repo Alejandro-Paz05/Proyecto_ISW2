@@ -55,6 +55,32 @@ const ENTORNO_SUPABASE = `
 
   GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
   GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated, service_role;
+
+  -- Lo mínimo del esquema storage: el registro de buckets y la tabla de
+  -- archivos, con RLS activa como en Supabase. Alcanza para que la 007 se
+  -- aplique igual acá que allá, incluida su política de lectura.
+  CREATE SCHEMA storage;
+
+  CREATE TABLE storage.buckets (
+    id                 TEXT PRIMARY KEY,
+    name               TEXT NOT NULL,
+    public             BOOLEAN NOT NULL DEFAULT FALSE,
+    file_size_limit    BIGINT,
+    allowed_mime_types TEXT[],
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+  CREATE TABLE storage.objects (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bucket_id  TEXT REFERENCES storage.buckets (id),
+    name       TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+
+  GRANT USAGE ON SCHEMA storage TO anon, authenticated, service_role;
+  GRANT ALL ON storage.buckets, storage.objects TO anon, authenticated, service_role;
 `;
 
 export async function aplicarMigraciones(db) {

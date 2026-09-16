@@ -15,6 +15,7 @@ En **Supabase → SQL Editor → New query**, pegá y ejecutá los archivos **en
 | 004 | `catalogo_de_ejemplo.sql` | 16 productos de prueba — **opcional** |
 | 005 | `perfiles_y_roles.sql` | `profiles` con el rol de cada cuenta, `orders.user_id`, `create_order` con cuenta y la RLS por usuario |
 | 006 | `retroalimentacion_y_tickets.sql` | `feedback`, `tickets`, `registrar_error` y el ticket automático de cada problema reportado |
+| 007 | `imagenes_de_productos.sql` | El bucket `productos` de Storage, público de lectura y escrito solo desde el servidor |
 
 Sobre una base que ya está al día, correrlos de nuevo no cambia nada y no da error. Esa es la idea, y desde la 005 no es solo una promesa: [tests/db/migraciones.test.js](../tests/db/migraciones.test.js) las corre dos veces seguidas sobre un Postgres real (PGlite) y compara tablas, filas, políticas, funciones, triggers y privilegios antes y después.
 
