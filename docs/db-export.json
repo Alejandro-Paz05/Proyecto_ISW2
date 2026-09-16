@@ -1,12 +1,12 @@
 {
-  "generado_at": "2026-09-04T02:46:52.407Z",
+  "generado_at": "2026-09-16T05:31:06.242Z",
   "motor": "postgres",
   "proyecto": "Akari Studio",
   "codigo_verificacion": "LEARN-CAP-76080609",
   "tablas": [
     {
       "nombre": "schema_migraciones",
-      "filas": 4,
+      "filas": 6,
       "columnas": [
         {
           "nombre": "version",
@@ -179,13 +179,27 @@
           "nombre": "created_at",
           "tipo": "timestamptz",
           "nulo": false
+        },
+        {
+          "nombre": "user_id",
+          "tipo": "uuid",
+          "nulo": true
         }
       ],
       "indices": [
-        "orders_created_at_idx"
+        "orders_created_at_idx",
+        "orders_user_id_idx"
       ],
-      "relaciones": [],
-      "politicas_rls": []
+      "relaciones": [
+        {
+          "columna": "user_id",
+          "referencia": "auth.users.id"
+        }
+      ],
+      "politicas_rls": [
+        "orders_leer_los_propios",
+        "orders_leer_todos_el_equipo"
+      ]
     },
     {
       "nombre": "order_items",
@@ -236,7 +250,9 @@
           "referencia": "products.id"
         }
       ],
-      "politicas_rls": []
+      "politicas_rls": [
+        "order_items_leer_si_se_ve_el_pedido"
+      ]
     },
     {
       "nombre": "order_status_history",
@@ -278,7 +294,204 @@
           "referencia": "orders.id"
         }
       ],
-      "politicas_rls": []
+      "politicas_rls": [
+        "order_status_history_leer_si_se_ve_el_pedido"
+      ]
+    },
+    {
+      "nombre": "profiles",
+      "filas": 2,
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "uuid",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "full_name",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "role",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        }
+      ],
+      "indices": [],
+      "relaciones": [
+        {
+          "columna": "id",
+          "referencia": "auth.users.id"
+        }
+      ],
+      "politicas_rls": [
+        "profiles_leer_el_propio",
+        "profiles_leer_todos_admin",
+        "profiles_editar_el_nombre_propio"
+      ]
+    },
+    {
+      "nombre": "tickets",
+      "filas": 1,
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "source",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "title",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "detail",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "severity",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "status",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "fingerprint",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "occurrences",
+          "tipo": "integer",
+          "nulo": false
+        },
+        {
+          "nombre": "first_seen_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        },
+        {
+          "nombre": "last_seen_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        },
+        {
+          "nombre": "context",
+          "tipo": "jsonb",
+          "nulo": false
+        },
+        {
+          "nombre": "resolution",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "resolved_at",
+          "tipo": "timestamptz",
+          "nulo": true
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        }
+      ],
+      "indices": [
+        "tickets_una_huella_abierta_idx",
+        "tickets_status_idx"
+      ],
+      "relaciones": [],
+      "politicas_rls": [
+        "tickets_leer_admin"
+      ]
+    },
+    {
+      "nombre": "feedback",
+      "filas": 0,
+      "columnas": [
+        {
+          "nombre": "id",
+          "tipo": "serial",
+          "pk": true,
+          "nulo": false
+        },
+        {
+          "nombre": "user_id",
+          "tipo": "uuid",
+          "nulo": true
+        },
+        {
+          "nombre": "kind",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "message",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "contact_email",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "page",
+          "tipo": "text",
+          "nulo": true
+        },
+        {
+          "nombre": "status",
+          "tipo": "text",
+          "nulo": false
+        },
+        {
+          "nombre": "ticket_id",
+          "tipo": "integer",
+          "nulo": true
+        },
+        {
+          "nombre": "created_at",
+          "tipo": "timestamptz",
+          "nulo": false
+        }
+      ],
+      "indices": [
+        "feedback_status_idx",
+        "feedback_user_id_idx",
+        "feedback_ticket_id_idx"
+      ],
+      "relaciones": [
+        {
+          "columna": "user_id",
+          "referencia": "auth.users.id"
+        },
+        {
+          "columna": "ticket_id",
+          "referencia": "tickets.id"
+        }
+      ],
+      "politicas_rls": [
+        "feedback_leer_la_propia",
+        "feedback_leer_toda_el_equipo"
+      ]
     }
   ]
 }

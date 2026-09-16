@@ -203,22 +203,54 @@ const MODELO = {
           por_defecto: "'pendiente'",
           restriccion: "status IN ('pendiente','confirmado','enviado','entregado','cancelado')"
         },
-        { nombre: 'created_at', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' }
+        { nombre: 'created_at', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' },
+        {
+          nombre: 'user_id',
+          tipo: 'uuid',
+          nulo: true,
+          clave: 'FK',
+          referencia: 'auth.users.id',
+          descripcion: 'La cuenta que hizo el pedido. NULL si se compró como invitada.'
+        }
       ],
       indices: [
         {
           nombre: 'orders_created_at_idx',
           columnas: ['created_at DESC'],
           motivo: 'El panel lista siempre del más reciente al más viejo.'
+        },
+        {
+          nombre: 'orders_user_id_idx',
+          columnas: ['user_id', 'created_at DESC'],
+          parcial: 'WHERE user_id IS NOT NULL',
+          motivo:
+            'Parcial porque la mayoría de los pedidos son de invitadas y no tiene ' +
+            'sentido indexar sus NULL. Cubre "mis pedidos", la única consulta que ' +
+            'filtra por esta columna.'
         }
       ],
-      relaciones: [],
+      relaciones: [{ columna: 'user_id', referencia: 'auth.users.id' }],
       rls: {
         activo: true,
-        politicas: [],
+        politicas: [
+          {
+            nombre: 'orders_leer_los_propios',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion: 'user_id = auth.uid()',
+            motivo: 'Cada clienta ve sus pedidos y ninguno más. Para anon sigue siendo cero.'
+          },
+          {
+            nombre: 'orders_leer_todos_el_equipo',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion: "rol_actual() IN ('duena','admin','super_admin')",
+            motivo: 'La tienda se gestiona viendo todos los pedidos.'
+          }
+        ],
         motivo:
-          'Sin políticas y con RLS activo, el acceso público es cero. Guarda datos ' +
-          'personales que solo el servidor debe poder leer.'
+          'Escribir sigue sin política: los pedidos solo nacen por create_order, desde ' +
+          'el servidor. Guarda datos personales que nadie más debe poder leer.'
       }
     },
     {
@@ -261,7 +293,21 @@ const MODELO = {
         { columna: 'order_id', referencia: 'orders.id' },
         { columna: 'product_id', referencia: 'products.id' }
       ],
-      rls: { activo: true, politicas: [], motivo: 'Igual que orders: cero acceso público.' }
+      rls: {
+        activo: true,
+        politicas: [
+          {
+            nombre: 'order_items_leer_si_se_ve_el_pedido',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion: 'EXISTS (SELECT 1 FROM orders o WHERE o.id = order_items.order_id)',
+            motivo:
+              'La subconsulta pasa a su vez por las políticas de orders, así que quién ' +
+              'puede ver qué pedido se decide en un solo lugar.'
+          }
+        ],
+        motivo: 'Para anon, igual que orders: cero acceso.'
+      }
     },
     {
       nombre: 'order_status_history',
@@ -298,8 +344,275 @@ const MODELO = {
       relaciones: [{ columna: 'order_id', referencia: 'orders.id' }],
       rls: {
         activo: true,
-        politicas: [],
+        politicas: [
+          {
+            nombre: 'order_status_history_leer_si_se_ve_el_pedido',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion:
+              'EXISTS (SELECT 1 FROM orders o WHERE o.id = order_status_history.order_id)',
+            motivo: 'La bitácora se ve si se ve su pedido, por la misma subconsulta.'
+          }
+        ],
         motivo: 'Está atada a pedidos, que tampoco son públicos.'
+      }
+    },
+    {
+      nombre: 'profiles',
+      descripcion:
+        'Un perfil por cuenta de Supabase Auth, con su rol. Lo crea un trigger sobre ' +
+        'auth.users, nunca la aplicación.',
+      clave_primaria: ['id'],
+      columnas: [
+        {
+          nombre: 'id',
+          tipo: 'uuid',
+          nulo: false,
+          clave: 'PK',
+          referencia: 'auth.users.id',
+          descripcion: 'La misma clave que la cuenta: primaria y foránea a la vez.'
+        },
+        {
+          nombre: 'full_name',
+          tipo: 'text',
+          nulo: true,
+          descripcion: 'Sale de los metadatos del registro; Google lo manda como full_name o name.'
+        },
+        {
+          nombre: 'role',
+          tipo: 'text',
+          nulo: false,
+          por_defecto: "'clienta'",
+          restriccion: "role IN ('clienta','duena','admin','super_admin')",
+          descripcion:
+            'Toda cuenta nace clienta. El rol lo sube un admin desde el servidor: si el ' +
+            'registro pudiera elegirlo, cualquiera se daría de alta como admin.'
+        },
+        { nombre: 'created_at', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' }
+      ],
+      indices: [],
+      relaciones: [{ columna: 'id', referencia: 'auth.users.id' }],
+      rls: {
+        activo: true,
+        politicas: [
+          {
+            nombre: 'profiles_leer_el_propio',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion: 'id = auth.uid()',
+            motivo: 'Cada cuenta ve su perfil.'
+          },
+          {
+            nombre: 'profiles_leer_todos_admin',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion: "rol_actual() IN ('admin','super_admin')",
+            motivo: 'Administrar cuentas exige verlas; el super_admin revisa el sistema entero.'
+          },
+          {
+            nombre: 'profiles_editar_el_nombre_propio',
+            operacion: 'UPDATE',
+            roles: ['authenticated'],
+            condicion: 'id = auth.uid()',
+            motivo:
+              'La política deja pasar la fila propia y el privilegio de columna ' +
+              'GRANT UPDATE (full_name) impide que en esa fila se toque el rol. Hacen ' +
+              'falta las dos: la política sola dejaría cambiar cualquier columna.'
+          }
+        ]
+      }
+    },
+    {
+      nombre: 'tickets',
+      descripcion:
+        'Problemas por corregir: los que el sistema captura solo y los que reportan las clientas.',
+      clave_primaria: ['id'],
+      columnas: [
+        { nombre: 'id', tipo: 'serial', nulo: false, clave: 'PK' },
+        {
+          nombre: 'source',
+          tipo: 'text',
+          nulo: false,
+          restriccion: "source IN ('automatico','cliente','interno')"
+        },
+        { nombre: 'title', tipo: 'text', nulo: false, restriccion: 'char_length BETWEEN 1 AND 200' },
+        { nombre: 'detail', tipo: 'text', nulo: true },
+        {
+          nombre: 'severity',
+          tipo: 'text',
+          nulo: false,
+          por_defecto: "'media'",
+          restriccion: "severity IN ('baja','media','alta','critica')"
+        },
+        {
+          nombre: 'status',
+          tipo: 'text',
+          nulo: false,
+          por_defecto: "'abierto'",
+          restriccion: "status IN ('abierto','en_progreso','resuelto','descartado')"
+        },
+        {
+          nombre: 'fingerprint',
+          tipo: 'text',
+          nulo: true,
+          descripcion:
+            'Lo que hace que dos ocurrencias sean el mismo problema. NULL en los tickets ' +
+            'que no vienen de un error capturado.'
+        },
+        {
+          nombre: 'occurrences',
+          tipo: 'integer',
+          nulo: false,
+          por_defecto: '1',
+          restriccion: 'occurrences > 0',
+          descripcion: 'Cuántas veces se vio. Lo incrementa registrar_error.'
+        },
+        { nombre: 'first_seen_at', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' },
+        { nombre: 'last_seen_at', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' },
+        {
+          nombre: 'context',
+          tipo: 'jsonb',
+          nulo: false,
+          por_defecto: "'{}'",
+          descripcion: 'Ruta, pila y navegador de la última ocurrencia. Nunca datos personales.'
+        },
+        { nombre: 'resolution', tipo: 'text', nulo: true },
+        {
+          nombre: 'resolved_at',
+          tipo: 'timestamptz',
+          nulo: true,
+          descripcion: 'La pone un trigger, no la aplicación.'
+        },
+        { nombre: 'created_at', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' }
+      ],
+      indices: [
+        {
+          nombre: 'tickets_una_huella_abierta_idx',
+          columnas: ['fingerprint'],
+          unico: true,
+          parcial: "WHERE fingerprint IS NOT NULL AND status IN ('abierto','en_progreso')",
+          motivo:
+            'Un solo ticket abierto por huella: es lo que convierte cien ocurrencias en ' +
+            'un ticket con cien ocurrencias. Parcial a propósito, así el mismo error ' +
+            'después de resuelto abre uno nuevo, que es lo que es: una regresión.'
+        },
+        {
+          nombre: 'tickets_status_idx',
+          columnas: ['status', 'last_seen_at DESC'],
+          motivo: 'El portal lista por estado, con lo más reciente arriba.'
+        }
+      ],
+      relaciones: [],
+      rls: {
+        activo: true,
+        politicas: [
+          {
+            nombre: 'tickets_leer_admin',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion: "rol_actual() IN ('admin','super_admin')",
+            motivo:
+              'Son trabajo técnico: los ven quien corrige y quien revisa. A la dueña le ' +
+              'importa el reclamo de la clienta, y ese lo ve en feedback.'
+          }
+        ]
+      }
+    },
+    {
+      nombre: 'feedback',
+      descripcion: 'Lo que las clientas dejan desde la tienda. Con cuenta o como invitadas.',
+      clave_primaria: ['id'],
+      columnas: [
+        { nombre: 'id', tipo: 'serial', nulo: false, clave: 'PK' },
+        {
+          nombre: 'user_id',
+          tipo: 'uuid',
+          nulo: true,
+          clave: 'FK',
+          referencia: 'auth.users.id',
+          descripcion: 'NULL cuando la deja una invitada.'
+        },
+        {
+          nombre: 'kind',
+          tipo: 'text',
+          nulo: false,
+          restriccion: "kind IN ('sugerencia','problema','elogio')"
+        },
+        {
+          nombre: 'message',
+          tipo: 'text',
+          nulo: false,
+          restriccion: 'char_length BETWEEN 5 AND 2000'
+        },
+        {
+          nombre: 'contact_email',
+          tipo: 'text',
+          nulo: true,
+          restriccion: 'formato de correo',
+          descripcion: 'Opcional: para responderle a una invitada que quiere respuesta.'
+        },
+        { nombre: 'page', tipo: 'text', nulo: true, restriccion: 'char_length <= 300' },
+        {
+          nombre: 'status',
+          tipo: 'text',
+          nulo: false,
+          por_defecto: "'nueva'",
+          restriccion: "status IN ('nueva','leida','archivada')"
+        },
+        {
+          nombre: 'ticket_id',
+          tipo: 'integer',
+          nulo: true,
+          clave: 'FK',
+          referencia: 'tickets.id',
+          descripcion: 'Lo llena el trigger cuando la retroalimentación es un problema.'
+        },
+        { nombre: 'created_at', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' }
+      ],
+      indices: [
+        {
+          nombre: 'feedback_status_idx',
+          columnas: ['status', 'created_at DESC'],
+          motivo: 'El panel lista lo nuevo primero.'
+        },
+        {
+          nombre: 'feedback_user_id_idx',
+          columnas: ['user_id'],
+          parcial: 'WHERE user_id IS NOT NULL',
+          motivo: 'La mayoría son de invitadas: indexar sus NULL no sirve para nada.'
+        },
+        {
+          nombre: 'feedback_ticket_id_idx',
+          columnas: ['ticket_id'],
+          parcial: 'WHERE ticket_id IS NOT NULL',
+          motivo: 'Para llegar del ticket al reclamo que lo abrió.'
+        }
+      ],
+      relaciones: [
+        { columna: 'user_id', referencia: 'auth.users.id' },
+        { columna: 'ticket_id', referencia: 'tickets.id' }
+      ],
+      rls: {
+        activo: true,
+        politicas: [
+          {
+            nombre: 'feedback_leer_la_propia',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion: 'user_id = auth.uid()',
+            motivo: 'Quien la escribió puede releerla.'
+          },
+          {
+            nombre: 'feedback_leer_toda_el_equipo',
+            operacion: 'SELECT',
+            roles: ['authenticated'],
+            condicion: "rol_actual() IN ('duena','admin','super_admin')",
+            motivo: 'Es para que el equipo la lea: ese es el punto de la tabla.'
+          }
+        ],
+        motivo:
+          'Escribir no tiene política: entra por la ruta de API, que limita cuántos ' +
+          'mensajes acepta por rato.'
       }
     }
   ],
@@ -337,6 +650,40 @@ const MODELO = {
       cardinalidad: 'N:1',
       al_borrar: 'CASCADE',
       motivo: 'La bitácora de un pedido borrado no le sirve a nadie.'
+    },
+    {
+      desde: 'profiles.id',
+      hacia: 'auth.users.id',
+      cardinalidad: '1:1',
+      al_borrar: 'CASCADE',
+      motivo:
+        'El perfil es la cuenta vista desde el dominio: sin cuenta no existe. Comparte ' +
+        'su clave en vez de tener una propia, así no puede haber dos perfiles de la misma.'
+    },
+    {
+      desde: 'orders.user_id',
+      hacia: 'auth.users.id',
+      cardinalidad: 'N:1',
+      al_borrar: 'SET NULL',
+      motivo:
+        'Borrar una cuenta no borra lo que compró: la venta existió y la contabilidad ' +
+        'la necesita. El pedido queda como uno de invitada.'
+    },
+    {
+      desde: 'feedback.user_id',
+      hacia: 'auth.users.id',
+      cardinalidad: 'N:1',
+      al_borrar: 'SET NULL',
+      motivo: 'El mensaje sigue siendo útil aunque la cuenta ya no esté; deja de ser de nadie.'
+    },
+    {
+      desde: 'feedback.ticket_id',
+      hacia: 'tickets.id',
+      cardinalidad: 'N:1',
+      al_borrar: 'SET NULL',
+      motivo:
+        'El reclamo no desaparece porque se borre su ticket. El ticket no copia el correo ' +
+        'ni la cuenta: se llega a ellos por acá, para no duplicar lo que hay que proteger.'
     }
   ],
 
@@ -351,14 +698,16 @@ const MODELO = {
         'p_customer_phone text',
         'p_customer_address text',
         'p_payment_method text',
-        'p_items jsonb'
+        'p_items jsonb',
+        'p_user_id uuid DEFAULT NULL'
       ],
       retorna: 'jsonb',
       descripcion:
         'Única vía para registrar un pedido. Bloquea las filas de producto con ' +
         'SELECT ... FOR UPDATE ordenadas por id, valida el stock, calcula el total ' +
         'con los precios de la base, inserta el pedido y sus líneas, y descuenta el ' +
-        'inventario. Todo en una transacción.',
+        'inventario. Todo en una transacción. La cuenta llega ya verificada por el ' +
+        'servidor; NULL es una compra como invitada.',
       permisos: 'Solo service_role. Revocada de PUBLIC, anon y authenticated.'
     },
     {
@@ -373,6 +722,66 @@ const MODELO = {
         'de verdad (IS DISTINCT FROM, para no registrar un UPDATE que deja el mismo ' +
         'valor).',
       permisos: 'Lo invoca el trigger; no se llama desde la aplicación.'
+    },
+    {
+      nombre: 'crear_perfil_de_usuario',
+      tipo: 'SECURITY DEFINER',
+      lenguaje: 'plpgsql',
+      parametros: [],
+      retorna: 'trigger',
+      descripcion:
+        'Trigger AFTER INSERT sobre auth.users. Crea el perfil en la misma transacción ' +
+        'que la cuenta, con el nombre de los metadatos del registro y el rol clienta. ' +
+        'Así no existe el estado de una cuenta sin perfil.',
+      permisos: 'Lo invoca el trigger auth_usuario_creado.'
+    },
+    {
+      nombre: 'rol_actual',
+      tipo: 'SECURITY DEFINER',
+      lenguaje: 'sql',
+      parametros: [],
+      retorna: 'text',
+      descripcion:
+        'El rol de quien está haciendo la consulta, leído de profiles por auth.uid(). ' +
+        'Es SECURITY DEFINER porque si leyera profiles con los permisos de quien ' +
+        'pregunta, la propia política de profiles la volvería a llamar en un ciclo.',
+      permisos: 'authenticated. La usan las políticas de RLS.'
+    },
+    {
+      nombre: 'registrar_error',
+      tipo: 'SECURITY DEFINER',
+      lenguaje: 'plpgsql',
+      parametros: ['p_fingerprint text', 'p_title text', 'p_detail text', 'p_context jsonb'],
+      retorna: 'integer',
+      descripcion:
+        'Registra una ocurrencia de error. INSERT ... ON CONFLICT sobre el índice único ' +
+        'parcial de la huella: si ya hay un ticket abierto con esa huella, le suma una ' +
+        'ocurrencia y actualiza el contexto en vez de abrir otro.',
+      permisos: 'Solo service_role: la llama /api/errores, nunca el navegador.'
+    },
+    {
+      nombre: 'abrir_ticket_por_problema',
+      tipo: 'SECURITY DEFINER',
+      lenguaje: 'plpgsql',
+      parametros: [],
+      retorna: 'trigger',
+      descripcion:
+        'Trigger BEFORE INSERT sobre feedback. Cuando el tipo es problema, abre su ticket ' +
+        'y guarda el id en la misma transacción que el mensaje. En la aplicación, un ' +
+        'reporte cargado por otro camino quedaría sin ticket.',
+      permisos: 'Lo invoca el trigger feedback_abrir_ticket.'
+    },
+    {
+      nombre: 'fechar_resolucion_de_ticket',
+      tipo: 'trigger',
+      lenguaje: 'plpgsql',
+      parametros: [],
+      retorna: 'trigger',
+      descripcion:
+        'Pone resolved_at al pasar a resuelto y la borra al reabrir o descartar. Si ' +
+        'dependiera de que la ruta de API se acuerde, cambiar el estado desde el panel ' +
+        'de Supabase dejaría un ticket resuelto sin fecha.',
+      permisos: 'Lo invoca el trigger tickets_fechar_resolucion.'
     }
   ],
 
