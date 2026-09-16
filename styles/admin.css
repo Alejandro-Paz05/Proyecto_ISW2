@@ -377,6 +377,43 @@
   margin-bottom: 18px;
 }
 
+/* Aviso de la cuenta que solo mira. Amarillo y no rojo: no es un error, es
+   una advertencia de que los controles no van a hacer nada. */
+.admin-banner-lectura {
+  background: #fff6d8;
+  color: #7a5c00;
+  border: 1px solid #f0dca0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+/* La pila de llamadas de un ticket: texto preformateado que no puede
+   ensanchar la tabla ni crecer sin fin. */
+.admin-pila {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-detalle textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 10px;
+  resize: vertical;
+}
+
 /* ===== Productos ===== */
 .admin-boton-nuevo {
   margin-bottom: 20px;

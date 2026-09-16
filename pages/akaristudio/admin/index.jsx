@@ -27,13 +27,17 @@ function historialOrdenado(pedido) {
   );
 }
 
-export default function PedidosAdmin() {
+export default function PedidosAdmin({ sesion }) {
   const [pedidos, setPedidos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [filtro, setFiltro] = useState('todos');
   const [guardando, setGuardando] = useState(null);
   const [expandido, setExpandido] = useState(null);
+
+  // La cuenta que revisa el proyecto ve todo y no cambia nada. El servidor ya
+  // se lo impide; mostrarle controles que siempre fallan sería maltratarla.
+  const soloLectura = sesion?.soloLectura;
 
   const cargar = useCallback(async () => {
     try {
@@ -99,7 +103,7 @@ export default function PedidosAdmin() {
     .reduce((suma, p) => suma + Number(p.total), 0);
 
   return (
-    <AdminLayout titulo="Pedidos">
+    <AdminLayout titulo="Pedidos" portal="tienda" sesion={sesion}>
       <div className="admin-tarjetas">
         <div className="admin-tarjeta">
           <span className="admin-tarjeta-valor">{pedidos.length}</span>
@@ -177,7 +181,7 @@ export default function PedidosAdmin() {
                       <select
                         className={`admin-estado estado-${pedido.status}`}
                         value={pedido.status}
-                        disabled={guardando === pedido.id}
+                        disabled={soloLectura || guardando === pedido.id}
                         onChange={(e) => cambiarEstado(pedido, e.target.value)}
                         aria-label={`Estado del pedido ${pedido.order_number}`}
                       >
