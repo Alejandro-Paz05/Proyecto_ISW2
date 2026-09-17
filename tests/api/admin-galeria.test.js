@@ -133,9 +133,25 @@ describe('galería desde el panel', () => {
     it('una foto nueva va sin id, para que la base se lo dé', async () => {
       await guardar([{ imagen: UNA, titulo: '' }]);
 
-      const [filas] = cadenaCon('upsert').upsert.mock.calls[0];
+      const [filas] = cadenaCon('insert').insert.mock.calls[0];
       expect(filas[0]).not.toHaveProperty('id');
       expect(filas[0].titulo).toBeNull();
+    });
+
+    // Le pasó a Alejandro al subir la séptima foto: PostgREST exige que todos
+    // los objetos de una misma operación tengan las mismas claves, así que
+    // mandar seis con id y una sin id rechazaba la escritura entera.
+    it('separa las que ya existían de las nuevas', async () => {
+      await guardar([
+        { id: 1, imagen: UNA, titulo: 'Cejas' },
+        { imagen: OTRA, titulo: 'Recién subida' }
+      ]);
+
+      const [actualizadas] = cadenaCon('upsert').upsert.mock.calls[0];
+      const [insertadas] = cadenaCon('insert').insert.mock.calls[0];
+
+      expect(actualizadas).toEqual([{ id: 1, imagen: UNA, titulo: 'Cejas', position: 0 }]);
+      expect(insertadas).toEqual([{ imagen: OTRA, titulo: 'Recién subida', position: 1 }]);
     });
 
     // La portada sirve una copia de hasta cinco minutos: sin invalidar, la
@@ -154,6 +170,7 @@ describe('galería desde el panel', () => {
 
       expect(cadenaCon('delete')).toBeDefined();
       expect(cadenaCon('upsert')).toBeUndefined();
+      expect(cadenaCon('insert')).toBeUndefined();
     });
 
     it('si la base falla, lo reporta y responde 500', async () => {

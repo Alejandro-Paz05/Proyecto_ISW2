@@ -48,10 +48,25 @@ async function reemplazar(req, res) {
       if (error) throw error;
     }
 
-    if (colores.length > 0) {
-      const { error } = await db
-        .from('product_colors')
-        .upsert(colores.map((color) => ({ ...color, product_id: productId })));
+    // Los que ya existían y los nuevos van por separado, y no en un upsert
+    // único: PostgREST exige que todos los objetos de una misma operación
+    // tengan exactamente las mismas claves, y mezclar filas con id y sin id la
+    // rechaza entera. Pasa apenas se agrega un color a un producto que ya
+    // tiene otros, que es el caso normal.
+    const conFila = colores
+      .filter((color) => color.id)
+      .map((color) => ({ ...color, product_id: productId }));
+    const nuevos = colores
+      .filter((color) => !color.id)
+      .map((color) => ({ ...color, product_id: productId }));
+
+    if (conFila.length > 0) {
+      const { error } = await db.from('product_colors').upsert(conFila);
+      if (error) throw error;
+    }
+
+    if (nuevos.length > 0) {
+      const { error } = await db.from('product_colors').insert(nuevos);
       if (error) throw error;
     }
 

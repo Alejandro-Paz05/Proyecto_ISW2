@@ -36,6 +36,10 @@ function conRespuestas(...respuestas) {
   });
 }
 
+/** La cadena donde se llamó a ese método: los índices se corren según el caso. */
+const cadenaCon = (metodo) =>
+  estado.cadenas.find((cadena) => cadena[metodo].mock.calls.length > 0);
+
 const guardar = (body, id = '7') =>
   llamar(colores, {
     method: 'PUT',
@@ -113,18 +117,35 @@ describe('colores de un producto', () => {
       // Existen el 1 y el 2; solo se manda el 1.
       await guardar({ colores: [{ id: 1, nombre: 'Rojo', stock: 4 }] });
 
-      const borrado = estado.cadenas[1];
-      expect(borrado.delete).toHaveBeenCalled();
-      expect(borrado.in).toHaveBeenCalledWith('id', [2]);
+      expect(cadenaCon('delete').in).toHaveBeenCalledWith('id', [2]);
     });
 
     it('conserva el id de los que siguen, para no huerfanar las ventas viejas', async () => {
       await guardar({ colores: [{ id: 2, nombre: 'Azul', stock: 9 }] });
 
-      const [filas] = estado.cadenas[2].upsert.mock.calls[0];
+      const [filas] = cadenaCon('upsert').upsert.mock.calls[0];
       expect(filas).toEqual([
         { id: 2, nombre: 'Azul', hex: null, stock: 9, position: 0, product_id: 7 }
       ]);
+    });
+
+    // El mismo problema que en la galería: PostgREST exige que todos los
+    // objetos de una operación tengan las mismas claves, así que agregar un
+    // color a un producto que ya tenía otros rechazaba la escritura entera.
+    it('separa los colores que ya existían de los nuevos', async () => {
+      await guardar({
+        colores: [
+          { id: 1, nombre: 'Rojo', stock: 4 },
+          { nombre: 'Verde', stock: 2 }
+        ]
+      });
+
+      const [actualizados] = cadenaCon('upsert').upsert.mock.calls[0];
+      const [insertados] = cadenaCon('insert').insert.mock.calls[0];
+
+      expect(actualizados[0]).toMatchObject({ id: 1, nombre: 'Rojo' });
+      expect(insertados[0]).not.toHaveProperty('id');
+      expect(insertados[0]).toMatchObject({ nombre: 'Verde', product_id: 7 });
     });
 
     it('sin nada que borrar no llama al borrado', async () => {
@@ -136,7 +157,7 @@ describe('colores de un producto', () => {
 
       await guardar({ colores: [{ nombre: 'Rojo', stock: 1 }] });
 
-      expect(estado.cadenas[1].delete).not.toHaveBeenCalled();
+      expect(cadenaCon('delete')).toBeUndefined();
     });
 
     // El trigger de la base recalcula products.stock, asi que la copia en

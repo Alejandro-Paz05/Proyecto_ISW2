@@ -86,8 +86,21 @@ async function reemplazar(req, res) {
       if (error) throw error;
     }
 
-    if (fotos.length > 0) {
-      const { error } = await db.from('galeria').upsert(fotos);
+    // Las que ya existían y las nuevas van por separado, y no en un upsert
+    // único, porque PostgREST exige que todos los objetos de una misma
+    // operación tengan exactamente las mismas claves: mezclar filas con id y
+    // sin id la rechaza entera. Pasa apenas se agrega una foto a una galería
+    // que ya tiene otras, que es el caso normal.
+    const conocidas = fotos.filter((foto) => foto.id);
+    const nuevas = fotos.filter((foto) => !foto.id);
+
+    if (conocidas.length > 0) {
+      const { error } = await db.from('galeria').upsert(conocidas);
+      if (error) throw error;
+    }
+
+    if (nuevas.length > 0) {
+      const { error } = await db.from('galeria').insert(nuevas);
       if (error) throw error;
     }
 
