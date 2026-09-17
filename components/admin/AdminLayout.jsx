@@ -17,10 +17,13 @@ const SECCIONES = {
     { href: '/akaristudio/admin/productos', label: 'Productos' },
     { href: '/akaristudio/admin/retroalimentacion', label: 'Retroalimentación' }
   ],
+  // La retroalimentación se ve desde los dos portales, y cada uno tiene su
+  // propia página: si esta apuntara a la del panel de la tienda, tocarla
+  // mudaría de portal y las secciones de la barra cambiarían solas.
   sistema: [
     { href: '/akaristudio/sistema', label: 'Tickets' },
     { href: '/akaristudio/sistema/cuentas', label: 'Cuentas' },
-    { href: '/akaristudio/admin/retroalimentacion', label: 'Retroalimentación' }
+    { href: '/akaristudio/sistema/retroalimentacion', label: 'Retroalimentación' }
   ]
 };
 
