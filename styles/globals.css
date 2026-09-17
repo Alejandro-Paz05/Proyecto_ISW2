@@ -882,11 +882,25 @@ h1, h2, h3, h4 {
   transform: scaleX(1);
 }
 
+/* El icono va dentro de un disco dorado tenue: le da peso en la tarjeta sin
+   competir con el título, y todos ocupan exactamente el mismo lugar aunque el
+   dibujo de adentro sea más ancho o más alto. */
 .service-icon {
-  font-size: 44px;
+  width: 64px;
+  height: 64px;
   margin-bottom: 16px;
-  display: inline-block;
-  transition: transform var(--dur-3) var(--ease-rebote);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--gold-dark);
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  transition: transform var(--dur-3) var(--ease-rebote), background var(--dur-2) var(--ease);
+}
+
+.service-card:hover .service-icon {
+  background: rgba(212, 175, 55, 0.2);
 }
 
 .service-card:hover .service-icon {
@@ -998,12 +1012,23 @@ h1, h2, h3, h4 {
   /* aspect-ratio en vez de una altura fija: la tarjeta se adapta al ancho de
      la columna sin recortar de más en pantallas angostas. */
   aspect-ratio: 4 / 3;
+  /* Panel blanco: las fotos del catálogo vienen de fuentes distintas —unas de
+     estudio sobre fondo blanco, otras tomadas con el teléfono— y un fondo
+     común las hace ver como parte del mismo catálogo. */
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
 }
 
+/* contain y no cover: a un labial o un lápiz de cejas, que son verticales,
+   cover les cortaba la punta o la base. En un catálogo eso es esconder
+   justamente lo que la clienta quiere mirar antes de comprar. */
 .product-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   transition: transform 0.65s var(--ease), filter var(--dur-2) var(--ease);
 }
@@ -1197,6 +1222,37 @@ h1, h2, h3, h4 {
   font-size: 16px;
 }
 
+/* El icono arriba a la izquierda y el texto al lado: si la dirección ocupa dos
+   líneas, la segunda arranca alineada con la primera y no debajo del icono. */
+.contacto-dato {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.contacto-dato svg {
+  color: var(--gold-dark);
+  flex-shrink: 0;
+  /* Baja el icono hasta la altura de las mayúsculas de la primera línea. */
+  margin-top: 4px;
+}
+
+/* El mismo problema que en el pie: sin regla propia, el teléfono, el correo y
+   el Instagram salían en el azul por defecto del navegador, que acá encima
+   queda subrayado sobre fondo claro. */
+.contact-info a {
+  color: var(--gold-dark);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(184, 148, 42, 0.35);
+  transition: color var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease);
+}
+
+.contact-info a:hover,
+.contact-info a:focus-visible {
+  color: var(--black);
+  border-bottom-color: var(--black);
+}
+
 .contact-info strong {
   color: var(--gold-dark);
 }
@@ -1226,8 +1282,8 @@ h1, h2, h3, h4 {
   transform: translateY(-2px);
 }
 
-.map-placeholder span {
-  font-size: 48px;
+.map-placeholder svg {
+  color: var(--gold);
 }
 
 .map-placeholder p {
