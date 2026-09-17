@@ -1285,6 +1285,20 @@ h1, h2, h3, h4 {
   margin-bottom: 10px;
 }
 
+/* El teléfono, el correo y el Instagram son enlaces, y sin esta regla salían
+   en el azul por defecto del navegador sobre fondo negro: ilegibles y fuera
+   de la paleta. Se comportan igual que los enlaces de la columna de al lado. */
+.footer-contact a {
+  color: #a5a5a5;
+  text-decoration: none;
+  transition: color var(--dur-2) var(--ease);
+}
+
+.footer-contact a:hover,
+.footer-contact a:focus-visible {
+  color: var(--gold);
+}
+
 .footer-bottom {
   border-top: 1px solid rgba(212, 175, 55, 0.2);
   padding: 20px 0;
