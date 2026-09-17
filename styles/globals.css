@@ -735,64 +735,6 @@ h1, h2, h3, h4 {
   }
 }
 
-/* ===== Indicador de scroll ===== */
-.hero-scroll {
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  text-decoration: none;
-  animation: entrarHero 0.85s var(--ease) 0.6s both;
-  transition: color var(--dur-2) var(--ease);
-}
-
-.hero-scroll:hover {
-  color: var(--gold);
-}
-
-.hero-scroll-raton {
-  width: 24px;
-  height: 38px;
-  border: 1.5px solid currentColor;
-  border-radius: 12px;
-  position: relative;
-}
-
-/* La ruedita que baja dentro del mouse dibujado. */
-.hero-scroll-raton::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 7px;
-  width: 3px;
-  height: 7px;
-  margin-left: -1.5px;
-  border-radius: 2px;
-  background: currentColor;
-  animation: rueda 1.8s var(--ease-suave) infinite;
-}
-
-@keyframes rueda {
-  0% { opacity: 0; transform: translateY(0); }
-  35% { opacity: 1; }
-  70%, 100% { opacity: 0; transform: translateY(13px); }
-}
-
-@media (max-height: 640px) {
-  .hero-scroll {
-    display: none;
-  }
-}
-
 /* ===== SECCIONES ===== */
 .section {
   padding: 90px 0;

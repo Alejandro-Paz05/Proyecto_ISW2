@@ -27,10 +27,6 @@ export default function Hero() {
         </div>
       </div>
 
-      <a href="#servicios" className="hero-scroll" aria-label="Bajar a los servicios">
-        <span className="hero-scroll-raton" aria-hidden="true"></span>
-        <span>Descubrí</span>
-      </a>
     </section>
   );
 }
