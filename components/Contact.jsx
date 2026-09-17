@@ -1,4 +1,11 @@
 import { NEGOCIO } from '@/lib/negocio';
+import {
+  IconoUbicacion,
+  IconoTelefono,
+  IconoCorreo,
+  IconoReloj,
+  IconoInstagram
+} from '@/components/Iconos';
 
 const MAPA = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
   `${NEGOCIO.nombre}, ${NEGOCIO.direccion}, Honduras`
@@ -11,25 +18,39 @@ export default function Contact() {
         <div className="contact-info" data-revelar="izquierda">
           <p className="section-tag">Visítanos</p>
           <h2 className="section-title">Contacto</h2>
-          <p>
-            <strong>📍 Dirección:</strong> {NEGOCIO.direccion}
+          <p className="contacto-dato">
+            <IconoUbicacion tamano={18} />
+            <span>
+              <strong>Dirección:</strong> {NEGOCIO.direccion}
+            </span>
           </p>
-          <p>
-            <strong>📞 Teléfono:</strong>{' '}
-            <a href={NEGOCIO.telefonoEnlace}>{NEGOCIO.telefono}</a>
+          <p className="contacto-dato">
+            <IconoTelefono tamano={18} />
+            <span>
+              <strong>Teléfono:</strong> <a href={NEGOCIO.telefonoEnlace}>{NEGOCIO.telefono}</a>
+            </span>
           </p>
-          <p>
-            <strong>✉️ Email:</strong>{' '}
-            <a href={`mailto:${NEGOCIO.correo}`}>{NEGOCIO.correo}</a>
+          <p className="contacto-dato">
+            <IconoCorreo tamano={18} />
+            <span>
+              <strong>Email:</strong>{' '}
+              <a href={`mailto:${NEGOCIO.correo}`}>{NEGOCIO.correo}</a>
+            </span>
           </p>
-          <p>
-            <strong>🕐 Horario:</strong> {NEGOCIO.horario}
+          <p className="contacto-dato">
+            <IconoReloj tamano={18} />
+            <span>
+              <strong>Horario:</strong> {NEGOCIO.horario}
+            </span>
           </p>
-          <p>
-            <strong>📷 Instagram:</strong>{' '}
-            <a href={NEGOCIO.instagramUrl} target="_blank" rel="noreferrer">
-              @{NEGOCIO.instagram}
-            </a>
+          <p className="contacto-dato">
+            <IconoInstagram tamano={18} />
+            <span>
+              <strong>Instagram:</strong>{' '}
+              <a href={NEGOCIO.instagramUrl} target="_blank" rel="noreferrer">
+                @{NEGOCIO.instagram}
+              </a>
+            </span>
           </p>
         </div>
         <div className="contact-map" data-revelar="derecha">
@@ -43,7 +64,7 @@ export default function Contact() {
             rel="noreferrer"
             aria-label={`Ver la ubicación de ${NEGOCIO.nombre} en Google Maps`}
           >
-            <span>📍</span>
+            <IconoUbicacion tamano={44} />
             <p>Ver cómo llegar</p>
             <small>
               {NEGOCIO.nombre} · {NEGOCIO.direccion}
