@@ -1,5 +1,9 @@
 import { NEGOCIO } from '@/lib/negocio';
 
+const MAPA = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+  `${NEGOCIO.nombre}, ${NEGOCIO.direccion}, Honduras`
+)}`;
+
 export default function Contact() {
   return (
     <section id="contacto" className="section">
@@ -21,15 +25,30 @@ export default function Contact() {
           <p>
             <strong>🕐 Horario:</strong> {NEGOCIO.horario}
           </p>
+          <p>
+            <strong>📷 Instagram:</strong>{' '}
+            <a href={NEGOCIO.instagramUrl} target="_blank" rel="noreferrer">
+              @{NEGOCIO.instagram}
+            </a>
+          </p>
         </div>
         <div className="contact-map" data-revelar="derecha">
-          <div className="map-placeholder">
+          {/* Un enlace y no un mapa incrustado: el iframe de Google carga
+              cientos de kilobytes y rastrea a quien visita, para mostrar algo
+              que se mira una vez y se abre igual en la app del teléfono. */}
+          <a
+            className="map-placeholder"
+            href={MAPA}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Ver la ubicación de ${NEGOCIO.nombre} en Google Maps`}
+          >
             <span>📍</span>
-            <p>Mapa de ubicación</p>
+            <p>Ver cómo llegar</p>
             <small>
               {NEGOCIO.nombre} · {NEGOCIO.direccion}
             </small>
-          </div>
+          </a>
         </div>
       </div>
     </section>

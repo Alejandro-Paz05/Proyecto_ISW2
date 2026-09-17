@@ -35,6 +35,11 @@ export default function Footer() {
           <p>
             <a href={`mailto:${NEGOCIO.correo}`}>{NEGOCIO.correo}</a>
           </p>
+          <p>
+            <a href={NEGOCIO.instagramUrl} target="_blank" rel="noreferrer">
+              @{NEGOCIO.instagram}
+            </a>
+          </p>
         </div>
       </div>
       <div className="footer-bottom">

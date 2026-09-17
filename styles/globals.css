@@ -1183,6 +1183,8 @@ h1, h2, h3, h4 {
   color: var(--gold-dark);
 }
 
+/* Es un enlace a Google Maps, no un mapa: por eso se comporta como tarjeta y
+   no arrastra el subrayado ni el color de los enlaces del sitio. */
 .map-placeholder {
   background: var(--black);
   color: var(--white);
@@ -1194,6 +1196,16 @@ h1, h2, h3, h4 {
   justify-content: center;
   gap: 8px;
   border: 1px solid rgba(212, 175, 55, 0.3);
+  text-align: center;
+  padding: 24px;
+  text-decoration: none;
+  transition: border-color var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+}
+
+.map-placeholder:hover,
+.map-placeholder:focus-visible {
+  border-color: var(--gold);
+  transform: translateY(-2px);
 }
 
 .map-placeholder span {

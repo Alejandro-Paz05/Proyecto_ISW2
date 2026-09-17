@@ -19,6 +19,31 @@ describe('datos del negocio', () => {
       expect(NEGOCIO[campo]).toBeTruthy();
     }
   });
+
+  // El teléfono se muestra con guiones y el de WhatsApp va en dígitos: son dos
+  // campos distintos y se pueden desincronizar al cambiar uno solo. Si eso
+  // pasa, la clienta ve un número y le escribe a otro.
+  it('el número que se muestra es el mismo que abre WhatsApp', () => {
+    const soloDigitos = (texto) => texto.replace(/\D/g, '');
+
+    expect(soloDigitos(NEGOCIO.telefono)).toBe(NEGOCIO.whatsapp);
+    expect(soloDigitos(NEGOCIO.whatsappVisible)).toBe(NEGOCIO.whatsapp);
+    expect(soloDigitos(NEGOCIO.telefonoEnlace)).toBe(NEGOCIO.whatsapp);
+  });
+
+  // Los valores de relleno estuvieron publicados semanas: el botón de WhatsApp
+  // abría una conversación con un número que no existe.
+  it('no quedó ningún dato de relleno', () => {
+    expect(NEGOCIO.whatsapp).not.toBe('50499990000');
+    expect(NEGOCIO.telefono).not.toMatch(/9999-0000/);
+    expect(NEGOCIO.direccion).not.toBe('Tegucigalpa, Honduras');
+  });
+
+  it('el enlace de Instagram apunta al usuario del salón', () => {
+    expect(NEGOCIO.instagram).toBeTruthy();
+    expect(NEGOCIO.instagram).not.toContain('@');
+    expect(NEGOCIO.instagramUrl).toBe(`https://www.instagram.com/${NEGOCIO.instagram}`);
+  });
 });
 
 describe('enlaceWhatsApp', () => {
