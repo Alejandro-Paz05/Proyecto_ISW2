@@ -2,18 +2,20 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { reportarError } from '@/lib/errores';
 import { conCache, CLAVE_GALERIA } from '@/lib/cache';
 import { conReintento } from '@/lib/reintento';
-import { responderJSON, CACHE_CATEGORIAS } from '@/lib/respuesta-cacheable';
+import { responderJSON, CACHE_GALERIA } from '@/lib/respuesta-cacheable';
 
 /**
  * Las fotos de trabajos que se muestran en la portada.
  *
- * Cambian cuando la dueña sube una, o sea muy de vez en cuando comparado con
- * el stock. Por eso se cachean cinco minutos y se sirven con las mismas
- * cabeceras que las categorías: no hay ninguna decisión de compra que dependa
- * de ver la foto de hace un rato.
+ * Treinta segundos de copia en memoria, y no cinco minutos: cada función de
+ * Vercel corre en su propia instancia con su propia copia, así que invalidar
+ * desde el panel solo limpia la del panel. La ventana corta es lo que hace que
+ * las demás se pongan al día solas. Alcanza para absorber una ráfaga de
+ * visitas y es lo bastante corta como para que la dueña vea su foto nueva
+ * enseguida, que es lo que importa acá.
  */
 
-const TTL_MS = 5 * 60 * 1000;
+const TTL_MS = 30 * 1000;
 
 // Mientras la migración 011 no se haya corrido, la tabla no existe. La portada
 // tiene que seguir abriendo: una galería vacía es que todavía no hay fotos, y
@@ -43,7 +45,7 @@ export default async function handler(req, res) {
       })
     );
 
-    return responderJSON(req, res, fotos, CACHE_CATEGORIAS);
+    return responderJSON(req, res, fotos, CACHE_GALERIA);
   } catch (error) {
     console.error('Error al obtener la galería:', error);
     await reportarError(error, { ruta: '/api/galeria', metodo: req.method });

@@ -78,4 +78,16 @@ describe('GET /api/galeria', () => {
 
     expect(from).toHaveBeenCalledTimes(1);
   });
+
+  // Con las cabeceras de las categorías, la foto que subía la dueña tardaba
+  // entre cinco y quince minutos en aparecer y desde afuera se veía como que
+  // no se había guardado.
+  it('obliga a preguntar antes de servir una copia', async () => {
+    const res = await llamar(handler);
+
+    expect(res.headers['Cache-Control']).toMatch(/no-cache/);
+    expect(res.headers['Cache-Control']).not.toMatch(/s-maxage/);
+    // Con ETag, esa pregunta cuesta un 304 y no la lista entera.
+    expect(res.headers.ETag).toBeTruthy();
+  });
 });
