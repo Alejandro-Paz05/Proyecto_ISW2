@@ -32,7 +32,13 @@ export default function BotonDeAvisos() {
     setMensaje(null);
 
     try {
-      setEstado(estado === 'activos' ? await desactivarAvisos() : await activarAvisos());
+      if (estado === 'activos') {
+        await desactivarAvisos();
+        setEstado('inactivos');
+      } else {
+        await activarAvisos();
+        setEstado('activos');
+      }
     } catch (error) {
       setMensaje(error.message);
       // Puede haber quedado bloqueado justo ahora, al decir que no.

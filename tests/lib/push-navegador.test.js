@@ -113,7 +113,7 @@ describe('avisos en el navegador', () => {
 
   describe('activarAvisos', () => {
     it('pide permiso, se suscribe y registra el dispositivo', async () => {
-      await expect(activarAvisos()).resolves.toBe('activos');
+      await expect(activarAvisos()).resolves.toBeUndefined();
 
       expect(window.Notification.requestPermission).toHaveBeenCalled();
       expect(registro.pushManager.subscribe).toHaveBeenCalledOnce();
@@ -186,7 +186,7 @@ describe('avisos en el navegador', () => {
         return true;
       });
 
-      await expect(desactivarAvisos()).resolves.toBe('inactivos');
+      await expect(desactivarAvisos()).resolves.toBeUndefined();
 
       expect(orden).toEqual(['servidor', 'navegador']);
       expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
@@ -195,7 +195,7 @@ describe('avisos en el navegador', () => {
     });
 
     it('sin suscripción no llama a nadie', async () => {
-      await expect(desactivarAvisos()).resolves.toBe('inactivos');
+      await expect(desactivarAvisos()).resolves.toBeUndefined();
 
       expect(global.fetch).not.toHaveBeenCalled();
     });
