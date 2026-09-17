@@ -171,6 +171,27 @@ describe('avisos en el navegador', () => {
 
       await expect(activarAvisos()).rejects.toThrow(/no puede recibir avisos/i);
     });
+
+    // Le pasó a Alejandro en Brave, que trae apagado el servicio de push de
+    // Google. El navegador contesta en inglés y sin decir qué hacer.
+    it('traduce el fallo del servicio de push a algo accionable', async () => {
+      conNavegador({ permiso: 'granted' });
+      registro.pushManager.subscribe = vi.fn(async () => {
+        throw new Error('Registration failed - push service error');
+      });
+
+      await expect(activarAvisos()).rejects.toThrow(/brave:\/\/settings\/privacy/);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('un fallo distinto no se disfraza del de Brave', async () => {
+      conNavegador({ permiso: 'granted' });
+      registro.pushManager.subscribe = vi.fn(async () => {
+        throw new Error('AbortError: la pestaña se cerró');
+      });
+
+      await expect(activarAvisos()).rejects.toThrow(/la pestaña se cerró/);
+    });
   });
 
   describe('desactivarAvisos', () => {
