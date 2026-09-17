@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { reportarError } from '@/lib/errores';
 import { conCache, CLAVE_CATEGORIAS } from '@/lib/cache';
+import { conReintento } from '@/lib/reintento';
 import { responderJSON, CACHE_CATEGORIAS } from '@/lib/respuesta-cacheable';
 
 // Cinco minutos. Las categorías se cambian a mano y muy de vez en cuando;
@@ -14,15 +15,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const categorias = await conCache(CLAVE_CATEGORIAS, TTL_MS, async () => {
-      const { data, error } = await getSupabaseAdmin()
-        .from('categories')
-        .select('key, label')
-        .order('position', { ascending: true });
+    const categorias = await conCache(CLAVE_CATEGORIAS, TTL_MS, () =>
+      conReintento(async () => {
+        const { data, error } = await getSupabaseAdmin()
+          .from('categories')
+          .select('key, label')
+          .order('position', { ascending: true });
 
-      if (error) throw error;
-      return data;
-    });
+        if (error) throw error;
+        return data;
+      })
+    );
 
     return responderJSON(req, res, categorias, CACHE_CATEGORIAS);
   } catch (error) {

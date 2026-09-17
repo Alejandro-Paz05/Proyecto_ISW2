@@ -23,7 +23,13 @@ const MIGRACIONES = [
   { version: 3, nombre: 'bitacora_de_estados', tablas: ['order_status_history'] },
   { version: 4, nombre: 'catalogo_de_ejemplo', tablas: [], opcional: true },
   { version: 5, nombre: 'perfiles_y_roles', tablas: ['profiles'] },
-  { version: 6, nombre: 'retroalimentacion_y_tickets', tablas: ['feedback', 'tickets'] }
+  { version: 6, nombre: 'retroalimentacion_y_tickets', tablas: ['feedback', 'tickets'] },
+  // No crea tablas: el bucket vive en el esquema storage, que este script no
+  // consulta. Se declara igual para que el conteo cuadre con los archivos.
+  { version: 7, nombre: 'imagenes_de_productos', tablas: [] },
+  // Tampoco: es un trigger sobre orders.
+  { version: 8, nombre: 'reponer_stock_al_cancelar', tablas: [] },
+  { version: 9, nombre: 'avisos_push', tablas: ['suscripciones_push'] }
 ];
 
 function archivosDeMigracion() {

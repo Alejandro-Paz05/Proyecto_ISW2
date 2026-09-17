@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { reportarError } from '@/lib/errores';
 import { conCache, CLAVE_PRODUCTOS } from '@/lib/cache';
+import { conReintento } from '@/lib/reintento';
 import { responderJSON, CACHE_CATALOGO } from '@/lib/respuesta-cacheable';
 
 // Diez segundos. Corto a propósito: lo único que puede cambiar el catálogo
@@ -16,15 +17,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const productos = await conCache(CLAVE_PRODUCTOS, TTL_MS, async () => {
-      const { data, error } = await getSupabaseAdmin()
-        .from('products')
-        .select('id, name, category, price, description, image, stock')
-        .order('id', { ascending: true });
+    const productos = await conCache(CLAVE_PRODUCTOS, TTL_MS, () =>
+      conReintento(async () => {
+        const { data, error } = await getSupabaseAdmin()
+          .from('products')
+          .select('id, name, category, price, description, image, stock')
+          .order('id', { ascending: true });
 
-      if (error) throw error;
-      return data;
-    });
+        if (error) throw error;
+        return data;
+      })
+    );
 
     return responderJSON(req, res, productos, CACHE_CATALOGO);
   } catch (error) {
