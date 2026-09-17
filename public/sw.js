@@ -102,6 +102,61 @@ self.addEventListener('fetch', (evento) => {
   evento.respondWith(esEstatico ? cachePrimero(peticion) : redPrimero(peticion));
 });
 
+/**
+ * Un pedido nuevo. Llega aunque el panel esté cerrado y el teléfono bloqueado:
+ * el service worker despierta solo para esto.
+ *
+ * El contenido lo cifra el servidor para este navegador en particular, así que
+ * el servicio de push por el que viaja no puede leerlo. Aun así no trae datos
+ * de la clienta: esto aparece en una pantalla bloqueada.
+ */
+self.addEventListener('push', (evento) => {
+  let aviso = {};
+
+  try {
+    aviso = evento.data ? evento.data.json() : {};
+  } catch {
+    // Un aviso que no se entiende igual se muestra: que algo pasó es la mitad
+    // de la información.
+  }
+
+  evento.waitUntil(
+    self.registration.showNotification(aviso.titulo || 'Akari Studio', {
+      body: aviso.cuerpo || 'Entró un pedido nuevo.',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: aviso.etiqueta || 'akari',
+      data: { url: aviso.url || '/akaristudio/admin' },
+      // Que vibre: el aviso sirve si se nota sin mirar la pantalla.
+      vibrate: [80, 40, 80]
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (evento) => {
+  evento.notification.close();
+  const destino = evento.notification.data?.url || '/akaristudio/admin';
+
+  evento.waitUntil(
+    (async () => {
+      const ventanas = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      });
+
+      // Si el panel ya está abierto en alguna pestaña, se le da el foco en vez
+      // de abrir una segunda.
+      for (const ventana of ventanas) {
+        if (ventana.url.includes('/akaristudio/admin') && 'focus' in ventana) {
+          return ventana.focus();
+        }
+      }
+
+      return self.clients.openWindow(destino);
+    })()
+  );
+});
+
 async function cachePrimero(peticion) {
   const enCache = await caches.match(peticion);
   if (enCache) return enCache;

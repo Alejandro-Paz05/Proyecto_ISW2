@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import BotonDeAvisos from '@/components/admin/BotonDeAvisos';
 
 /**
  * El marco de los dos portales privados.
@@ -73,6 +74,11 @@ export default function AdminLayout({ titulo, portal = 'tienda', sesion, childre
             </nav>
 
             <div className="admin-acciones">
+              {/* Solo para quien atiende los pedidos, y solo con cuenta
+                  propia: la contraseña compartida no identifica un
+                  dispositivo al que mandarle nada. */}
+              {!sesion?.soloLectura && sesion?.origen === 'supabase' && <BotonDeAvisos />}
+
               {puedeVerElSistema && (
                 <Link href={otro.href} className="admin-link-tienda">
                   {otro.label} →

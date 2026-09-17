@@ -3,6 +3,7 @@ import { reportarError } from '@/lib/errores';
 import { cuentaDeSesion } from '@/lib/sesion';
 import { invalidar, CLAVE_PRODUCTOS } from '@/lib/cache';
 import { permitir, ipDe } from '@/lib/limite';
+import { avisarDePedido } from '@/lib/push';
 
 // Códigos de Postgres que corresponden a un error del cliente, no del
 // servidor. `create_order` los usa para rechazar datos inválidos o
@@ -106,6 +107,13 @@ export default async function handler(req, res) {
     // este mismo instante. Esperar a que venza mostraría como disponible
     // algo que se acaba de vender.
     invalidar(CLAVE_PRODUCTOS);
+
+    // Se espera al aviso, pero con su propio límite de tiempo adentro: una
+    // función serverless puede congelarse apenas responde, y un envío lanzado
+    // sin esperar se quedaría a mitad de camino. Nunca lanza: la venta ya está
+    // registrada y un aviso que no sale no puede tirarla abajo.
+    const unidades = normalizedItems.reduce((suma, item) => suma + item.qty, 0);
+    await avisarDePedido(data, unidades);
 
     return res.status(201).json({ success: true, order: data });
   } catch (error) {

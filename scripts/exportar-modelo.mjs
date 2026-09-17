@@ -519,6 +519,69 @@ const MODELO = {
       }
     },
     {
+      nombre: 'suscripciones_push',
+      descripcion:
+        'Un navegador del personal que aceptó recibir avisos de pedidos nuevos. La ' +
+        'dueña puede quererlos en su teléfono y no en la computadora del salón.',
+      clave_primaria: ['id'],
+      columnas: [
+        { nombre: 'id', tipo: 'serial', nulo: false, clave: 'PK' },
+        {
+          nombre: 'user_id',
+          tipo: 'uuid',
+          nulo: false,
+          clave: 'FK',
+          referencia: 'auth.users.id',
+          descripcion: 'Borrar la cuenta se lleva sus dispositivos.'
+        },
+        {
+          nombre: 'endpoint',
+          tipo: 'text',
+          nulo: false,
+          clave: 'UNIQUE',
+          descripcion:
+            'La dirección que da el navegador. Única: reabrir el panel vuelve a ' +
+            'suscribir el mismo dispositivo y tiene que actualizar su fila, no duplicarla.'
+        },
+        {
+          nombre: 'p256dh',
+          tipo: 'text',
+          nulo: false,
+          descripcion: 'Clave con la que se cifra el aviso para ese navegador.'
+        },
+        {
+          nombre: 'auth',
+          tipo: 'text',
+          nulo: false,
+          descripcion: 'El otro secreto del cifrado. Ni Google ni Apple pueden leer el contenido.'
+        },
+        {
+          nombre: 'navegador',
+          tipo: 'text',
+          nulo: true,
+          descripcion: 'Para que la dueña reconozca cuál de sus dispositivos es.'
+        },
+        { nombre: 'created_at', tipo: 'timestamptz', nulo: false, por_defecto: 'now()' },
+        { nombre: 'last_used_at', tipo: 'timestamptz', nulo: true }
+      ],
+      indices: [
+        {
+          nombre: 'suscripciones_push_user_id_idx',
+          columnas: ['user_id'],
+          motivo: 'Cada pedido busca los dispositivos del personal por cuenta.'
+        }
+      ],
+      relaciones: [{ columna: 'user_id', referencia: 'auth.users.id' }],
+      rls: {
+        activo: true,
+        politicas: [],
+        motivo:
+          'Sin políticas y con los privilegios revocados: acceso público cero. Las ' +
+          'escribe y las lee el servidor. Que el navegador pudiera listarlas no le ' +
+          'serviría de nada y expondría a qué dispositivos llegan los avisos del negocio.'
+      }
+    },
+    {
       nombre: 'feedback',
       descripcion: 'Lo que las clientas dejan desde la tienda. Con cuenta o como invitadas.',
       clave_primaria: ['id'],
@@ -668,6 +731,15 @@ const MODELO = {
       motivo:
         'Borrar una cuenta no borra lo que compró: la venta existió y la contabilidad ' +
         'la necesita. El pedido queda como uno de invitada.'
+    },
+    {
+      desde: 'suscripciones_push.user_id',
+      hacia: 'auth.users.id',
+      cardinalidad: 'N:1',
+      al_borrar: 'CASCADE',
+      motivo:
+        'Un dispositivo suscrito sin cuenta detrás no le sirve a nadie: los avisos se ' +
+        'mandan a quien atiende los pedidos, no a un navegador suelto.'
     },
     {
       desde: 'feedback.user_id',

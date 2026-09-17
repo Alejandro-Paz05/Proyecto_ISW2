@@ -15,6 +15,7 @@ export function crearCadena(resultado) {
   for (const metodo of [
     'select',
     'insert',
+    'upsert',
     'update',
     'delete',
     'eq',
