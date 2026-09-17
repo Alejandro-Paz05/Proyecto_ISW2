@@ -33,8 +33,12 @@ export default function Document() {
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Cinco pesos y no siete: cada uno es un archivo que el navegador
+            descarga antes de poder pintar el texto. Se quitaron Playfair 600,
+            que ninguna regla usaba —los títulos van en 700 y el resto hereda
+            400—, y Poppins 300, que no aparece en ninguna hoja. */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </Head>
