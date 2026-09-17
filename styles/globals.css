@@ -987,23 +987,15 @@ h1, h2, h3, h4 {
   /* aspect-ratio en vez de una altura fija: la tarjeta se adapta al ancho de
      la columna sin recortar de más en pantallas angostas. */
   aspect-ratio: 4 / 3;
-  /* Panel blanco: las fotos del catálogo vienen de fuentes distintas —unas de
-     estudio sobre fondo blanco, otras tomadas con el teléfono— y un fondo
-     común las hace ver como parte del mismo catálogo. */
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
 }
 
-/* contain y no cover: a un labial o un lápiz de cejas, que son verticales,
-   cover les cortaba la punta o la base. En un catálogo eso es esconder
-   justamente lo que la clienta quiere mirar antes de comprar. */
+/* cover y no contain: la foto llena la tarjeta y puede recortar los bordes de
+   una vertical. Se probaron las dos y esta se ve mejor con el catálogo real,
+   donde casi todas las fotos ya vienen encuadradas. */
 .product-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
   /* Arranca invisible y entra con un fundido cuando termina de bajar. La clase
      la pone el propio <img> al cargar. */
