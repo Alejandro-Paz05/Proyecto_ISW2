@@ -19,10 +19,16 @@ export default async function handler(req, res) {
   try {
     const productos = await conCache(CLAVE_PRODUCTOS, TTL_MS, () =>
       conReintento(async () => {
+        // Los colores viajan con su producto en una sola consulta: pedirlos
+        // aparte serían dos viajes a la base para pintar una tarjeta.
         const { data, error } = await getSupabaseAdmin()
           .from('products')
-          .select('id, name, category, price, description, image, stock')
-          .order('id', { ascending: true });
+          .select(
+            'id, name, category, price, description, image, stock, ' +
+              'colores:product_colors(id, nombre, hex, stock)'
+          )
+          .order('id', { ascending: true })
+          .order('position', { referencedTable: 'product_colors', ascending: true });
 
         if (error) throw error;
         return data;

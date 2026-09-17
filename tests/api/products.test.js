@@ -1,11 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { llamar } from '../helpers/http';
 
-const { order, select, from } = vi.hoisted(() => {
-  const order = vi.fn();
-  const select = vi.fn(() => ({ order }));
-  const from = vi.fn(() => ({ select }));
-  return { order, select, from };
+// La consulta encadena dos `order`: uno para los productos y otro para los
+// colores que vienen anidados. La cadena tiene que devolverse a si misma y ser
+// esperable, como la de verdad.
+const { order, select, from, estado } = vi.hoisted(() => {
+  const estado = { resultado: null };
+  const cadena = {};
+  const order = vi.fn(() => cadena);
+  const select = vi.fn(() => cadena);
+  const from = vi.fn(() => cadena);
+
+  cadena.order = order;
+  cadena.select = select;
+  cadena.then = (resolver, rechazar) => Promise.resolve(estado.resultado).then(resolver, rechazar);
+
+  return { order, select, from, estado };
 });
 
 vi.mock('@/lib/supabase', () => ({
@@ -26,8 +36,10 @@ describe('GET /api/products', () => {
     // La cache vive en el modulo: sin esto, la primera prueba dejaria el
     // catalogo cargado y las demas no llegarian a consultar la base.
     limpiarCache();
-    order.mockReset();
-    order.mockResolvedValue({ data: CATALOGO, error: null });
+    order.mockClear();
+    select.mockClear();
+    from.mockClear();
+    estado.resultado = { data: CATALOGO, error: null };
   });
 
   afterEach(() => {
@@ -107,7 +119,9 @@ describe('GET /api/products', () => {
       await llamar(handler);
       await llamar(handler);
 
-      expect(order).toHaveBeenCalledTimes(1);
+      // Se cuenta `from` y no `order`: la consulta encadena varios `order` y
+      // lo que importa es cuantas veces se fue a la base.
+      expect(from).toHaveBeenCalledTimes(1);
     });
 
     it('vuelve a consultar despues de invalidar', async () => {
@@ -117,7 +131,7 @@ describe('GET /api/products', () => {
       invalidar(CLAVE_PRODUCTOS);
       await llamar(handler);
 
-      expect(order).toHaveBeenCalledTimes(2);
+      expect(from).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -127,7 +141,7 @@ describe('GET /api/products', () => {
     });
 
     it('devuelve 500 con un mensaje generico', async () => {
-      order.mockResolvedValue({ data: null, error: { message: 'permission denied for table products' } });
+      estado.resultado = { data: null, error: { message: 'permission denied for table products' } };
 
       const res = await llamar(handler);
 
@@ -136,7 +150,7 @@ describe('GET /api/products', () => {
     });
 
     it('no filtra detalles internos del esquema', async () => {
-      order.mockResolvedValue({ data: null, error: { message: 'permission denied for table products' } });
+      estado.resultado = { data: null, error: { message: 'permission denied for table products' } };
 
       const res = await llamar(handler);
 
@@ -144,7 +158,7 @@ describe('GET /api/products', () => {
     });
 
     it('devuelve 500 si la conexion se cae', async () => {
-      order.mockRejectedValue(new Error('fetch failed'));
+      estado.resultado = Promise.reject(new Error('fetch failed'));
 
       const res = await llamar(handler);
 

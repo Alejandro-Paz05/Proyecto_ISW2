@@ -22,6 +22,10 @@ export default function Products({
   etiquetas = ETIQUETAS_CATEGORIA
 }) {
   const [filter, setFilter] = useState('todos');
+  // Qué color eligió la clienta en cada producto. No se preselecciona ninguno:
+  // en un salón, comprar el color equivocado es un viaje de vuelta, así que
+  // vale más un botón que espera a que elija.
+  const [colorElegido, setColorElegido] = useState({});
   const { addToCart, cart } = useCart();
 
   const categories = [{ key: 'todos', label: 'Todos' }, ...categorias];
@@ -88,10 +92,24 @@ export default function Products({
         {!loading && !error && filtered.length > 0 && (
           <div className="products-grid">
             {filtered.map((product, i) => {
+              const colores = product.colores ?? [];
+              const elegido = colores.find(c => c.id === colorElegido[product.id]) ?? null;
+
+              // Agotado es que no quede ninguno de ningún color: products.stock
+              // es la suma de sus colores, mantenida por la base.
               const agotado = product.stock <= 0;
-              const enCarrito = cart.find(item => item.id === product.id)?.qty ?? 0;
-              const sinMasUnidades = enCarrito >= product.stock;
-              const stockBajo = !agotado && product.stock <= UMBRAL_STOCK_BAJO;
+              // Lo que se puede comprar en este momento es lo del color
+              // elegido, no lo del producto entero.
+              const disponible = colores.length > 0 ? elegido?.stock ?? 0 : product.stock;
+              const faltaElegirColor = colores.length > 0 && !elegido;
+
+              const enCarrito =
+                cart.find(
+                  item =>
+                    item.id === product.id && (item.colorId ?? null) === (elegido?.id ?? null)
+                )?.qty ?? 0;
+              const sinMasUnidades = !faltaElegirColor && enCarrito >= disponible;
+              const stockBajo = !agotado && disponible > 0 && disponible <= UMBRAL_STOCK_BAJO;
 
               return (
                 <div
@@ -110,6 +128,38 @@ export default function Products({
                     <span className="product-category">{etiquetas[product.category]}</span>
                     <h3 className="product-name">{product.name}</h3>
                     <p className="product-desc">{product.description}</p>
+
+                    {colores.length > 0 && (
+                      <div
+                        className="product-colores"
+                        role="group"
+                        aria-label={`Color de ${product.name}`}
+                      >
+                        {colores.map(color => {
+                          const sinUnidades = color.stock <= 0;
+                          const seleccionado = elegido?.id === color.id;
+
+                          return (
+                            <button
+                              key={color.id}
+                              type="button"
+                              className={`color-muestra ${seleccionado ? 'elegido' : ''}`}
+                              style={color.hex ? { '--muestra': color.hex } : undefined}
+                              onClick={() =>
+                                setColorElegido(prev => ({ ...prev, [product.id]: color.id }))
+                              }
+                              disabled={sinUnidades}
+                              aria-pressed={seleccionado}
+                              title={sinUnidades ? `${color.nombre}: agotado` : color.nombre}
+                            >
+                              <span className="color-punto" aria-hidden="true" />
+                              {color.nombre}
+                              {sinUnidades && <span className="sr-only"> (agotado)</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                     {/* El aviso de stock va ARRIBA del precio, no debajo: si
                         no, la fila del precio queda a distinta altura en cada
                         tarjeta según tenga aviso o no, y la rejilla se ve
@@ -117,7 +167,8 @@ export default function Products({
                     <div className="product-cierre">
                       {stockBajo && (
                         <span className="stock-info">
-                          {product.stock === 1 ? '¡Última unidad!' : `¡Solo quedan ${product.stock}!`}
+                          {disponible === 1 ? '¡Última unidad!' : `¡Solo quedan ${disponible}!`}
+                          {elegido ? ` en ${elegido.nombre}` : ''}
                         </span>
                       )}
                       <div className="product-footer">
@@ -127,13 +178,21 @@ export default function Products({
                         ) : (
                           <button
                             className="add-btn"
-                            onClick={() => addToCart(product)}
-                            disabled={sinMasUnidades}
+                            onClick={() => addToCart(product, elegido)}
+                            disabled={faltaElegirColor || sinMasUnidades}
                             title={
-                              sinMasUnidades ? 'Ya tienes todas las unidades disponibles' : undefined
+                              faltaElegirColor
+                                ? 'Tocá un color para poder agregarlo'
+                                : sinMasUnidades
+                                  ? 'Ya tienes todas las unidades disponibles'
+                                  : undefined
                             }
                           >
-                            {sinMasUnidades ? 'En el carrito' : 'Agregar'}
+                            {faltaElegirColor
+                              ? 'Elegí un color'
+                              : sinMasUnidades
+                                ? 'En el carrito'
+                                : 'Agregar'}
                           </button>
                         )}
                       </div>

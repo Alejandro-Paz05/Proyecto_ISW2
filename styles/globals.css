@@ -1065,6 +1065,64 @@ h1, h2, h3, h4 {
   flex: 1;
 }
 
+/* ===== Colores de un producto ===== */
+
+.product-colores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 4px;
+}
+
+/* Cada color es un botón con su nombre al lado del punto: un círculo de color
+   solo obliga a adivinar, y hay nombres que no se ven —"tornasol", "efecto
+   espejo"— o que la clienta necesita saber para pedirlo después por WhatsApp. */
+.color-muestra {
+  --muestra: #6b6b6b;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 6px;
+  border-radius: 50px;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  background: rgba(255, 255, 255, 0.04);
+  color: #d8d4cc;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease),
+    color var(--dur-2) var(--ease);
+}
+
+.color-punto {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muestra);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.color-muestra:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--white);
+}
+
+.color-muestra.elegido {
+  border-color: var(--gold);
+  background: rgba(212, 175, 55, 0.16);
+  color: var(--white);
+  font-weight: 600;
+}
+
+/* Agotado se muestra, no se esconde: que ese color exista pero no esté es
+   información útil, y esconderlo haría pensar que nunca lo tuvieron. */
+.color-muestra:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
 /* El bloque que cierra la tarjeta. El margen automático va acá y no en el
    precio: así el aviso de stock viaja pegado al precio en vez de empujarlo
    hacia arriba, y todas las tarjetas de una fila alinean su precio. */
@@ -1456,6 +1514,25 @@ h1, h2, h3, h4 {
 .cart-item-name {
   font-weight: 600;
   font-size: 15px;
+}
+
+/* El color va en su propia línea, debajo del nombre: en el carrito hay poco
+   ancho y "Balines en Plateado" se parte feo en un teléfono. */
+.cart-item-color {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 2px;
+}
+
+.muestra-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
 }
 
 .cart-item-price {

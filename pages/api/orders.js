@@ -26,10 +26,14 @@ const LIMITE = { maximo: 5, ventanaMs: 15 * 60 * 1000 };
 const PAYMENT_METHODS = new Set(['efectivo', 'tarjeta', 'transferencia']);
 
 /**
- * Normaliza el carrito que llega del navegador a `[{ id, qty }]`.
+ * Normaliza el carrito que llega del navegador a `[{ id, qty, color? }]`.
  * Nombre, precio y total se ignoran a propósito: los pone la base de
  * datos. Si vinieran del cliente, cualquiera podría pedir un producto
  * de L 4,500 por L 1.
+ *
+ * Del color solo se comprueba la forma. Que exista, que sea de ese producto y
+ * que le queden unidades lo decide `create_order`, que es quien puede mirarlo
+ * con la fila bloqueada.
  */
 function normalizeItems(items) {
   if (!Array.isArray(items) || items.length === 0 || items.length > MAX_ITEMS) {
@@ -45,7 +49,15 @@ function normalizeItems(items) {
     if (!Number.isInteger(id) || id <= 0) return null;
     if (!Number.isInteger(qty) || qty <= 0) return null;
 
-    normalized.push({ id, qty });
+    const linea = { id, qty };
+
+    if (item?.color !== undefined && item?.color !== null) {
+      const color = Number(item.color);
+      if (!Number.isInteger(color) || color <= 0) return null;
+      linea.color = color;
+    }
+
+    normalized.push(linea);
   }
 
   return normalized;

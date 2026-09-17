@@ -46,10 +46,14 @@ export default function CheckoutModal() {
             address: form.address
           },
           payment,
-          // Solo id y cantidad: el precio y el total los calcula el
-          // servidor con los datos de la base. El resumen de arriba es
-          // únicamente informativo.
-          items: cart.map(item => ({ id: item.id, qty: item.qty }))
+          // Id, cantidad y, solo si lo hay, el color elegido: el precio y el
+          // total los calcula el servidor con los datos de la base. El resumen
+          // de arriba es únicamente informativo.
+          items: cart.map(item => ({
+            id: item.id,
+            qty: item.qty,
+            ...(item.colorId ? { color: item.colorId } : {})
+          }))
         })
       });
 
@@ -100,8 +104,11 @@ export default function CheckoutModal() {
         <div className="order-summary">
           <h4>Resumen del pedido</h4>
           {cart.map(item => (
-            <div className="summary-line" key={item.id}>
-              <span>{item.name} × {item.qty}</span>
+            <div className="summary-line" key={item.clave}>
+              <span>
+                {item.name}
+                {item.color ? ` · ${item.color.nombre}` : ''} × {item.qty}
+              </span>
               <span>{formatPrice(item.price * item.qty)}</span>
             </div>
           ))}

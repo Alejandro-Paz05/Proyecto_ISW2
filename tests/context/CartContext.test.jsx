@@ -79,7 +79,7 @@ describe('CartContext', () => {
       const { result } = await montarHidratado();
       act(() => result.current.addToCart(LAMPARA));
 
-      act(() => result.current.changeQty(4, 5));
+      act(() => result.current.changeQty('4:', 5));
 
       expect(result.current.cart[0].qty).toBe(1);
       expect(result.current.toast).toMatch(/solo quedan 3/i);
@@ -89,7 +89,7 @@ describe('CartContext', () => {
       const { result } = await montarHidratado();
       act(() => result.current.addToCart(ESMALTE));
 
-      act(() => result.current.changeQty(2, -1));
+      act(() => result.current.changeQty('2:', -1));
 
       expect(result.current.cart).toHaveLength(0);
     });
@@ -117,7 +117,7 @@ describe('CartContext', () => {
 
       await waitFor(() => {
         const guardado = JSON.parse(localStorage.getItem('akari_cart'));
-        expect(guardado).toEqual([{ id: 2, qty: 1 }]);
+        expect(guardado).toEqual([{ id: 2, qty: 1, color: null }]);
       });
     });
 
@@ -188,7 +188,7 @@ describe('CartContext', () => {
       montar({ products: [], productsLoaded: false });
 
       await waitFor(() => {
-        expect(JSON.parse(localStorage.getItem('akari_cart'))).toEqual([{ id: 2, qty: 1 }]);
+        expect(JSON.parse(localStorage.getItem('akari_cart'))).toEqual([{ id: 2, qty: 1, color: null }]);
       });
     });
   });

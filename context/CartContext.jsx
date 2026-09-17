@@ -19,6 +19,18 @@ const STORAGE_KEY = 'akari_cart';
  * un cambio en Supabase dejaba al cliente viendo un importe y pagándole otro
  * al servidor, que calcula el total con los precios reales.
  */
+/**
+ * La identidad de una línea del carrito.
+ *
+ * Dejó de ser el producto y pasó a ser producto + color: "Balines plateado" y
+ * "Balines dorado" son dos cosas distintas, con existencias distintas, y suman
+ * por separado. Un producto sin colores usa la misma clave de siempre con el
+ * color vacío.
+ */
+export function claveDeLinea(id, color = null) {
+  return `${id}:${color ?? ''}`;
+}
+
 function readStoredItems() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -26,9 +38,16 @@ function readStoredItems() {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
 
-    // Tolera el formato anterior, que guardaba el producto entero.
+    // Tolera los dos formatos anteriores: el que guardaba el producto entero y
+    // el que guardaba { id, qty } sin color.
     return parsed
-      .map((item) => ({ id: Number(item?.id), qty: Number(item?.qty) }))
+      .map((item) => ({
+        id: Number(item?.id),
+        qty: Number(item?.qty),
+        color: Number.isInteger(Number(item?.color)) && Number(item?.color) > 0
+          ? Number(item.color)
+          : null
+      }))
       .filter(
         (item) =>
           Number.isInteger(item.id) && Number.isInteger(item.qty) && item.qty > 0
@@ -81,8 +100,32 @@ export function CartProvider({ children, products = [], productsLoaded = false }
     return map;
   }, [products]);
 
+  /** El color elegido, tal como está hoy en el catálogo. */
+  const colorDe = useCallback(
+    (id, colorId) =>
+      colorId ? productById.get(id)?.colores?.find((c) => c.id === colorId) ?? null : null,
+    [productById]
+  );
+
+  /**
+   * Las unidades disponibles de esa línea.
+   *
+   * Con color, las del color: el producto puede tener cincuenta en total y
+   * ninguna del plateado, y lo que la clienta está comprando es el plateado.
+   */
   const stockOf = useCallback(
-    (id) => productById.get(id)?.stock ?? 0,
+    (id, colorId = null) => {
+      const producto = productById.get(id);
+      if (!producto) return 0;
+      if (!colorId) return producto.stock ?? 0;
+      return colorDe(id, colorId)?.stock ?? 0;
+    },
+    [productById, colorDe]
+  );
+
+  /** Un producto con colores obliga a elegir uno antes de comprar. */
+  const exigeColor = useCallback(
+    (id) => (productById.get(id)?.colores?.length ?? 0) > 0,
     [productById]
   );
 
@@ -100,8 +143,15 @@ export function CartProvider({ children, products = [], productsLoaded = false }
     let recortados = 0;
 
     for (const item of items) {
-      const stock = stockOf(item.id);
-      if (!productById.has(item.id) || stock <= 0) {
+      const stock = stockOf(item.id, item.color);
+
+      // Se va si el producto desapareció, si se agotó, si el color que había
+      // elegido ya no está en el catálogo, o si el producto pasó a venderse
+      // por colores y esta línea es de antes, sin ninguno.
+      const colorPerdido = item.color !== null && !colorDe(item.id, item.color);
+      const faltaElegirColor = item.color === null && exigeColor(item.id);
+
+      if (!productById.has(item.id) || stock <= 0 || colorPerdido || faltaElegirColor) {
         eliminados += 1;
         continue;
       }
@@ -114,6 +164,7 @@ export function CartProvider({ children, products = [], productsLoaded = false }
     }
 
     if (eliminados === 0 && recortados === 0) return;
+
 
     setItems(next);
     const avisos = [];
@@ -128,7 +179,16 @@ export function CartProvider({ children, products = [], productsLoaded = false }
       avisos.push('Ajustamos algunas cantidades al stock disponible');
     }
     showToast(`${avisos.join('. ')}.`);
-  }, [hydrated, productsLoaded, items, productById, stockOf, showToast]);
+  }, [
+    hydrated,
+    productsLoaded,
+    items,
+    productById,
+    stockOf,
+    colorDe,
+    exigeColor,
+    showToast
+  ]);
 
   /** El carrito que ve la UI: cantidades propias, datos del catálogo. */
   const cart = useMemo(() => {
@@ -136,68 +196,93 @@ export function CartProvider({ children, products = [], productsLoaded = false }
     return items.flatMap((item) => {
       const product = productById.get(item.id);
       if (!product) return [];
+
+      const color = colorDe(item.id, item.color);
+
       return [
         {
+          // La clave, y no el id, es lo que identifica la línea en la lista:
+          // el mismo producto en dos colores son dos filas.
+          clave: claveDeLinea(item.id, item.color),
           id: product.id,
           name: product.name,
           price: product.price,
           image: product.image,
-          stock: product.stock,
+          stock: stockOf(item.id, item.color),
+          color,
+          colorId: item.color,
           qty: item.qty
         }
       ];
     });
-  }, [items, productById, productsLoaded]);
+  }, [items, productById, productsLoaded, colorDe, stockOf]);
 
+  /**
+   * Agrega una unidad. `color` es el color elegido, o null para un producto
+   * que no se vende por colores.
+   */
   const addToCart = useCallback(
-    (product) => {
-      const stock = stockOf(product.id);
-      const enCarrito = items.find((item) => item.id === product.id)?.qty ?? 0;
+    (product, color = null) => {
+      const colorId = color?.id ?? null;
+
+      if (exigeColor(product.id) && !colorId) {
+        showToast(`Elegí un color de ${product.name}.`);
+        return;
+      }
+
+      const stock = stockOf(product.id, colorId);
+      const clave = claveDeLinea(product.id, colorId);
+      const enCarrito = items.find((item) => claveDeLinea(item.id, item.color) === clave)?.qty ?? 0;
+      // El nombre con que se le habla a la clienta: "Balines" no le dice cuál
+      // de los dos se agotó si tiene los dos en el carrito.
+      const nombre = color ? `${product.name} en ${color.nombre}` : product.name;
 
       if (stock <= 0) {
-        showToast(`${product.name} está agotado.`);
+        showToast(`${nombre} está agotado.`);
         return;
       }
       if (enCarrito >= stock) {
-        showToast(
-          `Ya tienes las ${stock} unidades disponibles de ${product.name}.`
-        );
+        showToast(`Ya tienes las ${stock} unidades disponibles de ${nombre}.`);
         return;
       }
 
       setItems((prev) =>
-        prev.some((item) => item.id === product.id)
+        prev.some((item) => claveDeLinea(item.id, item.color) === clave)
           ? prev.map((item) =>
-              item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+              claveDeLinea(item.id, item.color) === clave ? { ...item, qty: item.qty + 1 } : item
             )
-          : [...prev, { id: product.id, qty: 1 }]
+          : [...prev, { id: product.id, qty: 1, color: colorId }]
       );
-      showToast(`${product.name} agregado al carrito ✨`);
+      showToast(`${nombre} agregado al carrito ✨`);
     },
-    [items, stockOf, showToast]
+    [items, stockOf, exigeColor, showToast]
   );
 
-  const removeFromCart = useCallback((id) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = useCallback((clave) => {
+    setItems((prev) => prev.filter((item) => claveDeLinea(item.id, item.color) !== clave));
   }, []);
 
   const changeQty = useCallback(
-    (id, delta) => {
-      const stock = stockOf(id);
-      const actual = items.find((item) => item.id === id)?.qty ?? 0;
-      const deseada = actual + delta;
+    (clave, delta) => {
+      const item = items.find((linea) => claveDeLinea(linea.id, linea.color) === clave);
+      if (!item) return;
+
+      const stock = stockOf(item.id, item.color);
+      const deseada = item.qty + delta;
 
       if (deseada > stock) {
         showToast(`Solo quedan ${stock} unidades disponibles.`);
         return;
       }
       if (deseada <= 0) {
-        removeFromCart(id);
+        removeFromCart(clave);
         return;
       }
 
       setItems((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, qty: deseada } : item))
+        prev.map((linea) =>
+          claveDeLinea(linea.id, linea.color) === clave ? { ...linea, qty: deseada } : linea
+        )
       );
     },
     [items, stockOf, showToast, removeFromCart]

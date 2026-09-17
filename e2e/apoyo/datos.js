@@ -53,6 +53,22 @@ export const PRODUCTOS = [
     description: 'Cobertura media, tono universal.',
     image: IMAGEN,
     stock: 0 // Agotado: no se puede agregar.
+  },
+  {
+    id: 5,
+    name: 'Balines decorativos',
+    category: 'unas',
+    price: 120,
+    description: 'Decoración, dorados o plateados.',
+    image: IMAGEN,
+    // El stock del producto es la suma de sus colores, como lo mantiene la
+    // base: 4 + 1 + 0.
+    stock: 5,
+    colores: [
+      { id: 51, nombre: 'Dorado', hex: '#d4af37', stock: 4 },
+      { id: 52, nombre: 'Plateado', hex: '#c0c0c0', stock: 1 },
+      { id: 53, nombre: 'Tornasol', hex: null, stock: 0 } // Ese color, agotado.
+    ]
   }
 ];
 

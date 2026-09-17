@@ -45,27 +45,42 @@ export default function CartDrawer() {
           ) : (
             cart.map(item => {
               const enElLimite = item.qty >= item.stock;
+              // El nombre con el color: dos filas de "Balines" no se
+              // distinguirían, y el aviso de limite hablaria del equivocado.
+              const nombre = item.color ? `${item.name} en ${item.color.nombre}` : item.name;
               return (
-                <div className="cart-item" key={item.id}>
+                <div className="cart-item" key={item.clave}>
                   <img src={item.image} alt={item.name} className="cart-item-img" />
                   <div className="cart-item-info">
                     <p className="cart-item-name">{item.name}</p>
+                    {item.color && (
+                      <p className="cart-item-color">
+                        {item.color.hex && (
+                          <span
+                            className="muestra-color"
+                            style={{ background: item.color.hex }}
+                            aria-hidden="true"
+                          />
+                        )}
+                        {item.color.nombre}
+                      </p>
+                    )}
                     <p className="cart-item-price">{formatPrice(item.price)}</p>
                     <div className="cart-item-qty">
                       <button
                         className="qty-btn"
-                        onClick={() => changeQty(item.id, -1)}
-                        aria-label={`Quitar una unidad de ${item.name}`}
+                        onClick={() => changeQty(item.clave, -1)}
+                        aria-label={`Quitar una unidad de ${nombre}`}
                       >
                         −
                       </button>
                       <span>{item.qty}</span>
                       <button
                         className="qty-btn"
-                        onClick={() => changeQty(item.id, 1)}
+                        onClick={() => changeQty(item.clave, 1)}
                         disabled={enElLimite}
                         title={enElLimite ? `Solo quedan ${item.stock} en stock` : undefined}
-                        aria-label={`Agregar una unidad de ${item.name}`}
+                        aria-label={`Agregar una unidad de ${nombre}`}
                       >
                         +
                       </button>
@@ -74,7 +89,13 @@ export default function CartDrawer() {
                       <span className="cart-item-limit">Máximo disponible: {item.stock}</span>
                     )}
                   </div>
-                  <button className="cart-item-remove" onClick={() => removeFromCart(item.id)}>Eliminar</button>
+                  <button
+                    className="cart-item-remove"
+                    onClick={() => removeFromCart(item.clave)}
+                    aria-label={`Eliminar ${nombre} del carrito`}
+                  >
+                    Eliminar
+                  </button>
                 </div>
               );
             })
