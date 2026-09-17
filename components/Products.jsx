@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useRevelar } from '@/lib/use-revelar';
 import { CATEGORIAS, ETIQUETAS_CATEGORIA } from '@/lib/categorias';
@@ -27,6 +27,24 @@ export default function Products({
   // vale más un botón que espera a que elija.
   const [colorElegido, setColorElegido] = useState({});
   const { addToCart, cart } = useCart();
+
+  // Qué tarjeta acaba de confirmar. La confirmación de hoy aparece lejos del
+  // dedo: un aviso abajo y el contador del carrito arriba. Que el botón mismo
+  // responda es lo más directo a lo que se acaba de tocar.
+  const [confirmado, setConfirmado] = useState(null);
+  const temporizador = useRef(null);
+
+  useEffect(() => () => clearTimeout(temporizador.current), []);
+
+  const agregar = useCallback(
+    (producto, color) => {
+      addToCart(producto, color);
+      setConfirmado(`${producto.id}:${color?.id ?? ''}`);
+      clearTimeout(temporizador.current);
+      temporizador.current = setTimeout(() => setConfirmado(null), 1400);
+    },
+    [addToCart]
+  );
 
   const categories = [{ key: 'todos', label: 'Todos' }, ...categorias];
 
@@ -122,7 +140,26 @@ export default function Products({
                   style={{ '--i': i % 8 }}
                 >
                   <div className="product-img-marco">
-                    <img src={product.image} alt={product.name} className="product-img" loading="lazy" />
+                    {/* La foto entra con un fundido en vez de aparecer de
+                        golpe. Con veinte productos bajando a distinto ritmo,
+                        ese parpadeo constante es lo que hace sentir la página
+                        a medio cargar. El ref cubre la foto que ya estaba en
+                        caché: ahí `load` puede haber pasado antes de que React
+                        alcance a escuchar. */}
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="product-img"
+                      loading="lazy"
+                      onLoad={(e) => e.currentTarget.classList.add('cargada')}
+                      // Si la foto no carga, igual se muestra: si no, el texto
+                      // alternativo quedaría invisible detrás del fundido y la
+                      // tarjeta parecería vacía en vez de rota.
+                      onError={(e) => e.currentTarget.classList.add('cargada')}
+                      ref={(el) => {
+                        if (el?.complete) el.classList.add('cargada');
+                      }}
+                    />
                   </div>
                   <div className="product-body">
                     <span className="product-category">{etiquetas[product.category]}</span>
@@ -177,8 +214,10 @@ export default function Products({
                           <span className="out-of-stock">Agotado</span>
                         ) : (
                           <button
-                            className="add-btn"
-                            onClick={() => addToCart(product, elegido)}
+                            className={`add-btn ${
+                              confirmado === `${product.id}:${elegido?.id ?? ''}` ? 'confirmado' : ''
+                            }`}
+                            onClick={() => agregar(product, elegido)}
                             disabled={faltaElegirColor || sinMasUnidades}
                             title={
                               faltaElegirColor
@@ -188,11 +227,13 @@ export default function Products({
                                   : undefined
                             }
                           >
-                            {faltaElegirColor
-                              ? 'Elegí un color'
-                              : sinMasUnidades
-                                ? 'En el carrito'
-                                : 'Agregar'}
+                            {confirmado === `${product.id}:${elegido?.id ?? ''}`
+                              ? '✓ Agregado'
+                              : faltaElegirColor
+                                ? 'Elegí un color'
+                                : sinMasUnidades
+                                  ? 'En el carrito'
+                                  : 'Agregar'}
                           </button>
                         )}
                       </div>

@@ -589,17 +589,48 @@ h1, h2, h3, h4 {
   display: flex;
   align-items: center;
   overflow: hidden;
+  /* Negro debajo de todo: lo que se ve en el instante entre que la página
+     pinta y la foto termina de bajar. */
+  background: var(--black);
+}
+
+/**
+ * La foto, en su propia capa para poder acercarla.
+ *
+ * El acercamiento va sobre un pseudo-elemento y no sobre el fondo del hero
+ * porque animar `background-size` obliga al navegador a repintar la imagen en
+ * cada cuadro; `transform` la mueve en la tarjeta gráfica y no toca el resto.
+ *
+ * Veintiocho segundos y un 9%: tiene que notarse recién cuando alguien se
+ * queda mirando, no mientras lee el título.
+ */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   /* La imagen vive en public/ y no en un servidor ajeno: el día que esa URL
      cambie o el servicio se caiga, la portada se queda sin foto. En WebP pesa
      114 KB en vez de los 305 del JPEG original. */
   background: linear-gradient(rgba(13, 13, 13, 0.62), rgba(13, 13, 13, 0.86)),
     url('/hero.webp') center/cover no-repeat;
+  animation: acercarHero 28s var(--ease-suave) both;
+  will-change: transform;
+}
+
+@keyframes acercarHero {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.09);
+  }
 }
 
 /* En un teléfono no hace falta una imagen de 1600px: 900 se ve igual y pesa
    48 KB. La mayoría de las visitas del salón entran con datos móviles. */
 @media (max-width: 768px) {
-  .hero {
+  .hero::after {
     background-image: linear-gradient(rgba(13, 13, 13, 0.62), rgba(13, 13, 13, 0.86)),
       url('/hero-movil.webp');
   }
@@ -610,6 +641,8 @@ h1, h2, h3, h4 {
 .hero::before {
   content: '';
   position: absolute;
+  /* Por encima de la foto y por debajo del texto. */
+  z-index: 1;
   inset: -25%;
   background:
     radial-gradient(closest-side circle at 72% 28%, rgba(212, 175, 55, 0.22), transparent),
@@ -972,7 +1005,15 @@ h1, h2, h3, h4 {
   height: 100%;
   object-fit: contain;
   display: block;
-  transition: transform 0.65s var(--ease), filter var(--dur-2) var(--ease);
+  /* Arranca invisible y entra con un fundido cuando termina de bajar. La clase
+     la pone el propio <img> al cargar. */
+  opacity: 0;
+  transition: transform 0.65s var(--ease), filter var(--dur-2) var(--ease),
+    opacity var(--dur-2) var(--ease-suave);
+}
+
+.product-img.cargada {
+  opacity: 1;
 }
 
 .product-card:hover .product-img {
@@ -1095,8 +1136,13 @@ h1, h2, h3, h4 {
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
+  /* Ancho mínimo para que el botón no se encoja ni se estire al cambiar de
+     "Agregar" a "✓ Agregado": un botón que salta de tamaño se siente roto. */
+  min-width: 118px;
+  text-align: center;
   transition: all 0.3s;
 }
+
 
 .add-btn:hover:not(:disabled) {
   background: var(--gold-light);
@@ -1107,6 +1153,28 @@ h1, h2, h3, h4 {
   background: #3a3a3a;
   color: #999;
   cursor: not-allowed;
+}
+
+/* Verde y no dorado: es el único momento en que el botón dice "listo" en vez
+   de "tocame", y conviene que se distinga de un vistazo.
+ *
+ * Va después del :hover y repite su selector porque, al tocar con el mouse, el
+ * cursor se queda encima: sin esto el hover le gana por especificidad y la
+ * confirmación se pinta del mismo dorado de siempre. */
+.add-btn.confirmado,
+.add-btn.confirmado:hover:not(:disabled) {
+  background: #2f9e5f;
+  color: var(--white);
+  /* Sin el crecimiento del hover: el rebote de la confirmación ya da el
+     movimiento, y los dos juntos se pisan. */
+  transform: none;
+  animation: confirmar var(--dur-2) var(--ease-rebote);
+}
+
+@keyframes confirmar {
+  50% {
+    transform: scale(1.06);
+  }
 }
 
 /* ===== STOCK / OUT OF STOCK ===== */
