@@ -110,26 +110,34 @@ export default function Products({
                     <span className="product-category">{etiquetas[product.category]}</span>
                     <h3 className="product-name">{product.name}</h3>
                     <p className="product-desc">{product.description}</p>
-                    <div className="product-footer">
-                      <span className="product-price">{formatPrice(product.price)}</span>
-                      {agotado ? (
-                        <span className="out-of-stock">Agotado</span>
-                      ) : (
-                        <button
-                          className="add-btn"
-                          onClick={() => addToCart(product)}
-                          disabled={sinMasUnidades}
-                          title={sinMasUnidades ? 'Ya tienes todas las unidades disponibles' : undefined}
-                        >
-                          {sinMasUnidades ? 'En el carrito' : 'Agregar'}
-                        </button>
+                    {/* El aviso de stock va ARRIBA del precio, no debajo: si
+                        no, la fila del precio queda a distinta altura en cada
+                        tarjeta según tenga aviso o no, y la rejilla se ve
+                        desalineada. */}
+                    <div className="product-cierre">
+                      {stockBajo && (
+                        <span className="stock-info">
+                          {product.stock === 1 ? '¡Última unidad!' : `¡Solo quedan ${product.stock}!`}
+                        </span>
                       )}
+                      <div className="product-footer">
+                        <span className="product-price">{formatPrice(product.price)}</span>
+                        {agotado ? (
+                          <span className="out-of-stock">Agotado</span>
+                        ) : (
+                          <button
+                            className="add-btn"
+                            onClick={() => addToCart(product)}
+                            disabled={sinMasUnidades}
+                            title={
+                              sinMasUnidades ? 'Ya tienes todas las unidades disponibles' : undefined
+                            }
+                          >
+                            {sinMasUnidades ? 'En el carrito' : 'Agregar'}
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    {stockBajo && (
-                      <span className="stock-info">
-                        {product.stock === 1 ? '¡Última unidad!' : `¡Solo quedan ${product.stock}!`}
-                      </span>
-                    )}
                   </div>
                 </div>
               );
