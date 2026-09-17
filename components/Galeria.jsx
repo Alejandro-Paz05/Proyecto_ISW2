@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useCerrarConEscape } from '@/lib/use-escape';
+import { useRevelar } from '@/lib/use-revelar';
 
 /**
  * Las fotos de trabajos del salón.
@@ -32,6 +33,12 @@ export default function Galeria() {
       vigente = false;
     };
   }, []);
+
+  // El escaneo que revela los bloques al entrar en pantalla corre una vez, con
+  // la portada. Estas fotos llegan después, así que sin volver a escanear
+  // nadie las observa nunca y se quedan transparentes para siempre: ocupando
+  // su lugar en la página, pero invisibles.
+  useRevelar(`galeria:${fotos.length}`);
 
   const cerrar = useCallback(() => setAbierta(null), []);
   useCerrarConEscape(Boolean(abierta), cerrar);
