@@ -503,6 +503,74 @@
   border-color: var(--gold);
 }
 
+/* ===== Colores de un producto ===== */
+
+.admin-colores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Nombre ancho, muestra chica, unidades justas: es el orden en que se lee y
+   en que se tabula. */
+.admin-color-fila {
+  display: grid;
+  grid-template-columns: 1fr 44px 92px auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-color-fila input[type='color'] {
+  padding: 2px;
+  height: 38px;
+  cursor: pointer;
+}
+
+.admin-agregar-color {
+  align-self: flex-start;
+  background: none;
+  border: 1px dashed #c9c3b8;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.admin-agregar-color:hover {
+  border-color: var(--gold);
+  color: var(--black);
+}
+
+@media (max-width: 560px) {
+  /* En un teléfono, cuatro columnas dejan el nombre en dos letras. */
+  .admin-color-fila {
+    grid-template-columns: 1fr 44px;
+    grid-template-areas:
+      'nombre muestra'
+      'stock  quitar';
+  }
+
+  .admin-color-fila input[type='text'] {
+    grid-area: nombre;
+  }
+
+  .admin-color-fila input[type='color'] {
+    grid-area: muestra;
+  }
+
+  .admin-color-fila input[type='number'] {
+    grid-area: stock;
+  }
+
+  .admin-color-fila button {
+    grid-area: quitar;
+  }
+}
+
 /* ===== Imagen del producto: subir un archivo o pegar una dirección ===== */
 
 .admin-imagen {

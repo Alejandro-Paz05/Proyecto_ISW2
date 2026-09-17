@@ -4,7 +4,17 @@ import { protegerPagina, PANEL_TIENDA } from '@/lib/sesion';
 import { CATEGORIAS, ETIQUETAS_CATEGORIA } from '@/lib/categorias';
 import { LIMITE_DE_BYTES, TIPOS_ACEPTADOS, enMegabytes } from '@/lib/imagen';
 
-const VACIO = { name: '', category: 'unas', price: '', stock: '', description: '', image: '' };
+const VACIO = {
+  name: '',
+  category: 'unas',
+  price: '',
+  stock: '',
+  description: '',
+  image: '',
+  colores: []
+};
+
+const COLOR_POR_DEFECTO = '#cccccc';
 
 function formatPrice(amount) {
   return 'L ' + Number(amount).toFixed(2);
@@ -53,8 +63,38 @@ export default function ProductosAdmin({ sesion }) {
       price: String(producto.price),
       stock: String(producto.stock),
       description: producto.description ?? '',
-      image: producto.image ?? ''
+      image: producto.image ?? '',
+      colores: (producto.colores ?? []).map((color) => ({
+        id: color.id,
+        nombre: color.nombre,
+        hex: color.hex ?? COLOR_POR_DEFECTO,
+        stock: String(color.stock)
+      }))
     });
+  }
+
+  /** Cambia un campo de un color sin tocar los demás. */
+  function cambiarColor(indice, campo, valor) {
+    setFormulario((actual) => ({
+      ...actual,
+      colores: actual.colores.map((color, i) =>
+        i === indice ? { ...color, [campo]: valor } : color
+      )
+    }));
+  }
+
+  function agregarColor() {
+    setFormulario((actual) => ({
+      ...actual,
+      colores: [...actual.colores, { nombre: '', hex: COLOR_POR_DEFECTO, stock: '0' }]
+    }));
+  }
+
+  function quitarColor(indice) {
+    setFormulario((actual) => ({
+      ...actual,
+      colores: actual.colores.filter((_, i) => i !== indice)
+    }));
   }
 
   async function guardar(evento) {
@@ -83,6 +123,29 @@ export default function ProductosAdmin({ sesion }) {
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar el producto.');
+
+      // Los colores van en su propia llamada, después de que el producto
+      // exista: uno nuevo no tiene id hasta que la base se lo da.
+      const resColores = await fetch(`/api/admin/products/${data.id}/colores`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          colores: formulario.colores.map((color) => ({
+            ...(color.id ? { id: color.id } : {}),
+            nombre: color.nombre,
+            hex: color.hex,
+            stock: Number(color.stock)
+          }))
+        })
+      });
+
+      if (!resColores.ok) {
+        const detalle = await resColores.json().catch(() => ({}));
+        // El producto ya se guardó: decirlo evita que lo cargue dos veces.
+        throw new Error(
+          `${data.name} se guardó, pero los colores no: ${detalle.error ?? 'error inesperado'}`
+        );
+      }
 
       setFormulario(null);
       setAviso(esNuevo ? `"${data.name}" agregado al catálogo.` : `"${data.name}" actualizado.`);
@@ -230,12 +293,23 @@ export default function ProductosAdmin({ sesion }) {
               Stock
               <input
                 type="number"
-                required
+                required={formulario.colores.length === 0}
                 min="0"
                 step="1"
-                value={formulario.stock}
+                // Con colores, el stock del producto es la suma de los suyos y
+                // lo fija la base: dejarlo editable sería ofrecer un número que
+                // se va a pisar solo.
+                disabled={formulario.colores.length > 0}
+                value={
+                  formulario.colores.length > 0
+                    ? formulario.colores.reduce((suma, c) => suma + (Number(c.stock) || 0), 0)
+                    : formulario.stock
+                }
                 onChange={(e) => setFormulario({ ...formulario, stock: e.target.value })}
               />
+              {formulario.colores.length > 0 && (
+                <span className="admin-sub">Es la suma de los colores.</span>
+              )}
             </label>
 
             <label className="ancho-completo">
@@ -247,6 +321,51 @@ export default function ProductosAdmin({ sesion }) {
                 onChange={(e) => setFormulario({ ...formulario, description: e.target.value })}
               />
             </label>
+
+            <div className="ancho-completo admin-colores">
+              <span className="admin-imagen-titulo">Colores</span>
+              <span className="admin-sub">
+                Si se vende en varios colores, cargalos con las unidades de cada uno. La clienta
+                elige uno antes de agregarlo al carrito, y no puede comprar un color agotado.
+              </span>
+
+              {formulario.colores.map((color, i) => (
+                <div className="admin-color-fila" key={color.id ?? `nuevo-${i}`}>
+                  <input
+                    type="text"
+                    placeholder="Plateado"
+                    maxLength={40}
+                    required
+                    value={color.nombre}
+                    onChange={(e) => cambiarColor(i, 'nombre', e.target.value)}
+                    aria-label={`Nombre del color ${i + 1}`}
+                  />
+                  <input
+                    type="color"
+                    value={color.hex}
+                    onChange={(e) => cambiarColor(i, 'hex', e.target.value)}
+                    aria-label={`Muestra del color ${i + 1}`}
+                    title="La muestra que ve la clienta"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    required
+                    value={color.stock}
+                    onChange={(e) => cambiarColor(i, 'stock', e.target.value)}
+                    aria-label={`Unidades de ${color.nombre || `color ${i + 1}`}`}
+                  />
+                  <button type="button" className="peligro" onClick={() => quitarColor(i)}>
+                    Quitar
+                  </button>
+                </div>
+              ))}
+
+              <button type="button" className="admin-agregar-color" onClick={agregarColor}>
+                + Agregar color
+              </button>
+            </div>
 
             <div className="ancho-completo admin-imagen">
               <span className="admin-imagen-titulo">Imagen del producto</span>

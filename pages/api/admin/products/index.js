@@ -7,6 +7,10 @@ import { SIN_CACHE } from '@/lib/respuesta-cacheable';
 
 const COLUMNAS = 'id, name, category, price, description, image, stock, created_at';
 
+// El panel lista los productos con sus colores para poder editarlos sin pedir
+// una segunda vuelta por cada uno.
+const COLUMNAS_CON_COLORES = `${COLUMNAS}, colores:product_colors(id, nombre, hex, stock, position)`;
+
 async function handler(req, res) {
   if (req.method === 'GET') return listar(req, res);
   if (req.method === 'POST') return crear(req, res);
@@ -19,8 +23,9 @@ async function listar(req, res) {
   try {
     const { data, error } = await getSupabaseAdmin()
       .from('products')
-      .select(COLUMNAS)
-      .order('id', { ascending: true });
+      .select(COLUMNAS_CON_COLORES)
+      .order('id', { ascending: true })
+      .order('position', { referencedTable: 'product_colors', ascending: true });
 
     if (error) throw error;
 
