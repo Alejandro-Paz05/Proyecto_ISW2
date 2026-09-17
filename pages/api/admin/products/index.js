@@ -21,11 +21,20 @@ async function handler(req, res) {
 
 async function listar(req, res) {
   try {
-    const { data, error } = await getSupabaseAdmin()
+    const db = getSupabaseAdmin();
+
+    let { data, error } = await db
       .from('products')
       .select(COLUMNAS_CON_COLORES)
       .order('id', { ascending: true })
       .order('position', { referencedTable: 'product_colors', ascending: true });
+
+    // Entre desplegar este código y correr la migración 010, la tabla de
+    // colores no existe. El panel tiene que seguir abriendo: es desde donde se
+    // atienden los pedidos del día.
+    if (error?.code === 'PGRST200' || error?.code === '42P01') {
+      ({ data, error } = await db.from('products').select(COLUMNAS).order('id', { ascending: true }));
+    }
 
     if (error) throw error;
 
