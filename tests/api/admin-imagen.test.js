@@ -214,7 +214,7 @@ describe('subir la imagen de un producto', () => {
 
   describe('cuando el almacen falla', () => {
     it('responde 500, lo reporta y no inventa una direccion', async () => {
-      upload.mockResolvedValue({ data: null, error: new Error('bucket not found') });
+      upload.mockResolvedValue({ data: null, error: new Error('se cayó la conexión') });
 
       const res = await llamar(imagen, comoDuena({ method: 'POST', cuerpoCrudo: archivo(PNG) }));
 
@@ -222,6 +222,19 @@ describe('subir la imagen de un producto', () => {
       expect(res.body.error).toMatch(/No se pudo guardar la imagen/);
       expect(getPublicUrl).not.toHaveBeenCalled();
       expect(reportarError).toHaveBeenCalledOnce();
+    });
+
+    // Le pasó a Alejandro con la galería: subió una foto antes de correr la
+    // migración y el mensaje solo decía "No se pudo guardar la imagen", que no
+    // alcanza para saber que falta crear el bucket.
+    it('si el bucket no existe, lo dice en vez de dejarlo adivinando', async () => {
+      upload.mockResolvedValue({ data: null, error: new Error('Bucket not found') });
+
+      const res = await llamar(imagen, comoDuena({ method: 'POST', cuerpoCrudo: archivo(PNG) }));
+
+      expect(res.statusCode).toBe(500);
+      expect(res.body.error).toMatch(/bucket "productos"/i);
+      expect(res.body.error).toMatch(/migración/i);
     });
   });
 });
