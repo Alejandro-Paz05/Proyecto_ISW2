@@ -2,6 +2,7 @@ import Link from 'next/link';
 import TiendaLayout from '@/components/TiendaLayout';
 import Hero from '@/components/Hero';
 import Services from '@/components/Services';
+import Galeria from '@/components/Galeria';
 import Contact from '@/components/Contact';
 import { useRevelar } from '@/lib/use-revelar';
 import { NEGOCIO, enlaceWhatsApp } from '@/lib/negocio';
@@ -58,6 +59,11 @@ export default function Inicio() {
           </div>
         </div>
       </section>
+
+      {/* Entre los atajos y el contacto: primero qué hacemos y cómo pedirlo,
+          después la prueba de que lo hacemos bien, y al final dónde estamos.
+          Si no hay fotos cargadas, esta sección no se muestra. */}
+      <Galeria />
 
       <Contact />
     </TiendaLayout>

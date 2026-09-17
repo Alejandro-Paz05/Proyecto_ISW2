@@ -49,6 +49,7 @@ describe('AdminLayout', () => {
     expect(enlaces(nav)).toEqual([
       ['Pedidos', '/akaristudio/admin'],
       ['Productos', '/akaristudio/admin/productos'],
+      ['Galería', '/akaristudio/admin/galeria'],
       ['Retroalimentación', '/akaristudio/admin/retroalimentacion']
     ]);
   });

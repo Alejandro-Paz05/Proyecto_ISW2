@@ -19,6 +19,7 @@ En **Supabase → SQL Editor → New query**, pegá y ejecutá los archivos **en
 | 008 | `reponer_stock_al_cancelar.sql` | El trigger que devuelve el inventario de un pedido cancelado, y lo vuelve a descontar si se reabre |
 | 009 | `avisos_push.sql` | `suscripciones_push`: los dispositivos del personal que reciben el aviso de un pedido nuevo |
 | 010 | `colores_de_producto.sql` | `product_colors`: los colores en que se vende un producto, cada uno con su propio stock |
+| 011 | `galeria_de_trabajos.sql` | `galeria` y su bucket: las fotos de trabajos que la dueña publica en la portada |
 
 Sobre una base que ya está al día, correrlos de nuevo no cambia nada y no da error. Esa es la idea, y desde la 005 no es solo una promesa: [tests/db/migraciones.test.js](../tests/db/migraciones.test.js) las corre dos veces seguidas sobre un Postgres real (PGlite) y compara tablas, filas, políticas, funciones, triggers y privilegios antes y después.
 

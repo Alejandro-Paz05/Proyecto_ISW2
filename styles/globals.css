@@ -1363,6 +1363,121 @@ h1, h2, h3, h4 {
   color: var(--gold);
 }
 
+/* ===== GALERÍA DE TRABAJOS ===== */
+
+.galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+  margin-top: 36px;
+}
+
+.galeria-foto {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--black-card);
+  cursor: zoom-in;
+  /* Todas iguales: fotos de distinto alto dejan la rejilla con escalones y
+     una galería se lee como un bloque o no se lee. */
+  aspect-ratio: 1;
+  transition: transform var(--dur-2) var(--ease), border-color var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
+}
+
+.galeria-foto:hover,
+.galeria-foto:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--gold);
+  box-shadow: var(--shadow-lg);
+}
+
+.galeria-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.7s var(--ease);
+}
+
+.galeria-foto:hover img {
+  transform: scale(1.06);
+}
+
+/* El título se apoya en un degradado y no en una barra sólida: sobre una foto
+   clara hace falta el contraste, y sobre una oscura una barra se vería como un
+   parche. */
+.galeria-foto span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 26px 14px 12px;
+  background: linear-gradient(transparent, rgba(13, 13, 13, 0.85));
+  color: var(--white);
+  font-size: 13px;
+  text-align: left;
+}
+
+/* ===== Visor ===== */
+.galeria-visor {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  background: rgba(8, 8, 8, 0.92);
+  backdrop-filter: blur(4px);
+  cursor: zoom-out;
+  animation: aparecerVisor var(--dur-2) var(--ease);
+}
+
+@keyframes aparecerVisor {
+  from {
+    opacity: 0;
+  }
+}
+
+.galeria-visor img {
+  max-width: min(92vw, 900px);
+  max-height: 78vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+
+.galeria-visor p {
+  color: #e6e2da;
+  font-size: 15px;
+  text-align: center;
+}
+
+.galeria-cerrar {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--white);
+  font-size: 18px;
+  cursor: pointer;
+  transition: border-color var(--dur-2) var(--ease), background var(--dur-2) var(--ease);
+}
+
+.galeria-cerrar:hover {
+  border-color: var(--gold);
+  background: rgba(0, 0, 0, 0.7);
+}
+
 /* ===== FOOTER ===== */
 .footer {
   background: var(--black);

@@ -15,6 +15,7 @@ const SECCIONES = {
   tienda: [
     { href: '/akaristudio/admin', label: 'Pedidos' },
     { href: '/akaristudio/admin/productos', label: 'Productos' },
+    { href: '/akaristudio/admin/galeria', label: 'Galería' },
     { href: '/akaristudio/admin/retroalimentacion', label: 'Retroalimentación' }
   ],
   // La retroalimentación se ve desde los dos portales, y cada uno tiene su

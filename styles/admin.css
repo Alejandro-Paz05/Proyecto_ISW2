@@ -503,6 +503,87 @@
   border-color: var(--gold);
 }
 
+/* ===== Galería de trabajos ===== */
+
+.admin-galeria-ayuda {
+  max-width: 70ch;
+  margin-bottom: 18px;
+}
+
+.admin-galeria-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.admin-galeria {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.admin-galeria-item {
+  background: var(--white);
+  border: 1px solid #e6e3dd;
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-galeria-item img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  background: #f2f0eb;
+}
+
+.admin-galeria-item input {
+  border: none;
+  border-top: 1px solid #eceae5;
+  border-radius: 0;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+.admin-galeria-botones {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px 12px;
+}
+
+.admin-galeria-botones button {
+  flex: 1;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--gray);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.admin-galeria-botones button:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--black);
+}
+
+.admin-galeria-botones button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.admin-galeria-botones .peligro {
+  flex: 1.4;
+}
+
 /* ===== Colores de un producto ===== */
 
 .admin-colores {
