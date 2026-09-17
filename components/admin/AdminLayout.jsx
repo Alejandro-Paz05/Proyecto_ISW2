@@ -84,7 +84,15 @@ export default function AdminLayout({ titulo, portal = 'tienda', sesion, childre
                   {otro.label} →
                 </Link>
               )}
-              <Link href="/akaristudio" className="admin-link-tienda" target="_blank" rel="noreferrer">
+              {/* En el teléfono se esconde: quien atiende el panel ya tiene la
+                  tienda a un toque, y en 390px cada enlace de más empuja a los
+                  otros a una segunda fila desprolija. */}
+              <Link
+                href="/akaristudio"
+                className="admin-link-tienda solo-escritorio"
+                target="_blank"
+                rel="noreferrer"
+              >
                 Ver tienda ↗
               </Link>
               <button type="button" className="admin-salir" onClick={cerrarSesion}>

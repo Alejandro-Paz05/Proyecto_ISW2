@@ -837,13 +837,66 @@
 @media (max-width: 720px) {
   .admin-header-inner {
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px 12px;
+    padding: 12px 16px;
   }
 
+  /* La marca empuja al resto contra el borde derecho, así la primera fila
+     queda "quién soy" a la izquierda y "qué puedo hacer" a la derecha. */
+  .admin-marca {
+    flex: 1;
+    font-size: 16px;
+  }
+
+  .admin-acciones {
+    gap: 8px;
+  }
+
+  /* Las secciones pasan a una fila propia que se desliza, en vez de partirse
+     en dos renglones desparejos. Con cuatro o cinco no entran nunca en 390px,
+     y una fila deslizable se lee como una sola cosa. */
   .admin-nav {
     order: 3;
     width: 100%;
     flex: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    /* El borde de un enlace activo no queda cortado contra el borde. */
+    padding: 2px;
+    margin: -2px;
+    scrollbar-width: none;
+  }
+
+  .admin-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-nav a {
+    white-space: nowrap;
+  }
+
+  .solo-escritorio {
+    display: none;
+  }
+
+  /* Los dos botones de la derecha se achican para caber al lado de la marca
+     sin empujar nada a otra fila. */
+  .admin-salir {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .admin-avisos-nota {
+    /* Abajo y de ancho completo: anclado al botón se saldría por la derecha en
+       390px, y anclado arriba taparía las secciones. Al pie no tapa nada de lo
+       que se estaba mirando. */
+    position: fixed;
+    top: auto;
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+    box-shadow: var(--shadow);
   }
 
   .admin-titulo {
